@@ -51,10 +51,7 @@ class Route {
 class RouteNode {
     @Attribute(.unique) var id: UUID
     var sequence: Int
-
-    @Relationship(deleteRule: .noAction)
     var airport: Airport
-
     var plannedArrivalOffsetMinutes: Int
     var plannedDepartureOffsetMinutes: Int
 
