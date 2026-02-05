@@ -8,9 +8,11 @@ class Route {
 
     @Relationship(deleteRule: .cascade)
     var nodes: [RouteNode]
+    @Relationship(deleteRule: .cascade, inverse: \Trip.route)
+    var trips: [Trip]
 
     var name: String
-    
+
     var totalPlannedDurationMinutes: Int {
         nodes.last?.plannedArrivalOffsetMinutes ?? 0
     }
@@ -19,9 +21,14 @@ class Route {
         self.id = UUID()
         self.name = name
         self.nodes = []
+        self.trips = []
     }
 
-    func addNode(airport: Airport, journeyTimeMinutes: Int, turnAroundTimeMinutes: Int = 20) {
+    func addNode(
+        airport: Airport,
+        journeyTimeMinutes: Int,
+        turnAroundTimeMinutes: Int = 30
+    ) {
         var previousOffset: Int
         if nodes.count == 0 {
             previousOffset = 0
@@ -29,7 +36,9 @@ class Route {
             previousOffset = nodes.last!.plannedArrivalOffsetMinutes
         }
 
-        let arrivalOffset = previousOffset + journeyTimeMinutes + turnAroundTimeMinutes
+        // arrival offset is calculated from the source node
+        let arrivalOffset =
+            previousOffset + journeyTimeMinutes + turnAroundTimeMinutes
         let newNode = RouteNode(
             plannedArrivalOffsetMinutes: arrivalOffset,
             airport: airport

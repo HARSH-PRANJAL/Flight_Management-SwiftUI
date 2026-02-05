@@ -27,5 +27,4 @@ enum StaffAvailabilityStatus: String, Codable {
 enum AircraftStatus: String, Codable {
     case available = "AVAILABLE"
     case assigned = "ASSIGNED"
-    case groundingRequired = "GROUNDING_REQUIRED"
 }
