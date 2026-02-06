@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Model
-class Trip: Hashable {
+class Trip {
     @Attribute(.unique)
     var id: UUID
 
@@ -18,7 +18,7 @@ class Trip: Hashable {
     var flightNumber: String
     var isCancelled: Bool = false
     var isCompleted: Bool = false
-    var currentAirportSequence: Int = 1 // sequence of the trip node to visit
+    var currentAirportSequence: Int = 1  // sequence of the trip node to visit
 
     var currentStatus: TripStatus {
         if nodeStatuses.isEmpty {
@@ -53,7 +53,11 @@ class Trip: Hashable {
             )
         )
 
-        if nodeStatuses.isEmpty {
+        if isCancelled && nodeStatuses.isEmpty {
+            // if trip is cancelled before even starting
+            return scheduledDepartureTime
+        } else if nodeStatuses.isEmpty {
+            // if trip is not started yet
             return arrivalTime
         } else if isCancelled {
             // if flight is cancelled midway between airport A and B
@@ -65,7 +69,7 @@ class Trip: Hashable {
             }
         }
 
-        // trip is ongoing and is delayed (this is the adjusted estimated time)
+        // trip is ongoing and is delayed (delay can be of 0 mins)
         return arrivalTime.addingTimeInterval(
             TimeInterval(
                 totalDelayedMinutes * 60
@@ -96,15 +100,15 @@ class Trip: Hashable {
         self.scheduledDepartureTime = scheduledDepartureTime
         self.flightNumber = flightNumber
     }
-    
+
 }
 
 // MARK: Trip Scheduling
 extension Trip {
     // append the next trip node in nodes
     func scheduleNextAirport() {
-        self.currentAirportSequence += 1
-        self.nodeStatuses.append(
+        currentAirportSequence += 1
+        nodeStatuses.append(
             TripNodeStatus(
                 routeNode: self.plannedRouteNode,
             )
@@ -112,10 +116,14 @@ extension Trip {
     }
 
     func scheduleCurrentAirportArrival(arrivalTime: Date) {
+        if isCancelled {
+            return
+        }
+        
         // can not arrive on source trip node
         if !nodeStatuses.isEmpty {
             nodeStatuses.last!.actualArrivalTime = arrivalTime
-            
+
             // trip is completed and aircraft is arrived at the last airport of route
             if currentAirportSequence == route.nodes.count {
                 aircraft.updateLastAndNextScheduledTrip(completedTrip: self)
@@ -128,19 +136,26 @@ extension Trip {
     }
 
     func scheduleCurrentAirportDeparture(departureTime: Date) {
+        if isCancelled {
+            return
+        }
+        
         if nodeStatuses.isEmpty {
             startTrip(departureTime: departureTime)
         } else {
             // takeoff from airport A and prepare airport B
             if !isCompleted {
                 nodeStatuses.last!.actualDepartureTime = departureTime
-                // airport B will be current node
+                // airport B will be pushed as current node
                 scheduleNextAirport()
             }
         }
     }
 
     func startTrip(departureTime: Date) {
+        if isCancelled {
+            return
+        }
         nodeStatuses.removeAll()
         nodeStatuses.append(
             TripNodeStatus(
@@ -148,17 +163,56 @@ extension Trip {
                 actualDepartureTime: departureTime
             )
         )
-        
+
         aircraft.currentTrip = self
         for staff in staffs {
             staff.currentTrip = self
         }
-        
+
         scheduleNextAirport()
     }
 
 }
 
+// MARK: Cancel Trip
+extension Trip {
+    // cancel trip midway or before starting
+    func cancel() {
+        if isCancelled || isCompleted {
+            return
+        }
+
+        isCompleted = false
+
+        let hasStarted = !nodeStatuses.isEmpty
+
+        // this trip is the current trip of aircraft
+        if aircraft.currentTrip?.id == self.id {
+            aircraft.currentTrip = nil
+        }
+        
+        // if trip has started then this is the last completed trip for the aircraft
+        if hasStarted {
+            aircraft.lastCompletedTrip = self
+        }
+        aircraft.updateNextScheduledTrip(after: self)
+
+        for staff in staffs {
+            // this trip is the current trip of staff
+            if staff.currentTrip?.id == self.id {
+                staff.currentTrip = nil
+            }
+
+            // if trip has started then this is the last completed trip for the staff
+            if hasStarted {
+                staff.lastCompletedTrip = self
+            }
+            staff.updateNextScheduledTrip(after: self)
+        }
+        
+        isCancelled = true
+    }
+}
 @Model
 class TripNodeStatus {
     @Attribute(.unique)
@@ -177,7 +231,7 @@ class TripNodeStatus {
         self.actualArrivalTime = actualArrivalTime
         self.actualDepartureTime = actualDepartureTime
     }
-    
+
     // total delay from the source of the trip
     func totalDelayMinutes(tripStartTime: Date) -> Int {
         if actualArrivalTime == nil {
@@ -213,7 +267,7 @@ class Aircraft {
     var type: String
     var seatingCapacity: Int
     var minimumStaffRequired: [StaffRole: Int]
-    var lasCompletedTrip: Trip? = nil
+    var lastCompletedTrip: Trip? = nil
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
 
@@ -228,12 +282,23 @@ class Aircraft {
             $0.currentStatus == .scheduled
         })
     }
-    
+
+    var totaltripHours: Double {
+        return trips.filter({
+            $0.isCompleted == true || $0.isCancelled == true
+        }).reduce(0.0) {
+            $0
+                + $1.estimatedArrivalTime.timeIntervalSince(
+                    $1.scheduledDepartureTime
+                )
+        }
+    }
+
     var currentStatus: AircraftStatus {
-        if let nextTrip = nextScheduledTrip {
-            return nextTrip.currentStatus == .onTime || nextTrip.currentStatus == .delayed ? .assigned : .available
-        } else {
+        if currentTrip != nil {
             return .available
+        } else {
+            return .assigned
         }
     }
 
@@ -252,15 +317,20 @@ class Aircraft {
     }
 
     func updateLastAndNextScheduledTrip(completedTrip: Trip) {
-        lasCompletedTrip = completedTrip
+        lastCompletedTrip = completedTrip
+        updateNextScheduledTrip(after: completedTrip)
+    }
 
-        if let nextTrip = trips.first(where: {
-            $0.scheduledDepartureTime > completedTrip.estimatedArrivalTime
-        }) {
-            nextScheduledTrip = nextTrip
-        } else {
-            nextScheduledTrip = nil
-        }
+    func updateNextScheduledTrip(after previousTrip: Trip) {
+        let referenceTime = previousTrip.estimatedArrivalTime
+
+        nextScheduledTrip =
+            trips
+            .filter {
+                !$0.isCancelled && !$0.isCompleted
+                    && $0.scheduledDepartureTime > referenceTime
+            }
+            .min(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
     }
 
     func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int])
@@ -280,7 +350,7 @@ class Aircraft {
 }
 
 @Model
-class Staff: Hashable {
+class Staff {
     @Attribute(.unique)
     var id: UUID
 
@@ -289,7 +359,7 @@ class Staff: Hashable {
 
     var name: String
     var designation: StaffRole
-    var lasCompletedTrip: Trip? = nil
+    var lastCompletedTrip: Trip? = nil
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
     var isMarkedUnavailable: Bool = false
@@ -298,16 +368,19 @@ class Staff: Hashable {
         return trips.filter({
             $0.isCompleted == true || $0.isCancelled == true
         }).reduce(0.0) {
-            $0 + $1.estimatedArrivalTime.timeIntervalSince($1.scheduledDepartureTime)
+            $0
+                + $1.estimatedArrivalTime.timeIntervalSince(
+                    $1.scheduledDepartureTime
+                )
         }
     }
-    
+
     var completedTrips: [Trip] {
         return trips.filter({
             $0.isCompleted == true || $0.isCancelled == true
         })
     }
-    
+
     var scheduledTrips: [Trip] {
         return trips.filter({
             $0.currentStatus == .scheduled
@@ -318,8 +391,8 @@ class Staff: Hashable {
         if isMarkedUnavailable {
             return .unavailable
         } else {
-            if let nextTrip = nextScheduledTrip {
-                return nextTrip.currentStatus == .delayed || nextTrip.currentStatus == .onTime ? .onDuty : .available
+            if currentTrip != nil {
+                return .onDuty
             } else {
                 return .available
             }
@@ -338,16 +411,21 @@ class Staff: Hashable {
             $0.estimatedArrivalTime > from && $0.scheduledDepartureTime < to
         })
     }
-    
-    func updateLastAndNextScheduledTrip(completedTrip: Trip) {
-        lasCompletedTrip = completedTrip
 
-        if let nextTrip = trips.first(where: {
-            $0.scheduledDepartureTime > completedTrip.estimatedArrivalTime
-        }) {
-            nextScheduledTrip = nextTrip
-        } else {
-            nextScheduledTrip = nil
-        }
+    func updateLastAndNextScheduledTrip(completedTrip: Trip) {
+        lastCompletedTrip = completedTrip
+        updateNextScheduledTrip(after: completedTrip)
+    }
+
+    func updateNextScheduledTrip(after previousTrip: Trip) {
+        let referenceTime = previousTrip.estimatedArrivalTime
+
+        nextScheduledTrip =
+            trips
+            .filter {
+                !$0.isCancelled && !$0.isCompleted
+                    && $0.scheduledDepartureTime > referenceTime
+            }
+            .min(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
     }
 }
