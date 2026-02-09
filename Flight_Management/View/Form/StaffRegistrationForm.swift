@@ -1,8 +1,13 @@
 import PhotosUI
 import SwiftUI
+import SwiftData
 
 struct StaffRegistrationForm: View {
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) var context
 
+    // form fields
     @State private var name: String = ""
     @State private var email: String = ""
     @State private var gender: Gender? = nil
@@ -10,28 +15,25 @@ struct StaffRegistrationForm: View {
     @State private var day: String = ""
     @State private var month: String = ""
     @State private var year: String = ""
-
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var photoData: Data? = nil
     @State private var profilePreview: Image? = nil
+    @State private var dob: Date? = nil
+    
+    // validators and errors
+    @State private var error: Error = .none
+    @State private var errorMessage: String = ""
+    @State private var submissionState: SubmissionState = .none
 
+    // ui
     @FocusState private var focusedField: Focus?
-
-    private var days: [String] {
-        return Array(1...Month.numberOfDays(inMonth: month)).map(\.description)
-    }
-
-    let years = Array(
-        (Calendar.current.component(.year, from: Date()) - 100)...(Calendar
-            .current.component(.year, from: Date()))
+    
+    // formData
+    private let years = Array(
+        (Calendar.current.component(.year, from: Date()) - 66)...(Calendar
+            .current.component(.year, from: Date()) - 16)
     ).reversed().map { "\($0)" }
 
-    private enum Focus: Hashable {
-        case name
-        case email
-        case gender
-        case role
-    }
 
     var body: some View {
         ZStack {
@@ -51,53 +53,69 @@ struct StaffRegistrationForm: View {
 
                     // name, email, gender & staff role
                     VStack(spacing: 20) {
-                        customTextField(
-                            fieldName: "Name",
-                            placeholder: "Enter your full name",
-                            field: $name,
-                            focus: .name
-                        )
+                        ZStack {
+                            customTextField(
+                                fieldName: "Name",
+                                placeholder: "Enter your full name",
+                                field: $name,
+                                focus: .name
+                            )
+                            errorMessage(errorState: $error,for: .name, focusedField: .name ,errorMessage)
+                        }
+                        
+                        
+                        ZStack {
+                            customTextField(
+                                fieldName: "Email",
+                                placeholder: "example@example.com",
+                                field: $email,
+                                focus: .email
+                            )
+                            errorMessage(errorState: $error, for: .email, focusedField: .email ,errorMessage)
+                        }
 
-                        customTextField(
-                            fieldName: "Email",
-                            placeholder: "example@example.com",
-                            field: $email,
-                            focus: .email
-                        )
+                        ZStack {
+                            genderField()
+                            errorMessage(errorState: $error, for: .gender, focusedField: .gender ,errorMessage)
+                        }
+                        
+                        ZStack {
+                            designationField()
+                            errorMessage(errorState: $error, for: .role, focusedField: .role ,errorMessage)
+                        }
 
-                        genderField()
-                        designationField()
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Date of Birth")
-                                .font(.callout)
-                                .font(.system(size: 15))
-                                .foregroundColor(Color(.systemGray))
-                                .padding(.leading, 4)
-
-                            HStack(spacing: 8) {
-
-                                menuWithButtonSelector(
-                                    menuOptions: days,
-                                    selection: $day
-                                )
-                                menuWithButtonSelector(
-                                    menuOptions: Array(Month.allCases).map(
-                                        \.rawValue
-                                    ),
-                                    selection: $month
-                                )
-                                menuWithButtonSelector(
-                                    menuOptions: years,
-                                    selection: $year
-                                )
+                        ZStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Date of Birth")
+                                    .formFieldLabel()
+                                
+                                HStack(spacing: 8) {
+                                    menuWithButtonSelector(
+                                        menuOptions: days,
+                                        selection: $day,
+                                        placeholder: "Day"
+                                    )
+                                    menuWithButtonSelector(
+                                        menuOptions: Array(Month.allCases).map(
+                                            \.rawValue
+                                        ),
+                                        selection: $month,
+                                        placeholder: "Month"
+                                    )
+                                    menuWithButtonSelector(
+                                        menuOptions: years,
+                                        selection: $year,
+                                        placeholder: "Year"
+                                    )
+                                }
                             }
+                            errorMessage(errorState: $error, for: .dateOfBirth, focusedField: .dateOfBirth, errorMessage)
                         }
                     }
                     .padding(.horizontal, 16)
 
                     Button(action: {
-
+                        registerStaff()
                     }) {
                         Text("Register")
                             .font(.system(size: 17, weight: .semibold))
@@ -124,16 +142,47 @@ struct StaffRegistrationForm: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
         }
+        .overlay(alignment: .top) {
+            if submissionState == .success {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.white)
+                    Text("Staff added successfully")
+                        .foregroundStyle(.white)
+                }
+                .padding()
+                .background(Color.green.opacity(0.9))
+                .clipShape(Capsule())
+                .padding(.top, 16)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        submissionState = .none
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
 // MARK: UI Components
 extension StaffRegistrationForm {
+    
+    @ViewBuilder
+    private func errorMessage(errorState: Binding<Error>, for error: Error, focusedField: Focus,  _ errorMessage: String) -> some View {
+        Text(errorMessage)
+            .font(.caption)
+            .foregroundStyle(Color(.systemRed))
+            .opacity(errorState.wrappedValue == error && self.focusedField != focusedField ? 1 : 0)
+            .offset(x:20, y:50)
+    }
 
     @ViewBuilder
     private func menuWithButtonSelector(
         menuOptions: [String],
-        selection: Binding<String>
+        selection: Binding<String>,
+        placeholder: String = ""
     ) -> some View {
         Menu {
             ForEach(menuOptions, id: \.self) { y in
@@ -145,7 +194,7 @@ extension StaffRegistrationForm {
             HStack {
                 Text(
                     selection.wrappedValue.isEmpty
-                        ? "Year" : selection.wrappedValue
+                        ? placeholder : selection.wrappedValue
                 )
                 .font(.system(size: 17))
                 .foregroundColor(
@@ -173,10 +222,7 @@ extension StaffRegistrationForm {
     private func designationField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Designation")
-                .font(.callout)
-                .font(.system(size: 15))
-                .foregroundColor(Color(.systemGray))
-                .padding(.leading, 4)
+                .formFieldLabel()
 
             Menu {
                 ForEach(StaffRole.allCases, id: \.self) { role in
@@ -318,7 +364,6 @@ extension StaffRegistrationForm {
                     y: 2
                 )
                 .focused($focusedField, equals: focus)
-
         }
     }
 
@@ -378,8 +423,54 @@ extension StaffRegistrationForm {
     }
 }
 
-// MARK: UTIL
+// MARK: Util
 extension StaffRegistrationForm {
+    
+    private var days: [String] {
+        return Array(1...Month.numberOfDays(inMonth: month)).map(\.description)
+    }
+    
+    private var createDob: Date? {
+        var component = DateComponents()
+        component.day = Int(day)
+        component.month = Int(month)
+        component.year = Int(year)
+        
+        return Calendar.current.date(from: component)
+    }
+    
+    private enum SubmissionState {
+        case success
+        case none
+        case error
+    }
+
+    private enum Error: Equatable {
+        case none
+        case name
+        case email
+        case gender
+        case role
+        case dateOfBirth
+    }
+    
+    private enum Focus: Hashable {
+        case name
+        case email
+        case gender
+        case role
+        case dateOfBirth
+    }
+    
+    func resetFields() {
+        name = ""
+        role = .none
+        email = ""
+        gender = .none
+        day = ""
+        month = ""
+        year = ""
+    }
 
     func imageConverter(item: PhotosPickerItem) async {
         do {
@@ -409,6 +500,122 @@ extension StaffRegistrationForm {
     }
 }
 
+// MARK: Validators
+extension StaffRegistrationForm {
+    
+    private func nameValidation() -> Bool {
+        let pattern = /^[A-Za-z][A-Za-z0-9 ]+$/
+        let rawName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if rawName.isEmpty {
+            errorMessage = "Name can not be empty."
+            return false
+        }
+        
+        if rawName.wholeMatch(of: pattern) == nil {
+            errorMessage = "Provide correct name. eg. John23 Doe"
+            return false
+        } else {
+            name = rawName
+            return true
+        }
+    }
+    
+    private func emailValidation() -> Bool {
+        let pattern = /^[A-Z0-9a-z._%+-]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,64}$/
+        let rawEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if rawEmail.isEmpty {
+            errorMessage = "Email can not be empty."
+            return false
+        }
+        
+        if email.wholeMatch(of: pattern) == nil {
+            errorMessage = "Provide correct email."
+            return false
+        }
+        if email.count > 254 {
+            errorMessage = "Email can not be more than 254 characters long."
+            return false
+        }
+        
+        return true
+    }
+    
+    private func dobValidation() -> Bool {
+        guard let birthDate = createDob else {
+            errorMessage = "Date of birth is required"
+            return false
+        }
+        
+        let calendar = Calendar.current
+        let today = Date()
+        
+        let ageComponents = calendar.dateComponents([.year], from: birthDate, to: today)
+        guard let age = ageComponents.year else {
+            errorMessage = "Invalid date of birth"
+            return false
+        }
+        
+        switch role {
+        case .pilot, .coPilot:
+            if age > 65 {
+                errorMessage = "Maximum age for pilots is 65 years"
+                return false
+            }
+        case .cabinCrew:
+            if age > 60 {
+                errorMessage = "Maximum age for cabin crew is 60 years"
+                return false
+            }
+        case .none:
+            break
+        }
+        
+        dob = birthDate
+        
+        return true
+    }
+    
+    private func registerStaff() {
+        error = .none
+        errorMessage = ""
+        
+        if !nameValidation() {
+            error = .name
+        } else if !emailValidation() {
+            error = .email
+        } else if gender == nil {
+            error = .gender
+            errorMessage = "Please select a gender."
+        } else if role == nil {
+            error = .role
+            errorMessage = "Please select a staff designation."
+        } else if !dobValidation() {
+            error = .dateOfBirth
+        }
+        
+        if error != .none {
+            return
+        }
+        
+        let newStaff = Staff(name: name, designation: role!, gender: gender!, email: email, profileImage: photoData)
+        
+        
+        do {
+            context.insert(newStaff)
+            try context.save()
+            submissionState = .success
+            resetFields()
+        } catch {
+            submissionState = .error
+            errorMessage = "Something went wrong. Please try again later."
+        }
+        
+    }
+}
+
 #Preview {
     StaffRegistrationForm()
+        .modelContainer(for: Staff.self, inMemory: true)
 }
