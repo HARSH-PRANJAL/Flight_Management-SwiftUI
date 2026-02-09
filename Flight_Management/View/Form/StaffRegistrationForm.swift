@@ -217,59 +217,70 @@ extension StaffRegistrationForm {
             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         }
     }
+    
+    @ViewBuilder
+    private func enumMenuProvider<T>(
+        selection: Binding<T?>,
+        placeholder: String,
+        focus: Focus,
+        focusedField: FocusState<Focus?>.Binding
+    ) -> some View where T: CaseIterable & RawRepresentable & Hashable,
+                          T.RawValue == String {
+
+        Menu {
+            ForEach(Array(T.allCases), id: \.self) { value in
+                Button(value.rawValue) {
+                    selection.wrappedValue = value
+                }
+            }
+        } label: {
+            HStack {
+                Text(selection.wrappedValue?.rawValue ?? placeholder)
+                    .font(.system(size: 17))
+                    .foregroundColor(
+                        selection.wrappedValue == nil
+                            ? Color(.systemGray3)
+                            : Color(.label)
+                    )
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(.systemGray3))
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .stroke(
+                        Color(
+                            focusedField.wrappedValue == focus
+                                ? .systemBlue
+                                : .systemGray3
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: Color.black.opacity(0.05),
+                radius: 2,
+                x: 0,
+                y: 1
+            )
+        }
+        .focused(focusedField, equals: focus)
+    }
 
     @ViewBuilder
     private func designationField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Designation")
                 .formFieldLabel()
-
-            Menu {
-                ForEach(StaffRole.allCases, id: \.self) { role in
-                    Button(role.rawValue) {
-                        self.role = role
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(
-                        role == nil
-                            ? "Select gender" : role?.rawValue ?? ""
-                    )
-                    .font(.system(size: 17))
-                    .foregroundColor(
-                        role == nil
-                            ? Color(.systemGray3)
-                            : Color(.label)
-                    )
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(.systemGray3))
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
-                        .stroke(
-                            Color(
-                                focusedField == .role
-                                    ? .systemBlue : .systemGray3
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(
-                    color: Color.black.opacity(0.05),
-                    radius: 2,
-                    x: 0,
-                    y: 1
-                )
-            }
-            .focused($focusedField, equals: .role)
+            enumMenuProvider(selection: $role, placeholder: "Designation", focus: .role, focusedField: $focusedField)
         }
+
+            
     }
 
     @ViewBuilder
@@ -281,51 +292,7 @@ extension StaffRegistrationForm {
                 .foregroundColor(Color(.systemGray))
                 .padding(.leading, 4)
 
-            Menu {
-                ForEach(Gender.allCases, id: \.self) { gender in
-                    Button(gender.rawValue) {
-                        self.gender = gender
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(
-                        gender == nil
-                            ? "Select gender" : gender?.rawValue ?? ""
-                    )
-                    .font(.system(size: 17))
-                    .foregroundColor(
-                        gender == nil
-                            ? Color(.systemGray3)
-                            : Color(.label)
-                    )
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(.systemGray3))
-                }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
-                        .stroke(
-                            Color(
-                                focusedField == .gender
-                                    ? .systemBlue : .systemGray3
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(
-                    color: Color.black.opacity(0.05),
-                    radius: 2,
-                    x: 0,
-                    y: 1
-                )
-            }
-            .focused($focusedField, equals: .gender)
+            enumMenuProvider(selection: $gender, placeholder: "Gender", focus: .gender, focusedField: $focusedField)
         }
     }
 
