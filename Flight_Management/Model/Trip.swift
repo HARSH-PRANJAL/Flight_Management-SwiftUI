@@ -358,7 +358,11 @@ class Staff {
     var trips: [Trip]
 
     var name: String
+    var gender: Gender
+    var email: String
+    var profileImage: Data?
     var designation: StaffRole
+    
     var lastCompletedTrip: Trip? = nil
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
@@ -399,10 +403,13 @@ class Staff {
         }
     }
 
-    init(name: String, designation: StaffRole) {
+    init(name: String, designation: StaffRole, gender: Gender, email: String, profileImage: Data? = nil) {
         self.id = UUID()
         self.name = name
         self.designation = designation
+        self.gender = gender
+        self.email = email
+        self.profileImage = profileImage
         self.trips = []
     }
 
