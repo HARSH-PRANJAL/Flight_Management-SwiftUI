@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 class Trip {
@@ -362,6 +363,7 @@ class Staff {
     var email: String
     var profileImage: Data?
     var designation: StaffRole
+    var dob: Date
     
     var lastCompletedTrip: Trip? = nil
     var nextScheduledTrip: Trip? = nil
@@ -402,8 +404,18 @@ class Staff {
             }
         }
     }
+    
+    var avatarImage: Image {
+        if let data = profileImage,
+           let uiImage = UIImage(data: data) {
+            return Image(uiImage: uiImage)
+        }
+        
+        return Image(systemName: "person.crop.circle.fill")
+            .symbolRenderingMode(.monochrome)
+    }
 
-    init(name: String, designation: StaffRole, gender: Gender, email: String, profileImage: Data? = nil) {
+    init(name: String, designation: StaffRole, gender: Gender, email: String, profileImage: Data? = nil, dob: Date) {
         self.id = UUID()
         self.name = name
         self.designation = designation
@@ -411,6 +423,7 @@ class Staff {
         self.email = email
         self.profileImage = profileImage
         self.trips = []
+        self.dob = dob
     }
 
     func isAvailable(from: Date, to: Date) -> Bool {
