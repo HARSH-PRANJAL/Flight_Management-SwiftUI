@@ -10,7 +10,6 @@ struct StaffRegistrationForm: View {
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
-            
             StaffRegistrationContent(viewModel: viewModel)
         }
         .overlay(alignment: .top) {

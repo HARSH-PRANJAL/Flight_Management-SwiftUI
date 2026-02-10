@@ -6,18 +6,18 @@ where T.RawValue == String {
     let placeholder: String
     let focus: FormFocus
     let hasError: Bool
-    
+
     @Binding var selection: T?
     @FocusState.Binding var focusedField: FormFocus?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .formFieldLabel()
-            
+
             Menu {
                 ForEach(Array(T.allCases), id: \.self) { option in
-                    Button(option.rawValue) {
+                    Button(option.rawValue.capitalized) {
                         selection = option
                     }
                 }
@@ -27,7 +27,7 @@ where T.RawValue == String {
             .focused($focusedField, equals: focus)
         }
     }
-    
+
     private var menuLabel: some View {
         HStack {
             Text(selection?.rawValue ?? placeholder)
@@ -37,9 +37,9 @@ where T.RawValue == String {
                         ? Color(.systemGray3)
                         : Color(.label)
                 )
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
                 .foregroundColor(Color(.systemGray3))
@@ -57,7 +57,7 @@ where T.RawValue == String {
             y: 1
         )
     }
-    
+
     private var borderColor: Color {
         if hasError {
             return Color(.systemRed)
@@ -69,7 +69,7 @@ where T.RawValue == String {
 #Preview {
     @State var selection: Gender? = nil
     @FocusState var focusedField: FormFocus?
-    
+
     return FormPickerField<Gender>(
         label: "Gender",
         placeholder: "Select gender",

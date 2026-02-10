@@ -128,7 +128,6 @@ struct StaffRegistrationContent: View {
         }
     }
     
-    // MARK: - Action Buttons
     private var registerButton: some View {
         Button(action: handleRegistration) {
             Text("Register")
@@ -152,7 +151,7 @@ struct StaffRegistrationContent: View {
             .padding(.top, 16)
     }
     
-    // MARK: - Actions
+    // MARK: - Reegister
     private func handleRegistration() {
         viewModel.fieldErrors.removeAll()
         var isValid = true
@@ -173,7 +172,7 @@ struct StaffRegistrationContent: View {
             isValid = false
         }
         
-        guard isValid else { return }
+        if !isValid { return }
         
         submitRegistration()
     }
@@ -192,9 +191,11 @@ struct StaffRegistrationContent: View {
             context.insert(newStaff)
             try context.save()
             viewModel.submissionState = .success
+            print("Staff saved\n \(newStaff.id)")
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 viewModel.resetForm()
+                viewModel.submissionState = .none
                 dismiss()
             }
         } catch {
