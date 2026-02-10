@@ -1,0 +1,145 @@
+import SwiftUI
+
+struct ListRow<Content: View>: View {
+    let profileImage: Image?
+    let title: String
+    let subtitle: String
+    let statusBadge: StatusBadge
+    
+    init(
+        profileImage: Image?,
+        title: String,
+        subtitle: String,
+        status: StatusBadge
+    ) {
+        self.profileImage = profileImage
+        self.title = title
+        self.subtitle = subtitle
+        self.statusBadge = status
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                profileImageView
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(.label))
+                        .lineLimit(1)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.systemGray))
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 8) {
+                    statusBadgeView
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+    }
+    
+    @ViewBuilder
+    private var profileImageView: some View {
+        if let profileImage = profileImage {
+            profileImage
+                .resizable()
+                .scaledToFill()
+                .foregroundStyle(.gray)
+                .frame(width: 48, height: 48)
+                .clipShape(Circle())
+                .overlay {
+                    Circle()
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                }
+        } else {
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private var statusBadgeView: some View {
+        Text(statusBadge.label)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(statusBadge.backgroundColor)
+            .clipShape(Capsule())
+    }
+}
+
+// MARK: - Initialisers
+extension ListRow where Content == EmptyView {
+    init(staff: Staff) {
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: staff.designation.rawValue,
+            status: .from(staffStatus: staff.currentStatus)
+        )
+    }
+    
+    init(aircraft: Aircraft) {
+        self.init(
+            profileImage: nil,
+            title: aircraft.registrationNumber,
+            subtitle: aircraft.type,
+            status: .from(aircraftStatus: aircraft.currentStatus)
+        )
+    }
+}
+
+// MARK: - Previews
+#Preview("Staff List Row") {
+    let staff = Staff(
+        name: "John Doe",
+        designation: .pilot,
+        gender: .male,
+        email: "john@example.com",
+        dob: Date()
+    )
+    
+    ListRow(
+        staff: staff
+    )
+    .padding()
+}
+
+#Preview("Aircraft List Row") {
+    let aircraft = Aircraft(
+        registrationNumber: "N12345",
+        type: "Boeing 737",
+        seatingCapacity: 180,
+        minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
+    )
+    
+    ListRow(
+        aircraft: aircraft
+    )
+    .padding()
+}
+
+#Preview("Available Staff") {
+    let staff = Staff(
+        name: "Jane Smith",
+        designation: .coPilot,
+        gender: .female,
+        email: "jane@example.com",
+        dob: Date()
+    )
+    
+    VStack(spacing: 1) {
+        ListRow(staff: staff)
+        ListRow(staff: staff)
+        ListRow(staff: staff)
+    }
+}

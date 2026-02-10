@@ -20,7 +20,7 @@ enum TripStatus: String, Codable {
     case completed = "Completed"
 }
 
-enum StaffAvailabilityStatus: String, Codable {
+enum StaffAvailabilityStatus: String, Codable, CaseIterable {
     case available = "Available"
     case onDuty = "On-duty"
     case unavailable = "Unavailable"
@@ -92,3 +92,9 @@ enum Month: String, Codable, CaseIterable {
         }
     }
 }
+
+enum StaffSort: String, CaseIterable {
+    case name = "Name"
+    case experience = "Experience"
+}
+

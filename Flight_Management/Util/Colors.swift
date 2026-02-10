@@ -18,11 +18,20 @@ extension Color {
         }
     }
     
-    static func crewStatusColor(for status: StaffAvailabilityStatus) -> Color {
+    static func staffStatusColor(for status: StaffAvailabilityStatus) -> Color {
         switch status {
         case .available:   return .onTime
         case .onDuty:      return .completed
         case .unavailable: return .cancelled
+        }
+    }
+    
+    static func aircraftStatusColor(for status: AircraftStatus) -> Color {
+        switch status {
+        case .available:
+            return .onTime
+        case .assigned:
+            return .completed
         }
     }
 }
