@@ -68,13 +68,7 @@ struct ListRow: View {
     @ViewBuilder
     private var statusBadgeView: some View {
         if let statusBadge = self.statusBadge {
-            Text(statusBadge.label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(statusBadge.backgroundColor)
-                .clipShape(Capsule())
+            StatusCapsuleView(statusBadge: statusBadge)
         } else {
             EmptyView()
         }
@@ -99,6 +93,10 @@ extension ListRow {
             subtitle: aircraft.type,
             status: nil
         )
+    }
+    
+    init(trip: Trip) {
+        self.init(profileImage: nil, title: trip.flightNumber, subtitle:  formatDate(trip.scheduledDepartureTime, format: "dd-MM-yyyy HH:mm"), status: .from(tripStatus: trip.currentStatus))
     }
 }
 
@@ -142,8 +140,55 @@ extension ListRow {
     )
     
     VStack(spacing: 1) {
-        ListRow(staff: staff)
-        ListRow(staff: staff)
-        ListRow(staff: staff)
+        ListRow(staff: staff).id(UUID())
+        ListRow(staff: staff).id(UUID())
+        ListRow(staff: staff).id(UUID())
     }
 }
+
+//#Preview("Trip") {
+//    let route = Route(name: "New York - London")
+//    route.nodes = [
+//        RouteNode(plannedArrivalOffsetMinutes: 120, airport: Airport(code: "JFK", name: "John F. Kennedy", city: "New York", country: "USA")),
+//        RouteNode(plannedArrivalOffsetMinutes: 480, airport: Airport(code: "LHR", name: "London Heathrow", city: "London", country: "UK"))
+//    ] as [RouteNode]
+//    
+//    let aircraft = Aircraft(
+//        registrationNumber: "N12345",
+//        type: "Boeing 737",
+//        seatingCapacity: 180,
+//        minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
+//    )
+//    
+//    let trip = Trip(
+//        staff: [
+//            Staff(
+//                name: "Jane Smith",
+//                designation: .coPilot,
+//                gender: .female,
+//                email: "jane@example.com",
+//                dob: Date()
+//            ),
+//            Staff(
+//                name: "John Doe",
+//                designation: .pilot,
+//                gender: .male,
+//                email: "john@example.com",
+//                dob: Date()
+//            )
+//        ],
+//        aircraft: aircraft,
+//        nodeStatuses: [],
+//        route: route,
+//        scheduledDepartureTime: Date().addingTimeInterval(3600),
+//        flightNumber: "BA-100",
+//        isCancelled: false
+//    )
+//    
+//    VStack(spacing: 1) {
+//        ListRow(trip: trip).id(UUID())
+//        ListRow(trip: trip).id(UUID())
+//        ListRow(trip: trip).id(UUID())
+//    }
+//}
+//

@@ -1,6 +1,28 @@
 import SwiftUI
 
-// MARK: - Status Badge
+struct StatusCapsuleView: View {
+    
+    let statusBadge: StatusBadge
+    
+    var body: some View {
+        HStack {
+            Circle()
+                .fill(statusBadge.backgroundColor.opacity(20))
+                .contrast(1)
+                .frame(maxWidth: 10, maxHeight: 10)
+                .padding(.leading, 10)
+            Text(statusBadge.label)
+                .fontWeight(.semibold)
+                .foregroundStyle(statusBadge.backgroundColor.opacity(20))
+                .padding([.trailing, .vertical], 10)
+        }
+        .overlay {
+            Capsule(style: .circular)
+                .fill(statusBadge.backgroundColor.opacity(0.15))
+        }
+    }
+}
+
 struct StatusBadge {
     let label: String
     let backgroundColor: Color

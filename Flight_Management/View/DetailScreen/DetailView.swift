@@ -84,7 +84,7 @@ struct DetailView: View {
             .padding(.bottom, 10)
 
             primaryRow!
-                .padding(.horizontal, 16)
+                .padding(.leading, 16)
                 .background(
                     Color(.tertiarySystemBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -137,21 +137,7 @@ struct DetailView: View {
     }
 
     var statusCapsule: some View {
-        HStack {
-            Circle()
-                .fill(statusBadge.backgroundColor.opacity(20))
-                .contrast(1)
-                .frame(maxWidth: 10, maxHeight: 10)
-                .padding(.leading, 10)
-            Text(statusBadge.label)
-                .fontWeight(.semibold)
-                .foregroundStyle(statusBadge.backgroundColor.opacity(20))
-                .padding([.trailing, .vertical], 10)
-        }
-        .overlay {
-            Capsule(style: .circular)
-                .fill(statusBadge.backgroundColor.opacity(0.15))
-        }
+        StatusCapsuleView(statusBadge: statusBadge)
     }
 
     var displayImage: some View {
@@ -190,6 +176,45 @@ extension DetailView {
             }
         )
     }
+
+    init(trip: Trip) {
+        self.init(
+            profileImage: nil,
+            titleText: trip.flightNumber,
+            subTitleText: trip.route.name,
+            detailText: "Aircraft: \(trip.aircraft.type)",
+            statusBadge: .from(tripStatus: trip.currentStatus),
+            primaryRow: nil,
+            listData: trip.staffs.map { staff in
+                ListRow(
+                    profileImage: staff.avatarImage,
+                    title: staff.name,
+                    subtitle: staff.designation.rawValue,
+                    status: StatusBadge.from(staffStatus: staff.currentStatus)
+                )
+            },
+            actionButtonTitle: "Update Status",
+            currentTaskTitle: "Flight Crew",
+            listDataTitle: "Assigned Staff"
+        )
+    }
+
+    init(staff: Staff) {
+        self.init(
+            profileImage: staff.avatarImage,
+            titleText: staff.name,
+            subTitleText: staff.designation.rawValue,
+            detailText: staff.email,
+            statusBadge: .from(staffStatus: staff.currentStatus),
+            primaryRow: staff.currentTrip != nil ? ListRow(trip: staff.currentTrip!) : nil,
+            listData: staff.completedTrips.map { trip in
+                ListRow(trip: trip)
+            },
+            actionButtonTitle: "Change Availability",
+            currentTaskTitle: "Current Assignment",
+            listDataTitle: "Completed Flights"
+        )
+    }
 }
 
 
@@ -204,7 +229,7 @@ extension DetailView {
                 profileImage: nil,
                 title: "Implement User Authentication",
                 subtitle: "Create login and signup functionality with JWT tokens",
-                status: StatusBadge(label: "HIGH", backgroundColor: .red)
+                status: StatusBadge(label: "Cancelled", backgroundColor: Color.tripStatusColor(for: .cancelled))
             ),
             listData: [
                 ListRow(profileImage: nil, title: "Design Database Schema", subtitle: "Complete"),
@@ -220,8 +245,8 @@ extension DetailView {
 #Preview("Aircraft") {
     let mockRoute = Route(name: "New York to London")
     mockRoute.nodes = [
-        RouteNode(plannedArrivalOffsetMinutes: 120, airport: Airport(name: "JFK", code: "JFK")),
-        RouteNode(plannedArrivalOffsetMinutes: 480, airport: Airport(name: "LHR", code: "LHR"))
+        RouteNode(plannedArrivalOffsetMinutes: 120, airport: Airport(code: "JFK", name: "John F. Kennedy", city: "New York", country: "USA")),
+        RouteNode(plannedArrivalOffsetMinutes: 480, airport: Airport(code: "LHR", name: "London Heathrow", city: "London", country: "UK"))
     ]
     
     let mockTrip1 = Trip(
