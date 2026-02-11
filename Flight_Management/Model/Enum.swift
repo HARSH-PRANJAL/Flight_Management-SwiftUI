@@ -98,3 +98,15 @@ enum StaffSort: String, CaseIterable {
     case experience = "Experience"
 }
 
+enum FieldError: Hashable {
+    case name, email, gender, role, dateOfBirth
+}
+
+enum SubmissionState: Equatable {
+    case success, none, error
+}
+
+enum FormFocus: Hashable {
+    case name, email, gender, role, dateOfBirth
+}
+
