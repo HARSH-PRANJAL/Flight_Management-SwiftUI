@@ -283,6 +283,12 @@ class Aircraft {
             $0.currentStatus == .scheduled
         })
     }
+    
+    var completedTrips: [Trip] {
+        return trips.filter({
+            $0.isCompleted == true
+        })
+    }
 
     var totaltripHours: Double {
         return trips.filter({
