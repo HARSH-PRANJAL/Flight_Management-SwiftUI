@@ -1,7 +1,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Route Node Data Structure
 struct RouteNodeData: Identifiable {
     let id: UUID = UUID()
     let airport: Airport

@@ -1,9 +1,9 @@
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 struct ProfilePhotoField: View {
     @State var viewModel: StaffRegistrationFormViewModel
-    
+
     var body: some View {
         VStack(spacing: 12) {
             PhotosPicker(
@@ -13,7 +13,7 @@ struct ProfilePhotoField: View {
             ) {
                 profileImageContent
             }
-            
+
             Text("Add Photo")
                 .font(.system(size: 15))
                 .foregroundColor(Color(.systemGray))
@@ -28,7 +28,7 @@ struct ProfilePhotoField: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private var profileImageContent: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -42,11 +42,11 @@ struct ProfilePhotoField: View {
             } else {
                 defaultProfileImage
             }
-            
+
             addPhotoButton
         }
     }
-    
+
     private var defaultProfileImage: some View {
         Image(systemName: "person.circle.fill")
             .resizable()
@@ -55,7 +55,7 @@ struct ProfilePhotoField: View {
             .foregroundStyle(.gray.opacity(0.6))
             .photoOverlay()
     }
-    
+
     private var addPhotoButton: some View {
         Image(systemName: "plus.circle.fill")
             .resizable()

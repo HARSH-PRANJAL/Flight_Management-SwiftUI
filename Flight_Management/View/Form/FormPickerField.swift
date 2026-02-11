@@ -67,7 +67,7 @@ where T.RawValue == String {
 }
 
 #Preview {
-    @Previewable@State var selection: Gender? = nil
+    @Previewable @State var selection: Gender? = nil
     @FocusState var focusedField: FormFocus?
 
     return FormPickerField<Gender>(

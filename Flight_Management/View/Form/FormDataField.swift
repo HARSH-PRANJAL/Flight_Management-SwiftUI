@@ -3,14 +3,14 @@ import SwiftUI
 struct FormDateField: View {
     @State var viewModel: StaffRegistrationFormViewModel
     let hasError: Bool
-    
+
     @FocusState.Binding var focusedField: FormFocus?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Date of Birth")
                 .formFieldLabel()
-            
+
             HStack(spacing: 8) {
                 FormDateComponentPicker(
                     options: viewModel.daysInMonth,
@@ -18,14 +18,14 @@ struct FormDateField: View {
                     placeholder: "Day",
                     hasError: hasError
                 )
-                
+
                 FormDateComponentPicker(
                     options: Array(Month.allCases).map(\.rawValue),
                     selection: $viewModel.month,
                     placeholder: "Month",
                     hasError: hasError
                 )
-                
+
                 FormDateComponentPicker(
                     options: viewModel.years,
                     selection: $viewModel.year,
@@ -42,7 +42,7 @@ private struct FormDateComponentPicker: View {
     let selection: Binding<String>
     let placeholder: String
     let hasError: Bool
-    
+
     var body: some View {
         Menu {
             ForEach(options, id: \.self) { option in
@@ -52,16 +52,19 @@ private struct FormDateComponentPicker: View {
             }
         } label: {
             HStack {
-                Text(selection.wrappedValue.isEmpty ? placeholder : selection.wrappedValue)
-                    .font(.system(size: 17))
-                    .foregroundColor(
-                        selection.wrappedValue.isEmpty
-                            ? Color(.systemGray3)
-                            : Color(.label)
-                    )
-                
+                Text(
+                    selection.wrappedValue.isEmpty
+                        ? placeholder : selection.wrappedValue
+                )
+                .font(.system(size: 17))
+                .foregroundColor(
+                    selection.wrappedValue.isEmpty
+                        ? Color(.systemGray3)
+                        : Color(.label)
+                )
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12))
                     .foregroundColor(Color(.systemGray3))
@@ -83,7 +86,7 @@ private struct FormDateComponentPicker: View {
 #Preview {
     @Previewable @State var viewModel = StaffRegistrationFormViewModel()
     @FocusState var focusedField: FormFocus?
-    
+
     return FormDateField(
         viewModel: viewModel,
         hasError: false,

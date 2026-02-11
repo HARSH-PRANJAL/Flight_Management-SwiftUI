@@ -9,7 +9,6 @@ struct StaffListView: View {
     @State private var selectedFilter: StaffAvailabilityStatus? = nil
     @State private var selectedSort: StaffSort = .name
     @State private var searchText: String = ""
-    @State private var isSearchFocused: Bool = false
 
     var body: some View {
         VStack {
@@ -24,15 +23,14 @@ struct StaffListView: View {
                     }
                 }
             }
-            .searchable(
-                text: $searchText,
-                isPresented: $isSearchFocused,
-                placement: .navigationBarDrawer(displayMode: .automatic),
-                prompt: "Search by name or flight number"
-            )
             .toolbar {
                 toolbarFilterSortItem
             }
+            .searchable(
+                text: $searchText,
+                prompt: "Search by name or flight number"
+            )
+            .searchToolbarBehavior(.minimize)
             .sheet(isPresented: $isRegistrationFormPresented) {
                 StaffRegistrationForm()
             }
@@ -106,10 +104,10 @@ extension StaffListView {
         VStack(alignment: .center, spacing: 0) {
             Image(systemName: "person.3")
                 .resizable()
-                .opacity(0.5)
+                .opacity(0.15)
                 .frame(maxWidth: 150, maxHeight: 100)
             Text("No Staff Data Available.")
-            Spacer()
+                .opacity(0.25)
         }
     }
 

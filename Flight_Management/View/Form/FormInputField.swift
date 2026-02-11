@@ -5,15 +5,15 @@ struct FormInputField: View {
     let placeholder: String
     let focus: FormFocus
     let hasError: Bool
-    
+
     @Binding var text: String
     @FocusState.Binding var focusedField: FormFocus?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .formFieldLabel()
-            
+
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
                 .padding()
@@ -31,7 +31,7 @@ struct FormInputField: View {
                 .focused($focusedField, equals: focus)
         }
     }
-    
+
     private var borderColor: Color {
         if hasError {
             return Color(.systemRed)
@@ -43,7 +43,7 @@ struct FormInputField: View {
 #Preview {
     @Previewable @State var text = ""
     @FocusState var focusedField: FormFocus?
-    
+
     return FormInputField(
         label: "Name",
         placeholder: "Enter your name",
