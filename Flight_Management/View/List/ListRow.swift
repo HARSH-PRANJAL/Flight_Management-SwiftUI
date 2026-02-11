@@ -1,16 +1,16 @@
 import SwiftUI
 
-struct ListRow<Content: View>: View {
+struct ListRow: View {
     let profileImage: Image?
     let title: String
     let subtitle: String
-    let statusBadge: StatusBadge
+    let statusBadge: StatusBadge?
     
     init(
         profileImage: Image?,
         title: String,
         subtitle: String,
-        status: StatusBadge
+        status: StatusBadge? = nil
     ) {
         self.profileImage = profileImage
         self.title = title
@@ -67,18 +67,22 @@ struct ListRow<Content: View>: View {
     
     @ViewBuilder
     private var statusBadgeView: some View {
-        Text(statusBadge.label)
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(statusBadge.backgroundColor)
-            .clipShape(Capsule())
+        if let statusBadge = self.statusBadge {
+            Text(statusBadge.label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(statusBadge.backgroundColor)
+                .clipShape(Capsule())
+        } else {
+            EmptyView()
+        }
     }
 }
 
 // MARK: - Initialisers
-extension ListRow where Content == EmptyView {
+extension ListRow {
     init(staff: Staff) {
         self.init(
             profileImage: staff.avatarImage,
@@ -93,7 +97,7 @@ extension ListRow where Content == EmptyView {
             profileImage: nil,
             title: aircraft.registrationNumber,
             subtitle: aircraft.type,
-            status: .from(aircraftStatus: aircraft.currentStatus)
+            status: nil
         )
     }
 }
