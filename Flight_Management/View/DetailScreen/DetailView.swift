@@ -27,6 +27,12 @@ struct DetailView: View {
 
                     if onActionButtonTapped != nil {
                         actionButton
+                            .shadow(
+                                color: Color.black.opacity(0.07),
+                                radius: 2,
+                                x: 0,
+                                y: 2
+                            )
                     }
 
                     if primaryRow != nil {
@@ -61,8 +67,7 @@ struct DetailView: View {
                     row
                         .padding(.horizontal, 16)
                         .background(
-                            Color(.tertiarySystemBackground)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            cardTheme
                         )
                         .padding(.bottom, 10)
                 }
@@ -86,8 +91,7 @@ struct DetailView: View {
             primaryRow!
                 .padding(.leading, 16)
                 .background(
-                    Color(.tertiarySystemBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    cardTheme
                 )
         }
         .padding(.bottom, 25)
@@ -102,8 +106,7 @@ struct DetailView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(
-                Color(.tertiarySystemBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                cardTheme
             )
             .onTapGesture {
                 onActionButtonTapped!()
@@ -131,8 +134,7 @@ struct DetailView: View {
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(
-            Color(.tertiarySystemBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+            cardTheme
         )
     }
 
@@ -159,9 +161,21 @@ struct DetailView: View {
             }
         }
     }
+    
+    var cardTheme: some View {
+        Color(.tertiarySystemBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(
+                color: Color.black.opacity(0.07),
+                radius: 2,
+                x: 0,
+                y: 2
+            )
+    }
 }
 
 
+// MARK: Init
 extension DetailView {
     init(aircraft: Aircraft) {
         self.init(

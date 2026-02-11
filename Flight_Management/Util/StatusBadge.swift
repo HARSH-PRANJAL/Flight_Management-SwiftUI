@@ -1,20 +1,25 @@
 import SwiftUI
 
 struct StatusCapsuleView: View {
-    
+
     let statusBadge: StatusBadge
-    
+    var onlyIndicator: Bool = false
+
     var body: some View {
         HStack {
             Circle()
                 .fill(statusBadge.backgroundColor.opacity(20))
                 .contrast(1)
                 .frame(maxWidth: 10, maxHeight: 10)
-                .padding(.leading, 10)
-            Text(statusBadge.label)
-                .fontWeight(.semibold)
-                .foregroundStyle(statusBadge.backgroundColor.opacity(20))
-                .padding([.trailing, .vertical], 10)
+                .padding(.leading, onlyIndicator ? 0 : 10)
+                .glassEffect(.regular)
+            
+            if !onlyIndicator {
+                Text(statusBadge.label)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(statusBadge.backgroundColor.opacity(20))
+                    .padding([.trailing, .vertical], 10)
+            }
         }
         .overlay {
             Capsule(style: .circular)
@@ -29,7 +34,7 @@ struct StatusBadge {
 
     static func from(staffStatus: StaffAvailabilityStatus) -> StatusBadge {
         let bgColor = Color.staffStatusColor(for: staffStatus)
-        
+
         switch staffStatus {
         case .available:
             return StatusBadge(label: "Available", backgroundColor: bgColor)
@@ -42,7 +47,7 @@ struct StatusBadge {
 
     static func from(aircraftStatus: AircraftStatus) -> StatusBadge {
         let bgColor = Color.aircraftStatusColor(for: aircraftStatus)
-        
+
         switch aircraftStatus {
         case .available:
             return StatusBadge(
@@ -59,7 +64,7 @@ struct StatusBadge {
 
     static func from(tripStatus: TripStatus) -> StatusBadge {
         let bgColor = Color.tripStatusColor(for: tripStatus)
-        
+
         switch tripStatus {
         case .scheduled:
             return StatusBadge(
