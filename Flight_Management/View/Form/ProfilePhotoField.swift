@@ -89,6 +89,6 @@ extension View {
 }
 
 #Preview {
-    @State var viewModel = StaffRegistrationFormViewModel()
+    @Previewable @State var viewModel = StaffRegistrationFormViewModel()
     return ProfilePhotoField(viewModel: viewModel)
 }

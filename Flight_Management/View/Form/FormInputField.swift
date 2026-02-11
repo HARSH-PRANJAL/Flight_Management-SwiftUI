@@ -41,7 +41,7 @@ struct FormInputField: View {
 }
 
 #Preview {
-    @State var text = ""
+    @Previewable @State var text = ""
     @FocusState var focusedField: FormFocus?
     
     return FormInputField(
