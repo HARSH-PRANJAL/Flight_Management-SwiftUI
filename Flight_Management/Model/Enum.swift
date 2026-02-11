@@ -100,6 +100,9 @@ enum StaffSort: String, CaseIterable {
 
 enum FieldError: Hashable {
     case name, email, gender, role, dateOfBirth
+    case registrationNumber, type, seatingCapacity, minimumStaffRequired
+    case code, city, country
+    case routeName, airports, journeyTime
 }
 
 enum SubmissionState: Equatable {
@@ -108,5 +111,8 @@ enum SubmissionState: Equatable {
 
 enum FormFocus: Hashable {
     case name, email, gender, role, dateOfBirth
+    case registrationNumber, type, seatingCapacity
+    case code, city, country
+    case routeName, journeyTime
 }
 
