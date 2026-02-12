@@ -1,6 +1,6 @@
 import Foundation
 
-enum UserRole: String, Codable {
+enum UserRole: String, Codable, CaseIterable {
     case admin = "Admin"
     case tripManager = "Trip Manager"
     case crew = "Crew"
@@ -114,5 +114,6 @@ enum FormFocus: Hashable {
     case registrationNumber, type, seatingCapacity
     case code, city, country
     case routeName, journeyTime
+    case password
 }
 

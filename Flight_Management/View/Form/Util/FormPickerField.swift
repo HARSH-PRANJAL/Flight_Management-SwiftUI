@@ -30,7 +30,7 @@ where T.RawValue == String {
 
     private var menuLabel: some View {
         HStack {
-            Text(selection?.rawValue ?? placeholder)
+            Text(selection?.rawValue.capitalized ?? placeholder)
                 .font(.system(size: 17))
                 .foregroundColor(
                     selection == nil
@@ -51,10 +51,10 @@ where T.RawValue == String {
                 .stroke(borderColor, lineWidth: 1)
         }
         .shadow(
-            color: Color.black.opacity(0.05),
+            color: Color.black.opacity(0.07),
             radius: 2,
             x: 0,
-            y: 1
+            y: 2
         )
     }
 
@@ -62,7 +62,7 @@ where T.RawValue == String {
         if hasError {
             return Color(.systemRed)
         }
-        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray3)
+        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray2)
     }
 }
 
