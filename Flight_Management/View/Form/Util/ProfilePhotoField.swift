@@ -61,30 +61,8 @@ struct ProfilePhotoField: View {
             .resizable()
             .frame(width: 36, height: 36)
             .foregroundStyle(.white, .blue)
-            .background(Circle().fill(.white))
-            .shadow(color: .blue.opacity(0.3), radius: 5)
+            .shadow(color: .blue.opacity(0.3), radius: 2)
             .offset(x: 6, y: 6)
-    }
-}
-
-// MARK: - Circle Overlay Modifier
-private struct PhotoOverlay: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .overlay {
-                Circle()
-                    .stroke(
-                        Color.gray.opacity(0.4),
-                        lineWidth: 2
-                    )
-            }
-            .shadow(radius: 2)
-    }
-}
-
-extension View {
-    fileprivate func photoOverlay() -> some View {
-        modifier(PhotoOverlay())
     }
 }
 

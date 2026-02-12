@@ -36,7 +36,7 @@ struct FormInputField: View {
         if hasError {
             return Color(.systemRed)
         }
-        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray3)
+        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray2)
     }
 }
 
