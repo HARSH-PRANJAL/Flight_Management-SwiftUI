@@ -5,6 +5,7 @@ struct UserLoginForm: View {
     @Environment(\.modelContext) var context
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     @AppStorage("currentUserName") private var currentUserName: String = ""
+    @AppStorage("currentUserRole") private var currentUserRole: String = ""
 
     @State private var name: String = ""
     @State private var password: String = ""
@@ -140,6 +141,7 @@ struct UserLoginForm: View {
             $0.name == trimmedName && $0.password == password
         }) {
             currentUserName = matched.name
+            currentUserRole = matched.role.rawValue
             isLoggedIn = true
         } else {
             errorMessage = "Invalid credentials"

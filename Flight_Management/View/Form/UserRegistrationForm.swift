@@ -6,7 +6,7 @@ struct UserRegistrationForm: View {
     @Binding var isPresented: Bool
     @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
     @AppStorage("currentUserName") private var currentUserName: String = ""
-    @AppStorage("role") private var currentUserRole: String = ""
+    @AppStorage("currentUserRole") private var currentUserRole: String = ""
 
     @State private var name: String = ""
     @State private var password: String = ""
