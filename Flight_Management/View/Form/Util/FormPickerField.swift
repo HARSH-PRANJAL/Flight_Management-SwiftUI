@@ -25,12 +25,18 @@ where T.RawValue == String {
                 menuLabel
             }
             .focused($focusedField, equals: focus)
-        }
+        }.shadow(
+            color: Color.black.opacity(0.07),
+            radius: 2,
+            x: 0,
+            y: 2
+        )
     }
 
     private var menuLabel: some View {
         HStack {
             Text(selection?.rawValue.capitalized ?? placeholder)
+                .lineLimit(1)
                 .font(.system(size: 17))
                 .foregroundColor(
                     selection == nil
@@ -46,23 +52,14 @@ where T.RawValue == String {
         }
         .padding()
         .background {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
-                .stroke(borderColor, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(borderColor, lineWidth: 1)
         }
-        .shadow(
-            color: Color.black.opacity(0.07),
-            radius: 2,
-            x: 0,
-            y: 2
-        )
     }
-
-    private var borderColor: Color {
-        if hasError {
-            return Color(.systemRed)
-        }
-        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray2)
+    
+    var borderColor: Color {
+        hasError ? Color(.systemRed) : Color(.systemGray2)
     }
 }
 

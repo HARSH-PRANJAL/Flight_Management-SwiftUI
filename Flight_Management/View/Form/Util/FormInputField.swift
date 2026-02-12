@@ -23,12 +23,13 @@ struct FormInputField: View {
                         .stroke(borderColor, lineWidth: 1)
                 }
                 .shadow(
-                    color: Color.black.opacity(0.07),
+                    color: focusedField == focus ? Color(.systemBlue).opacity(0.14) : Color.black.opacity(0.07),
                     radius: 2,
                     x: 0,
                     y: 2
                 )
                 .focused($focusedField, equals: focus)
+                .animation(.easeInOut(duration: 0.25), value: borderColor)
         }
     }
 
