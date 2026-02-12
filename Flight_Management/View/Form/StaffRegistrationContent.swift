@@ -153,7 +153,7 @@ struct StaffRegistrationContent: View {
         .padding(.top, 16)
     }
 
-    // MARK: - Reegister
+    // MARK: - Register
     private func handleRegistration() {
         viewModel.fieldErrors.removeAll()
         var isValid = true

@@ -5,7 +5,6 @@ struct StaffListView: View {
 
     @Query var staffs: [Staff]
 
-    @State private var isRegistrationFormPresented: Bool = false
     @State private var selectedFilter: StaffAvailabilityStatus? = nil
     @State private var selectedSort: StaffSort = .name
     @State private var searchText: String = ""
@@ -31,9 +30,6 @@ struct StaffListView: View {
                 prompt: "Search by name or flight number"
             )
             .searchToolbarBehavior(.minimize)
-            .sheet(isPresented: $isRegistrationFormPresented) {
-                StaffRegistrationForm()
-            }
         }
     }
 }
@@ -42,7 +38,7 @@ struct StaffListView: View {
 extension StaffListView {
 
     var toolbarFilterSortItem: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
+        ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Section("Filter") {
                     VStack(spacing: 0) {
