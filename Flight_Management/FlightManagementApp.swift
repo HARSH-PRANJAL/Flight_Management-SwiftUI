@@ -27,6 +27,7 @@ struct FlightManagementApp: App {
         WindowGroup {
             SplashView()
                 .modelContainer(container)
+                .environment(SessionManager.shared)
         }
     }
 }
