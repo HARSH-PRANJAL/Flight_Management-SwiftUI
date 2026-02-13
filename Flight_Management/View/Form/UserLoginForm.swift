@@ -3,9 +3,7 @@ import SwiftUI
 
 struct UserLoginForm: View {
     @Environment(\.modelContext) var context
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
-    @AppStorage("currentUserName") private var currentUserName: String = ""
-    @AppStorage("currentUserRole") private var currentUserRole: String = ""
+    @Environment(SessionManager.self) private var session
 
     @State private var name: String = ""
     @State private var password: String = ""
@@ -83,7 +81,9 @@ struct UserLoginForm: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(
-                                    name == "" || password == "" ? Color(.systemBlue).opacity(0.7) : Color(.systemBlue)
+                                    name == "" || password == ""
+                                        ? Color(.systemBlue).opacity(0.7)
+                                        : Color(.systemBlue)
                                 )
                                 .cornerRadius(12)
                         }
@@ -123,8 +123,10 @@ struct UserLoginForm: View {
                     if errorMessage != nil {
                         ErrorOverlay(message: errorMessage!)
                     } else {
-                        if !currentUserName.isEmpty {
-                            SuccessOverlay(message: "Logged in as \(currentUserName)")
+                        if session.isLoggedIn {
+                            SuccessOverlay(
+                                message: "Logged in as \(session.user!.name)"
+                            )
                         }
                     }
                 }
@@ -140,9 +142,7 @@ struct UserLoginForm: View {
         if let matched = users.first(where: {
             $0.name == trimmedName && $0.password == password
         }) {
-            currentUserName = matched.name
-            currentUserRole = matched.role.rawValue
-            isLoggedIn = true
+            session.loginUser(user: matched)
         } else {
             errorMessage = "Invalid credentials"
         }
@@ -152,4 +152,5 @@ struct UserLoginForm: View {
 #Preview {
     UserLoginForm()
         .modelContainer(for: User.self, inMemory: true)
+        .environment(SessionManager.shared)
 }

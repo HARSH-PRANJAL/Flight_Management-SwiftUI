@@ -5,9 +5,6 @@ import SwiftUI
 struct UserRegistrationForm: View {
     @Environment(\.modelContext) var context
     @Binding var isPresented: Bool
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
-    @AppStorage("currentUserName") private var currentUserName: String = ""
-    @AppStorage("currentUserRole") private var currentUserRole: String = ""
 
     @State private var name: String = ""
     @State private var password: String = ""
@@ -161,10 +158,9 @@ extension UserRegistrationForm {
 
         do {
             try context.save()
-            currentUserName = newUser.name
-            currentUserRole = newUser.role.rawValue
-            isLoggedIn = true
-            isPresented = false
+            withAnimation(.easeOut) {
+                isPresented.toggle()
+            }
         } catch {
             errorMessage = "Unable to save user"
         }

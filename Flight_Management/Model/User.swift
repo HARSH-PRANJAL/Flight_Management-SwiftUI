@@ -21,20 +21,30 @@ class User {
 }
 
 // for user session management
+struct LoggedInUser {
+    let id: String
+    let name: String
+    let role: String
+    let profileImage: Data?
+}
+
 @Observable
-class SessionManager {
+final class SessionManager {
     static let shared = SessionManager()
 
-    var user: User?
+    var user: LoggedInUser?
     var isLoggedIn: Bool { user != nil }
-    var role: String? { user?.role.rawValue }
-    var profileImage: Image? {
-        if let profileImageData = user?.profileImage,
-            let uiImage = UIImage(data: profileImageData)
-        {
-            return Image(uiImage: uiImage)
-        } else {
-            return nil
-        }
+    
+    func logout() {
+        user = nil
+    }
+
+    func loginUser(user: User) {
+        self.user = LoggedInUser(
+            id: user.id.uuidString,
+            name: user.name,
+            role: user.role.rawValue,
+            profileImage: user.profileImage
+        )
     }
 }

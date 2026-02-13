@@ -3,12 +3,14 @@ import SwiftUI
 
 struct SplashView: View {
     @Environment(\.modelContext) private var context
+    @Environment(SessionManager.self) var session
     @State private var showContent = false
 
     var body: some View {
         Group {
             if showContent {
                 ContentView()
+                    .environment(session)
             } else {
                 ZStack {
                     Color(.systemBackground).ignoresSafeArea()
@@ -41,4 +43,5 @@ struct SplashView: View {
 #Preview {
     SplashView()
         .modelContainer(for: User.self, inMemory: true)
+        .environment(SessionManager.shared)
 }
