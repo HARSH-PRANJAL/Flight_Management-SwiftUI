@@ -24,8 +24,6 @@ struct RouteRegistrationContent: View {
                 saveButton
                 disclaimerText
             }
-            .navigationTitle("Create Route")
-            .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $isAirportRegistrationFormDisplayed, content: {
                 AirportRegistrationForm()
             })

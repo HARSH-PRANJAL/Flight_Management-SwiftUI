@@ -98,6 +98,11 @@ enum StaffSort: String, CaseIterable {
     case experience = "Experience"
 }
 
+enum RouteSort: String, CaseIterable {
+    case name = "Name"
+    case tripsCount = "Trips Count"
+}
+
 enum FieldError: Hashable {
     case name, email, gender, role, dateOfBirth
     case registrationNumber, type, seatingCapacity, minimumStaffRequired
