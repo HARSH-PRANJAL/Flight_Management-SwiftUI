@@ -53,29 +53,14 @@ final class StaffRegistrationFormViewModel {
         dob = nil
         fieldErrors = [:]
     }
-
+    
     func processPhoto(_ item: PhotosPickerItem) async {
         do {
             guard let data = try await item.loadTransferable(type: Data.self)
             else { return }
-            handleImageData(data)
+            profilePreview = handleImageData(data, photo: &(photoData))
         } catch {
             print("Photo loading failed: \(error.localizedDescription)")
-        }
-    }
-
-    @MainActor
-    private func handleImageData(_ data: Data) {
-        if let image = UIImage(data: data),
-            let compressed = image.jpegData(compressionQuality: 0.78)
-        {
-            photoData = compressed
-            profilePreview = Image(uiImage: UIImage(data: compressed) ?? image)
-        } else {
-            photoData = data
-            if let uiImage = UIImage(data: data) {
-                profilePreview = Image(uiImage: uiImage)
-            }
         }
     }
 }
