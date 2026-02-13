@@ -1,4 +1,5 @@
 import SwiftData
+import PhotosUI
 import SwiftUI
 
 struct StaffRegistrationContent: View {
@@ -12,7 +13,11 @@ struct StaffRegistrationContent: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                ProfilePhotoField(viewModel: viewModel)
+                ProfilePhotoField(
+                    selectedPhoto: $viewModel.selectedPhoto, profilePreview: $viewModel.profilePreview, onChangeAction: { item in
+                        await viewModel.processPhoto(item)
+                    }
+                )
 
                 VStack(spacing: 20) {
                     nameFieldSection
@@ -27,8 +32,6 @@ struct StaffRegistrationContent: View {
 
                 disclaimerText
             }
-            .navigationTitle("Staff Registration")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 

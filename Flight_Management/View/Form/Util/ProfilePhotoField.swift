@@ -2,12 +2,15 @@ import PhotosUI
 import SwiftUI
 
 struct ProfilePhotoField: View {
-    @State var viewModel: StaffRegistrationFormViewModel
+    @Binding var selectedPhoto: PhotosPickerItem?
+    @Binding var profilePreview: Image?
+    
+    var onChangeAction: ((PhotosPickerItem) async -> Void)
 
     var body: some View {
         VStack(spacing: 12) {
             PhotosPicker(
-                selection: $viewModel.selectedPhoto,
+                selection: $selectedPhoto,
                 matching: .images,
                 photoLibrary: .shared()
             ) {
@@ -21,10 +24,10 @@ struct ProfilePhotoField: View {
         .frame(maxWidth: .infinity)
         .padding(.top, 32)
         .padding(.bottom, 24)
-        .onChange(of: viewModel.selectedPhoto) { _, newItem in
+        .onChange(of: selectedPhoto) { _, newItem in
             guard let item = newItem else { return }
             Task {
-                await viewModel.processPhoto(item)
+                await onChangeAction(item)
             }
         }
     }
@@ -32,7 +35,7 @@ struct ProfilePhotoField: View {
     @ViewBuilder
     private var profileImageContent: some View {
         ZStack(alignment: .bottomTrailing) {
-            if let preview = viewModel.profilePreview {
+            if let preview = profilePreview {
                 preview
                     .resizable()
                     .scaledToFill()
@@ -67,6 +70,25 @@ struct ProfilePhotoField: View {
 }
 
 #Preview {
-    @Previewable @State var viewModel = StaffRegistrationFormViewModel()
-    return ProfilePhotoField(viewModel: viewModel)
+    struct PreviewWrapper: View {
+        @State private var selectedPhoto: PhotosPickerItem? = nil
+        @State private var profilePreview: Image? = nil
+
+        var body: some View {
+            ProfilePhotoField(
+                selectedPhoto: $selectedPhoto,
+                profilePreview: $profilePreview,
+                onChangeAction: { item in
+                    // Load a SwiftUI Image preview from the selected photo for preview purposes
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        profilePreview = Image(uiImage: uiImage)
+                    }
+                }
+            )
+            .padding()
+        }
+    }
+
+    return PreviewWrapper()
 }
