@@ -9,6 +9,7 @@ class User {
     var name: String
     var password: String
     var role: UserRole
+    var profileImage: Data?
 
     init(name: String, password: String, role: UserRole = .crew) {
         self.id = UUID()

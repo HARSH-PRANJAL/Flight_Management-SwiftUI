@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import PhotosUI
 
 struct UserRegistrationForm: View {
     @Environment(\.modelContext) var context
@@ -12,6 +13,10 @@ struct UserRegistrationForm: View {
     @State private var password: String = ""
     @State private var selectedRole: UserRole? = nil
     @State private var errorMessage: String? = nil
+    @State var selectedPhoto: PhotosPickerItem?
+    @State var photoData: Data?
+    @State var profilePreview: Image?
+    
 
     @FocusState private var focusState: FormFocus?
 
@@ -19,79 +24,13 @@ struct UserRegistrationForm: View {
         NavigationStack {
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 20) {
-                    FormInputField(
-                        label: "Username",
-                        placeholder: "Enter your name",
-                        focus: .name,
-                        hasError: false,
-                        text: $name,
-                        focusedField: $focusState
-                    )
-                    .onChange(of: name) { oldValue, newValue in
-                        if newValue.count > 100 {
-                            name = String(newValue.prefix(100))
-                            return
-                        }
-
-                        var allowed = newValue.allSatisfy {
-                            $0.isLetter || $0.isNumber
-                                || $0.isWhitespace
-                        }
-
-                        if !allowed {
-                            name = newValue.filter {
-                                $0.isLetter || $0.isNumber
-                                    || $0.isWhitespace
-                            }
-                        }
-
-                        allowed = newValue.allSatisfy(\.isWhitespace)
-                        if allowed {
-                            name = ""
-                        }
-                    }
-
-                    FormInputField(
-                        label: "Password",
-                        placeholder: "Enter your password",
-                        focus: .password,
-                        hasError: false,
-                        text: $password,
-                        focusedField: $focusState
-                    )
-                    .onChange(of: password) { oldValue, newValue in
-                        if newValue.count > 255 {
-                            password = String(newValue.prefix(255))
-                        }
-                    }
-
-                    FormPickerField<UserRole>(
-                        label: "Role",
-                        placeholder: "User role",
-                        focus: .role,
-                        hasError: errorMessage != nil,
-                        selection: $selectedRole,
-                        focusedField: $focusState
-                    )
+                    userNameField
+                    passwordField
+                    rolePicker
                 }
                 .padding()
 
-                Button(action: handleRegister) {
-                    Text("Register")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            name == "" || password == ""
-                                ? Color(.systemGreen).opacity(0.7)
-                                : Color(.systemGreen)
-                        )
-                        .cornerRadius(12)
-                }
-                .disabled(name == "" || password == "")
-                .padding(.horizontal, 16)
-                .padding(.top, 24)
+                registerButton
 
                 Spacer()
             }
@@ -106,7 +45,104 @@ struct UserRegistrationForm: View {
             .padding()
         }
     }
+}
 
+// MARK: UI
+extension UserRegistrationForm {
+    
+    var userNameField: some View {
+        FormInputField(
+            label: "Username",
+            placeholder: "Enter your name",
+            focus: .name,
+            hasError: false,
+            text: $name,
+            focusedField: $focusState
+        )
+        .onChange(of: name) { oldValue, newValue in
+            if newValue.count > 100 {
+                name = String(newValue.prefix(100))
+                return
+            }
+
+            var allowed = newValue.allSatisfy {
+                $0.isLetter || $0.isNumber
+                    || $0.isWhitespace
+            }
+
+            if !allowed {
+                name = newValue.filter {
+                    $0.isLetter || $0.isNumber
+                        || $0.isWhitespace
+                }
+            }
+
+            allowed = newValue.allSatisfy(\.isWhitespace)
+            if allowed {
+                name = ""
+            }
+        }
+    }
+    
+    var passwordField: some View {
+        FormInputField(
+            label: "Password",
+            placeholder: "Enter your password",
+            focus: .password,
+            hasError: false,
+            text: $password,
+            focusedField: $focusState
+        )
+        .onChange(of: password) { oldValue, newValue in
+            if newValue.count > 255 {
+                password = String(newValue.prefix(255))
+            }
+        }
+    }
+    
+    var rolePicker: some View {
+        FormPickerField<UserRole>(
+            label: "Role",
+            placeholder: "User role",
+            focus: .role,
+            hasError: errorMessage != nil,
+            selection: $selectedRole,
+            focusedField: $focusState
+        )
+    }
+    
+    var registerButton: some View {
+        Button(action: handleRegister) {
+            Text("Register")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    name == "" || password == ""
+                        ? Color(.systemGreen).opacity(0.7)
+                        : Color(.systemGreen)
+                )
+                .cornerRadius(12)
+        }
+        .disabled(name == "" || password == "")
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
+    }
+}
+
+//MARK: Util
+extension UserRegistrationForm {
+    func processPhoto(_ item: PhotosPickerItem) async {
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self)
+            else { return }
+            profilePreview = handleImageData(data, photo: &(photoData))
+        } catch {
+            print("Photo loading failed: \(error.localizedDescription)")
+        }
+    }
+    
     private func handleRegister() {
         errorMessage = nil
 
@@ -132,7 +168,7 @@ struct UserRegistrationForm: View {
 }
 
 #Preview {
-    @State var shown = true
+    @Previewable @State var shown = true
     return UserRegistrationForm(isPresented: $shown)
         .modelContainer(for: User.self, inMemory: true)
 }
