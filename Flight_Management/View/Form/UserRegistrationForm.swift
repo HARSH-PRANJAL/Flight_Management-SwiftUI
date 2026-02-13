@@ -152,7 +152,8 @@ extension UserRegistrationForm {
         let newUser = User(
             name: trimmedName,
             password: password,
-            role: selectedRole!
+            role: selectedRole!,
+            profileImage: photoData
         )
         context.insert(newUser)
 

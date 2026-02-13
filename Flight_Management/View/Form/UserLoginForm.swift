@@ -142,7 +142,10 @@ struct UserLoginForm: View {
         if let matched = users.first(where: {
             $0.name == trimmedName && $0.password == password
         }) {
-            session.loginUser(user: matched)
+            session.loginUser(matched)
+            if matched.profileImage == nil {
+                print("No profile image")
+            }
         } else {
             errorMessage = "Invalid credentials"
         }
