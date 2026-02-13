@@ -1,6 +1,6 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
-import PhotosUI
 
 struct UserRegistrationForm: View {
     @Environment(\.modelContext) var context
@@ -16,40 +16,44 @@ struct UserRegistrationForm: View {
     @State var selectedPhoto: PhotosPickerItem?
     @State var photoData: Data?
     @State var profilePreview: Image?
-    
 
     @FocusState private var focusState: FormFocus?
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 20) {
+            ScrollView {
+                VStack(spacing: 16) {
+                    ProfilePhotoField(
+                        selectedPhoto: $selectedPhoto,
+                        profilePreview: $profilePreview,
+                        onChangeAction: { item in
+                            await processPhoto(item)
+                        }
+                    )
                     userNameField
                     passwordField
                     rolePicker
+                    
+                    registerButton
+                }
+                .navigationTitle("User registration")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { isPresented = false }
+                    }
                 }
                 .padding()
-
-                registerButton
-
                 Spacer()
             }
-            .navigationTitle("User registration")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { isPresented = false }
-                }
-            }
-            .padding(.top, 32)
-            .padding()
+            .scrollIndicators(.hidden)
         }
     }
 }
 
 // MARK: UI
 extension UserRegistrationForm {
-    
+
     var userNameField: some View {
         FormInputField(
             label: "Username",
@@ -83,7 +87,7 @@ extension UserRegistrationForm {
             }
         }
     }
-    
+
     var passwordField: some View {
         FormInputField(
             label: "Password",
@@ -99,7 +103,7 @@ extension UserRegistrationForm {
             }
         }
     }
-    
+
     var rolePicker: some View {
         FormPickerField<UserRole>(
             label: "Role",
@@ -110,7 +114,7 @@ extension UserRegistrationForm {
             focusedField: $focusState
         )
     }
-    
+
     var registerButton: some View {
         Button(action: handleRegister) {
             Text("Register")
@@ -142,7 +146,7 @@ extension UserRegistrationForm {
             print("Photo loading failed: \(error.localizedDescription)")
         }
     }
-    
+
     private func handleRegister() {
         errorMessage = nil
 
