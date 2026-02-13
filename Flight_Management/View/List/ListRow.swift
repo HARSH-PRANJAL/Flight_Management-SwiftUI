@@ -5,7 +5,7 @@ struct ListRow: View {
     let title: String
     let subtitle: String
     let statusBadge: StatusBadge?
-    
+
     init(
         profileImage: Image?,
         title: String,
@@ -17,26 +17,26 @@ struct ListRow: View {
         self.subtitle = subtitle
         self.statusBadge = status
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
                 profileImageView
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(.label))
                         .lineLimit(1)
-                    
+
                     Text(subtitle)
                         .font(.system(size: 14))
                         .foregroundColor(Color(.systemGray))
                         .lineLimit(1)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 8) {
                     statusBadgeView
                 }
@@ -46,7 +46,7 @@ struct ListRow: View {
             .contentShape(Rectangle())
         }
     }
-    
+
     @ViewBuilder
     private var profileImageView: some View {
         if let profileImage = profileImage {
@@ -64,7 +64,7 @@ struct ListRow: View {
             EmptyView()
         }
     }
-    
+
     @ViewBuilder
     private var statusBadgeView: some View {
         if let statusBadge = self.statusBadge {
@@ -85,7 +85,7 @@ extension ListRow {
             status: .from(staffStatus: staff.currentStatus)
         )
     }
-    
+
     init(aircraft: Aircraft) {
         self.init(
             profileImage: nil,
@@ -94,12 +94,23 @@ extension ListRow {
             status: nil
         )
     }
-    
+
     init(trip: Trip) {
-        self.init(profileImage: nil, title: trip.flightNumber, subtitle:  formatDate(trip.scheduledDepartureTime, format: "dd-MM-yyyy HH:mm"), status: .from(tripStatus: trip.currentStatus))
+        self.init(
+            profileImage: nil,
+            title: trip.flightNumber,
+            subtitle: formatDate(
+                trip.scheduledDepartureTime,
+                format: "dd-MM-yyyy HH:mm"
+            ),
+            status: .from(tripStatus: trip.currentStatus)
+        )
+    }
+
+    init(route: Route) {
+        self.init(profileImage: nil, title: route.name, subtitle: "Airports: \(route.nodes.count)", status: nil)
     }
 }
-
 
 #Preview("Staff List Row") {
     let staff = Staff(
@@ -109,7 +120,7 @@ extension ListRow {
         email: "john@example.com",
         dob: Date()
     )
-    
+
     ListRow(
         staff: staff
     )
@@ -123,7 +134,7 @@ extension ListRow {
         seatingCapacity: 180,
         minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
     )
-    
+
     ListRow(
         aircraft: aircraft
     )
@@ -138,7 +149,7 @@ extension ListRow {
         email: "jane@example.com",
         dob: Date()
     )
-    
+
     VStack(spacing: 1) {
         ListRow(staff: staff).id(UUID())
         ListRow(staff: staff).id(UUID())
