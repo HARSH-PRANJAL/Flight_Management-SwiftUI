@@ -12,11 +12,12 @@ class User {
     var role: UserRole
     var profileImage: Data?
 
-    init(name: String, password: String, role: UserRole = .crew) {
+    init(name: String, password: String, role: UserRole = .crew, profileImage: Data? = nil) {
         self.id = UUID()
         self.name = name
         self.password = password
         self.role = role
+        self.profileImage = profileImage
     }
 }
 

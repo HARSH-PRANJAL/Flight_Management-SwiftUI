@@ -1,12 +1,10 @@
 import SwiftUI
 
 struct AdminHome: View {
+    @Environment(SessionManager.self) var session
+
     @State var isAddStaffPresented: Bool = false
     @State var isAddRoutePresented: Bool = false
-
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool?
-    @AppStorage("currentUserName") private var currentUserName: String?
-    @AppStorage("currentUserRole") private var currentUserRole: String?
 
     var body: some View {
         TabView {
@@ -17,17 +15,34 @@ struct AdminHome: View {
                             ToolbarItem(placement: .topBarTrailing) {
                                 Menu {
                                     Button("Logout") {
-                                        currentUserName = ""
-                                        currentUserRole = ""
-                                        isLoggedIn = false
+                                        session.logout()
                                     }
                                 } label: {
-                                    Image(
-                                        systemName: "line.3.horizontal.decrease"
-                                    )
+                                    Group {
+                                        if let user = session.user,
+                                            let imageData = user.profileImage,
+                                            let uiImage = UIImage(
+                                                data: imageData
+                                            )
+                                        {
+
+                                            Image(uiImage: uiImage)
+                                                .resizable()
+                                                .scaledToFill()
+                                        } else {
+                                            Image(systemName: "person.fill")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .padding(6)
+                                                .foregroundStyle(.gray)
+                                        }
+                                    }
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(Circle())
                                 }
                             }
                         }
+                        .toolbarColorScheme(.none, for: .navigationBar)
                 }
             }
 
@@ -80,5 +95,15 @@ struct AdminHome: View {
 }
 
 #Preview {
-    AdminHome()
+    let sampleImage = UIImage(systemName: "person.crop.circle.fill")!
+    let sampleData = sampleImage.pngData()
+
+    SessionManager.shared.user = LoggedInUser(
+        id: "123",
+        name: "Hp",
+        role: "Admin",
+        profileImage: nil
+    )
+    return AdminHome()
+        .environment(SessionManager.shared)
 }
