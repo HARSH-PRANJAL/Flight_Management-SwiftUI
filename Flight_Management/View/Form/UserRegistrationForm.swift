@@ -8,11 +8,15 @@ struct UserRegistrationForm: View {
 
     @State private var name: String = ""
     @State private var password: String = ""
+    @State private var confirmPassword: String = ""
+    @State private var passwordFieldText: String = ""
     @State private var selectedRole: UserRole? = nil
-    @State private var errorMessage: String? = nil
+    
     @State var selectedPhoto: PhotosPickerItem?
     @State var photoData: Data?
     @State var profilePreview: Image?
+    
+    
 
     @FocusState private var focusState: FormFocus?
 
@@ -29,17 +33,13 @@ struct UserRegistrationForm: View {
                     )
                     userNameField
                     passwordField
+                    confirmPasswordField
                     rolePicker
                     
                     registerButton
                 }
                 .navigationTitle("User registration")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close") { isPresented = false }
-                    }
-                }
                 .padding()
                 Spacer()
             }
@@ -57,6 +57,11 @@ extension UserRegistrationForm {
             placeholder: "Enter your name",
             focus: .name,
             hasError: false,
+            maxLength: 100,
+            allowedCharacter: {
+                $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "."
+            },
+            trimWhitespace: true,
             text: $name,
             focusedField: $focusState
         )
@@ -84,6 +89,18 @@ extension UserRegistrationForm {
             }
         }
     }
+    
+    var confirmPasswordField: some View {
+        FormInputField(
+            label: "Confirm Password",
+            placeholder: "Repeat your password",
+            focus: .confirmPassword,
+            hasError: !confirmPassword.isEmpty && confirmPassword != password,
+            maxLength: 100,
+            text: $confirmPassword,
+            focusedField: $focusState
+        )
+    }
 
     var passwordField: some View {
         FormInputField(
@@ -91,12 +108,23 @@ extension UserRegistrationForm {
             placeholder: "Enter your password",
             focus: .password,
             hasError: false,
-            text: $password,
+            maxLength: 100,
+            text: $passwordFieldText,
             focusedField: $focusState
         )
-        .onChange(of: password) { oldValue, newValue in
-            if newValue.count > 255 {
-                password = String(newValue.prefix(255))
+        .onAppear {
+            passwordFieldText = password
+        }
+        .onChange(of: passwordFieldText) { _, newValue in
+            if focusState == .password {
+                password = newValue
+            }
+        }
+        .onChange(of: focusState) { _, newVal in
+            if newVal == .password {
+                passwordFieldText = password
+            } else {
+                passwordFieldText = String(repeating: "*", count: password.count)
             }
         }
     }
@@ -106,7 +134,7 @@ extension UserRegistrationForm {
             label: "Role",
             placeholder: "User role",
             focus: .role,
-            hasError: errorMessage != nil,
+            hasError: false,
             selection: $selectedRole,
             focusedField: $focusState
         )
@@ -126,7 +154,7 @@ extension UserRegistrationForm {
                 )
                 .cornerRadius(12)
         }
-        .disabled(name == "" || password == "")
+        .disabled(name == "" || password == "" || selectedRole == nil || password != confirmPassword)
         .padding(.horizontal, 16)
         .padding(.top, 24)
     }
@@ -145,8 +173,6 @@ extension UserRegistrationForm {
     }
 
     private func handleRegister() {
-        errorMessage = nil
-
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let newUser = User(
@@ -163,7 +189,7 @@ extension UserRegistrationForm {
                 isPresented.toggle()
             }
         } catch {
-            errorMessage = "Unable to save user"
+//            errorMessage = "Unable to save user."
         }
     }
 }

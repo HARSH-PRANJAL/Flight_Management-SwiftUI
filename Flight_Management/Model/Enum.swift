@@ -119,6 +119,6 @@ enum FormFocus: Hashable {
     case registrationNumber, type, seatingCapacity
     case code, city, country
     case routeName, journeyTime
-    case password
+    case password, confirmPassword
 }
 
