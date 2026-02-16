@@ -75,6 +75,13 @@ struct UserRegistrationForm: View {
                     user = session.getUserFromDB(modelContext: context)
                     name = user?.name ?? ""
                     selectedRole = user?.role ?? nil
+                    
+                    if let photoData = user?.profileImage,
+                        let uiImage = UIImage(data: photoData)
+                    {
+                        profilePreview = Image(uiImage: uiImage)
+                    }
+
                     editForm = true
                 }
             }

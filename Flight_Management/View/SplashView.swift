@@ -32,7 +32,19 @@ struct SplashView: View {
                         }
                     }
                     Task {
+                        let start = Date()
                         await DemoDataAPI.seedIfNeeded(in: context)
+                        DemoDataAPI.startAutoUpdates(in: context)
+                        let elapsed = Date().timeIntervalSince(start)
+                        let minDelay: TimeInterval = 1.5
+                        if elapsed < minDelay {
+                            do { try await Task.sleep(nanoseconds: UInt64((minDelay - elapsed) * 1_000_000_000)) } catch { }
+                        }
+                        await MainActor.run {
+                            withAnimation(.easeOut) {
+                                showContent = true
+                            }
+                        }
                     }
                 }
             }
