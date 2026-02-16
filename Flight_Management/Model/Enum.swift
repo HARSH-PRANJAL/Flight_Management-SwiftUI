@@ -12,7 +12,7 @@ enum StaffRole: String, Codable, CaseIterable {
     case cabinCrew = "Cabin Crew"
 }
 
-enum TripStatus: String, Codable {
+enum TripStatus: String, Codable, CaseIterable {
     case scheduled = "Scheduled"
     case onTime = "On-time"
     case delayed = "Delayed"
@@ -103,6 +103,11 @@ enum RouteSort: String, CaseIterable {
     case tripsCount = "Trips Count"
 }
 
+enum TripSort: String, CaseIterable {
+    case flightNumber = "Flight Number"
+    case departure = "Departure Time"
+}
+
 enum FieldError: Hashable {
     case name, email, gender, role, dateOfBirth
     case registrationNumber, type, seatingCapacity, minimumStaffRequired
@@ -120,5 +125,6 @@ enum FormFocus: Hashable {
     case code, city, country
     case routeName, journeyTime
     case password, confirmPassword
+    case flightNumber
 }
 
