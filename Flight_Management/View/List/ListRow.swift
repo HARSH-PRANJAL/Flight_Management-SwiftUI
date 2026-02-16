@@ -5,17 +5,20 @@ struct ListRow: View {
     let title: String
     let subtitle: String
     let statusBadge: StatusBadge?
+    let associatedTrip: Trip?
 
     init(
         profileImage: Image?,
         title: String,
         subtitle: String,
-        status: StatusBadge? = nil
+        status: StatusBadge? = nil,
+        associatedTrip: Trip? = nil
     ) {
         self.profileImage = profileImage
         self.title = title
         self.subtitle = subtitle
         self.statusBadge = status
+        self.associatedTrip = associatedTrip
     }
 
     var body: some View {
@@ -91,7 +94,8 @@ extension ListRow {
             profileImage: nil,
             title: aircraft.registrationNumber,
             subtitle: aircraft.type,
-            status: nil
+            status: nil,
+            associatedTrip: nil
         )
     }
 
@@ -103,7 +107,8 @@ extension ListRow {
                 trip.scheduledDepartureTime,
                 format: "dd-MM-yyyy HH:mm"
             ),
-            status: .from(tripStatus: trip.currentStatus)
+            status: .from(tripStatus: trip.currentStatus),
+            associatedTrip: trip
         )
     }
 
