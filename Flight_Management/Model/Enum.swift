@@ -113,6 +113,7 @@ enum FieldError: Hashable {
     case registrationNumber, type, seatingCapacity, minimumStaffRequired
     case code, city, country
     case routeName, airports, journeyTime
+    case password, confirmPassword
 }
 
 enum SubmissionState: Equatable {
@@ -126,5 +127,11 @@ enum FormFocus: Hashable {
     case routeName, journeyTime
     case password, confirmPassword
     case flightNumber
+}
+
+enum NotificationType {
+    case success(message: String)
+    case error(message: String)
+    case none
 }
 
