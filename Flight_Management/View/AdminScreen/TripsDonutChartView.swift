@@ -12,22 +12,23 @@ struct TripsDonutChartView: View {
     var body: some View {
         if metaData != 0 {
             Chart {
-                ForEach(Array(data.enumerated()), id: \.offset) {
-                    index,
-                    tuple in
-                    let (_, value, color) = tuple
+                ForEach(Array(data.enumerated()), id: \.offset) { _, tuple in
+                    let (label, value, _) = tuple
                     SectorMark(
                         angle: .value("Count", value),
                         innerRadius: .ratio(0.6),
                         angularInset: 1
                     )
-                    .foregroundStyle(color)
+                    .foregroundStyle(by: .value("Status", label))
                     .annotation(position: .overlay) {
-                        // small labels could be added here if desired
                         EmptyView()
                     }
                 }
             }
+            .chartForegroundStyleScale(
+                domain: data.map { $0.0 },
+                range: data.map { $0.2 }
+            )
             .chartLegend(.visible)
         } else {
             VStack {
@@ -51,3 +52,4 @@ struct TripsDonutChartView: View {
 #Preview("Without data") {
     TripsDonutChartView(data: [])
 }
+
