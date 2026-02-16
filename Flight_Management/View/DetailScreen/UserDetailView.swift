@@ -27,6 +27,7 @@ struct UserDetailView: View {
                 profileImage: profileImage,
                 titleText: user?.name ?? "Unknown User",
                 subTitleText: user?.role.rawValue ?? "Unknown Designation",
+                detailText: user?.email,
                 statusBadge: nil,
                 listData: [],
                 onActionButtonTapped: {

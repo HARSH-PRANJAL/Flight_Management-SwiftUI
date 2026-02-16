@@ -6,6 +6,7 @@ struct AircraftRegistrationContent: View {
 
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
+    @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
 
@@ -159,9 +160,12 @@ struct AircraftRegistrationContent: View {
 
     private func handleRegistration() {
         if viewModel.saveAircraft(to: context) {
+            notificationManager.showSuccess("Aircraft registered successfully")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 dismiss()
             }
+        } else {
+            notificationManager.showError("Failed to register aircraft. Please try again.")
         }
     }
 }

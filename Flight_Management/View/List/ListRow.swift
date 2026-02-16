@@ -1,6 +1,7 @@
 import SwiftUI
 
-struct ListRow: View {
+struct ListRow: View, Identifiable {
+    let id: UUID = UUID()
     let profileImage: Image?
     let title: String
     let subtitle: String
@@ -113,7 +114,7 @@ extension ListRow {
     }
 
     init(route: Route) {
-        self.init(profileImage: nil, title: route.name, subtitle: "Airports: \(route.nodes.count)", status: nil)
+        self.init(profileImage: nil, title: route.name, subtitle: "Airports: \(route.nodes.count)   Total trips: \(route.trips.count)", status: nil)
     }
 }
 

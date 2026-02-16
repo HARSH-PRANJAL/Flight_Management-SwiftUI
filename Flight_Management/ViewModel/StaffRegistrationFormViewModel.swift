@@ -17,6 +17,9 @@ final class StaffRegistrationFormViewModel {
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
+    
+    var isEditMode: Bool = false
+    var staffToEdit: Staff?
 
     let years: [String]
 
@@ -25,6 +28,37 @@ final class StaffRegistrationFormViewModel {
         self.years = Array(
             (currentYear - 66)...(currentYear - 16)
         ).reversed().map { "\($0)" }
+    }
+    
+    init(staff: Staff) {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        self.years = Array(
+            (currentYear - 66)...(currentYear - 16)
+        ).reversed().map { "\($0)" }
+        
+        self.isEditMode = true
+        self.staffToEdit = staff
+        self.loadStaffData(staff)
+    }
+    
+    private func loadStaffData(_ staff: Staff) {
+        self.name = staff.name
+        self.email = staff.email
+        self.gender = staff.gender
+        self.role = staff.designation
+        
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day], from: staff.dob)
+        self.year = String(components.year ?? 0)
+        self.month = String(components.month ?? 0)
+        self.day = String(components.day ?? 0)
+        
+        if let imageData = staff.profileImage,
+           let uiImage = UIImage(data: imageData) {
+            self.profilePreview = Image(uiImage: uiImage)
+        }
+        
+        self.dob = staff.dob
     }
 
     var daysInMonth: [String] {

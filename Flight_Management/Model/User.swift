@@ -12,15 +12,19 @@ class User {
     var password: String
     var role: UserRole
     var profileImage: Data?
+    @Attribute(.unique)
+    var email: String
 
     init(
         name: String,
+        email: String,
         password: String,
         role: UserRole = .crew,
         profileImage: Data? = nil
     ) {
         self.id = UUID()
         self.name = name
+        self.email = email
         self.password = password
         self.role = role
         self.profileImage = profileImage

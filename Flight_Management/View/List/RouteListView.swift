@@ -23,6 +23,7 @@ struct RouteListView: View {
                     }
                 }
             }
+            .navigationTitle("Route List")
             .toolbar {
                 toolbarFilterSortItem
             }

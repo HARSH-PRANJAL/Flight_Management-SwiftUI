@@ -24,12 +24,13 @@ struct StaffListView: View {
                     }
                 }
             }
+            .navigationTitle("Staff List")
             .toolbar {
                 toolbarFilterSortItem
             }
             .searchable(
                 text: $searchText,
-                prompt: "Search by name or flight number"
+                prompt: "Search by staff"
             )
             .searchToolbarBehavior(.minimize)
         }

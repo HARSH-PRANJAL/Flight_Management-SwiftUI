@@ -61,7 +61,7 @@ struct DetailView: View {
             .padding(.bottom, 10)
 
             LazyVStack(spacing: 0) {
-                ForEach(listData, id: \.title) { row in
+                ForEach(listData) { row in
                     Group {
                         if let trip = row.associatedTrip {
                             NavigationLink(destination: DetailView(trip: trip))
@@ -85,16 +85,18 @@ struct DetailView: View {
 
     var primaryRowCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label {
-                Text(currentTaskTitle)
-                    .font(.headline)
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: "clock.badge.airplane")
-                    .foregroundStyle(Color(.systemCyan))
+            if !currentTaskTitle.isEmpty {
+                Label {
+                    Text(currentTaskTitle)
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                } icon: {
+                    Image(systemName: "clock.badge.airplane")
+                        .foregroundStyle(Color(.systemCyan))
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 10)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 10)
 
             Group {
                 if let trip = primaryRow?.associatedTrip {
@@ -142,6 +144,7 @@ struct DetailView: View {
             Text(subTitleText)
                 .font(.title2)
                 .foregroundStyle(Color(.systemGray))
+            
                 .padding(.bottom, 10)
             if let detailText = self.detailText {
                 TextWithCopyView(text: detailText)
@@ -241,23 +244,6 @@ extension DetailView {
             actionButtonTitle: actionButtonTitle ?? "Change Availability",
             currentTaskTitle: "Current Assignment",
             listDataTitle: "Completed Flights"
-        )
-    }
-
-    init(route: Route) {
-        let filteredTrips = route.trips.filter { trip in
-            let status = trip.currentStatus
-            return status == .onTime || status == .delayed
-        }
-
-        self.init(
-            profileImage: nil,
-            titleText: route.name,
-            subTitleText: "Airports: \(route.nodes.count)",
-            statusBadge: nil,
-            primaryRow: nil,
-            listData: filteredTrips.map { ListRow(trip: $0) },
-            listDataTitle: "Ongoing Trips"
         )
     }
 }

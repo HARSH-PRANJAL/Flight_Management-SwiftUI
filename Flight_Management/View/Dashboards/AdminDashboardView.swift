@@ -100,6 +100,7 @@ struct AdminDashboardView: View {
                 }
                 .padding(.top, 16)
             }
+            .navigationTitle("Admin")
             .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showingTripList) {

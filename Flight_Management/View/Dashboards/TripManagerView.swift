@@ -3,6 +3,7 @@ import SwiftUI
 
 struct TripManagerView: View {
     @Environment(SessionManager.self) var session
+    @Environment(NotificationManager.self) var notificationManager
 
     @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
         [Trip]
@@ -12,34 +13,42 @@ struct TripManagerView: View {
     @Query var routes: [Route]
 
     var body: some View {
-        NavigationStack {
-            TabView {
-                Tab("Home", systemImage: "house") {
-                    homeView
-                }
-
-                Tab("Add Aircraft", systemImage: "airplane") {
-                    AircraftRegistrationForm()
-                }
-
-                Tab("Routes", systemImage: "map") {
-                    RouteListView()
-                }
-
-                Tab("Schedule", systemImage: "calendar.badge.plus") {
-                    TripRegistrationForm()
-                }
-
-                Tab("All Trips", systemImage: "pin") {
-                    TripListView()
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Logout") {
-                        session.logout()
+        ZStack {
+            NavigationStack {
+                TabView {
+                    Tab("Home", systemImage: "house") {
+                        homeView
+                            .navigationTitle("Manager")
+                    }
+                    
+                    Tab("Add Aircraft", systemImage: "airplane") {
+                        AircraftRegistrationForm()
+                    }
+                    
+                    Tab("Routes", systemImage: "map") {
+                        RouteListView()
+                    }
+                    
+                    Tab("Schedule", systemImage: "calendar.badge.plus") {
+                        TripRegistrationForm()
+                    }
+                    
+                    Tab("All Trips", systemImage: "pin") {
+                        TripListView()
                     }
                 }
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Logout") {
+                            session.logout()
+                        }
+                    }
+                }
+            }
+            
+            VStack {
+                NotificationView(notificationType: notificationManager.notification)
+                Spacer()
             }
         }
     }

@@ -7,6 +7,7 @@ struct RouteRegistrationContent: View {
 
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
+    @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
 
@@ -99,12 +100,13 @@ struct RouteRegistrationContent: View {
                                             "0",
                                             text: Binding(
                                                 get: {
-                                                    node.journeyTimeMinutes
+                                                    // read directly from viewModel to keep binding in sync
+                                                    viewModel.selectedNodes[index].journeyTimeMinutes
                                                 },
-                                                set: {
+                                                set: { newValue in
                                                     viewModel.updateJourneyTime(
                                                         at: index,
-                                                        minutes: $0
+                                                        minutes: newValue
                                                     )
                                                 }
                                             )
@@ -244,9 +246,12 @@ struct RouteRegistrationContent: View {
 
     private func handleSave() {
         if viewModel.saveRoute(to: context) {
+            notificationManager.showSuccess("Route created successfully")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 dismiss()
             }
+        } else {
+            notificationManager.showError("Failed to create route. Please try again.")
         }
     }
 }

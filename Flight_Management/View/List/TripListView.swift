@@ -1,9 +1,12 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct TripListView: View {
 
-    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips: [Trip]
+    var externalTrips: [Trip] = []
+
+    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
+        [Trip]
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
@@ -17,7 +20,8 @@ struct TripListView: View {
                 } else {
                     List {
                         ForEach(displayedTrips, id: \.id) { trip in
-                            NavigationLink(destination: DetailView(trip: trip)) {
+                            NavigationLink(destination: DetailView(trip: trip))
+                            {
                                 ListRow(trip: trip)
                             }
                         }
@@ -25,7 +29,9 @@ struct TripListView: View {
                 }
             }
             .toolbar {
-                toolbarFilterSortItem
+                if externalTrips.isEmpty {
+                    toolbarFilterSortItem
+                }
             }
             .searchable(
                 text: $searchText,
@@ -110,6 +116,10 @@ extension TripListView {
     }
 
     var displayedTrips: [Trip] {
+        if externalTrips.count != 0 {
+            return externalTrips
+        }
+
         var filtered = trips.filter { trip in
             if selectedFilter == nil {
                 return true
@@ -132,7 +142,8 @@ extension TripListView {
 
         return filtered.sorted { lhs, rhs in
             if selectedSort == .flightNumber {
-                return lhs.flightNumber.lowercased() < rhs.flightNumber.lowercased()
+                return lhs.flightNumber.lowercased()
+                    < rhs.flightNumber.lowercased()
             } else {
                 return lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
             }
@@ -142,6 +153,6 @@ extension TripListView {
 
 #Preview {
     NavigationStack {
-        TripListView()
+        TripListView(externalTrips: [])
     }
 }

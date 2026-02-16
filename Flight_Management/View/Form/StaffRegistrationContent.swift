@@ -7,8 +7,11 @@ struct StaffRegistrationContent: View {
 
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
+    @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
+    
+    var isPresented: Binding<Bool>?
 
     var body: some View {
         ScrollView {
@@ -133,7 +136,7 @@ struct StaffRegistrationContent: View {
 
     private var registerButton: some View {
         Button(action: handleRegistration) {
-            Text("Register")
+            Text(viewModel.isEditMode ? "Update Profile" : "Register")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -183,28 +186,51 @@ struct StaffRegistrationContent: View {
     }
 
     private func submitRegistration() {
-        let newStaff = Staff(
-            name: viewModel.name,
-            designation: viewModel.role!,
-            gender: viewModel.gender!,
-            email: viewModel.email,
-            profileImage: viewModel.photoData,
-            dob: Calendar.current.date(from: viewModel.dateOfBirthComponents)!
-        )
-
-        do {
-            context.insert(newStaff)
-            try context.save()
-            viewModel.submissionState = .success
-            print("Staff saved\n \(newStaff.id)")
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                viewModel.resetForm()
-                viewModel.submissionState = .none
-                dismiss()
+        if viewModel.isEditMode {
+            guard let staffToEdit = viewModel.staffToEdit else { return }
+            
+            staffToEdit.name = viewModel.name
+            staffToEdit.email = viewModel.email
+            if let photoData = viewModel.photoData {
+                staffToEdit.profileImage = photoData
             }
-        } catch {
-            viewModel.submissionState = .error
+            
+            do {
+                try context.save()
+                notificationManager.showSuccess("Staff profile updated successfully")
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    if let isPresented = isPresented {
+                        isPresented.wrappedValue = false
+                    } else {
+                        dismiss()
+                    }
+                }
+            } catch {
+                notificationManager.showError("Failed to update staff profile. Please try again.")
+            }
+        } else {
+            let newStaff = Staff(
+                name: viewModel.name,
+                designation: viewModel.role!,
+                gender: viewModel.gender!,
+                email: viewModel.email,
+                profileImage: viewModel.photoData,
+                dob: Calendar.current.date(from: viewModel.dateOfBirthComponents)!
+            )
+
+            do {
+                context.insert(newStaff)
+                try context.save()
+                notificationManager.showSuccess("Staff added successfully")
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    viewModel.resetForm()
+                    dismiss()
+                }
+            } catch {
+                notificationManager.showError("Failed to add staff. Please try again.")
+            }
         }
     }
 }

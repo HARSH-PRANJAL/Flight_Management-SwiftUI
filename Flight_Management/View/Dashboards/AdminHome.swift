@@ -2,62 +2,74 @@ import SwiftUI
 
 struct AdminHome: View {
     @Environment(SessionManager.self) var session
+    @Environment(NotificationManager.self) var notificationManager
 
     @State var isAddStaffPresented: Bool = false
     @State var isAddRoutePresented: Bool = false
 
     var body: some View {
-        TabView {
-            Tab("Home", systemImage: "house") {
-                NavigationStack {
-                    AdminDashboardView()
+        ZStack {
+            TabView {
+                Tab("Home", systemImage: "house") {
+                    NavigationStack {
+                        AdminDashboardView()
+                            .toolbar {
+                                profileHandlerToolbarItem(session: session)
+                            }
+                    }
                 }
-            }
 
-            Tab("Staff", systemImage: "person.3") {
-                NavigationStack {
-                    StaffListView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button {
-                                    isAddStaffPresented.toggle()
-                                } label: {
-                                    Image(systemName: "plus")
+                Tab("Staff", systemImage: "person.3") {
+                    NavigationStack {
+                        StaffListView()
+                            .toolbar {
+                                ToolbarItem(placement: .topBarLeading) {
+                                    Button {
+                                        isAddStaffPresented.toggle()
+                                    } label: {
+                                        Image(systemName: "plus")
+                                    }
                                 }
                             }
-                        }
+                    }
                 }
-            }
 
-            Tab("Route", systemImage: "location") {
-                NavigationStack {
-                    RouteListView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button {
-                                    isAddRoutePresented.toggle()
-                                } label: {
-                                    Image(systemName: "plus")
+                Tab("Route", systemImage: "location") {
+                    NavigationStack {
+                        RouteListView()
+                            .toolbar {
+                                ToolbarItem(placement: .topBarLeading) {
+                                    Button {
+                                        isAddRoutePresented.toggle()
+                                    } label: {
+                                        Image(systemName: "plus")
+                                    }
                                 }
                             }
-                        }
+                    }
                 }
             }
-        }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .sheet(isPresented: $isAddStaffPresented) {
-            NavigationStack {
-                StaffRegistrationForm()
-                    .navigationTitle("Add Staff")
-                    .navigationBarTitleDisplayMode(.inline)
+            .tabBarMinimizeBehavior(.onScrollDown)
+            .sheet(isPresented: $isAddStaffPresented) {
+                NavigationStack {
+                    StaffRegistrationForm()
+                        .navigationTitle("Add Staff")
+                        .navigationBarTitleDisplayMode(.inline)
+                }
             }
-        }
-        .sheet(isPresented: $isAddRoutePresented) {
-            NavigationStack {
-                RouteRegistrationForm()
-                    .navigationTitle("Create Route")
-                    .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $isAddRoutePresented) {
+                NavigationStack {
+                    RouteRegistrationForm()
+                        .navigationTitle("Create Route")
+                        .navigationBarTitleDisplayMode(.inline)
+                }
             }
+            
+            VStack {
+                NotificationView(notificationType: notificationManager.notification)
+                Spacer()
+            }
+            
         }
     }
 }
