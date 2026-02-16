@@ -8,17 +8,11 @@ struct RouteDetailView: View {
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
 
-            DetailView(
-                profileImage: nil,
-                titleText: route.name,
-                subTitleText: "Airports: \(route.nodes.count)",
-                statusBadge: nil,
-                listData: route.trips.map { ListRow(trip: $0) }
-            )
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .scrollDisabled(true)
-            .toolbar(.hidden, for: .bottomBar)
+            DetailView(route: route)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .scrollDisabled(true)
+                .toolbar(.hidden, for: .bottomBar)
         }
     }
 }

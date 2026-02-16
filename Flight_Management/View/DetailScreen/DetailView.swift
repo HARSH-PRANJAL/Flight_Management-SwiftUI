@@ -218,6 +218,23 @@ extension DetailView {
             listDataTitle: "Completed Flights"
         )
     }
+
+    init(route: Route) {
+        let filteredTrips = route.trips.filter { trip in
+            let status = trip.currentStatus
+            return status == .onTime || status == .delayed
+        }
+
+        self.init(
+            profileImage: nil,
+            titleText: route.name,
+            subTitleText: "Airports: \(route.nodes.count)",
+            statusBadge: nil,
+            primaryRow: nil,
+            listData: filteredTrips.map { ListRow(trip: $0) },
+            listDataTitle: "Ongoing Trips"
+        )
+    }
 }
 
 
