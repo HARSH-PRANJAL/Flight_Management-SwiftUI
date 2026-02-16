@@ -52,8 +52,11 @@ struct UpcomingTripsScrollView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(trips, id: \ .id) { trip in
-                    UpcomingTripCard(trip: trip)
+                ForEach(trips, id: \.id) { trip in
+                    NavigationLink(destination: DetailView(trip: trip)) {
+                        UpcomingTripCard(trip: trip)
+                    }
+                    .buttonStyle(.plain)
                 }
                 if trips.isEmpty {
                     Text("No upcoming flights")
