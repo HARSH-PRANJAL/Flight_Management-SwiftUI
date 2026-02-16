@@ -16,7 +16,9 @@ struct RouteListView: View {
                 } else {
                     List {
                         ForEach(displayedRoutes, id: \.id) { route in
-                            ListRow(route: route)
+                            NavigationLink(destination: RouteDetailView(route: route)) {
+                                ListRow(route: route)
+                            }
                         }
                     }
                 }

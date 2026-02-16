@@ -77,7 +77,7 @@ extension AircraftListView {
     }
 
     var displayedAircrafts: [Aircraft] {
-        var filtered = aircrafts.filter { aircraft in
+        let filtered = aircrafts.filter { aircraft in
             if searchText.isEmpty { return true }
 
             let registrationMatch = aircraft.registrationNumber

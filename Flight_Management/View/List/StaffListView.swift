@@ -17,7 +17,9 @@ struct StaffListView: View {
                 } else {
                     List {
                         ForEach(displayedStaffs, id: \.id) { staff in
-                            ListRow(staff: staff)
+                            NavigationLink(destination: StaffDetailView(staff: staff)) {
+                                ListRow(staff: staff)
+                            }
                         }
                     }
                 }
