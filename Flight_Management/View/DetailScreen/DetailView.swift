@@ -5,13 +5,11 @@ struct DetailView: View {
     var titleText: String
     var subTitleText: String
     var detailText: String?
-    var statusBadge: StatusBadge
+    var statusBadge: StatusBadge?
     var primaryRow: ListRow?
     var listData: [ListRow]
 
-    var onActionButtonTapped: (() -> Void)? = {
-        print("test")
-    }
+    var onActionButtonTapped: (() -> Void)? = nil
     var actionButtonTitle: String = "Change Status"
     var currentTaskTitle: String = "Current Task"
     var listDataTitle: String = "Completed Tasks"
@@ -64,12 +62,22 @@ struct DetailView: View {
 
             LazyVStack(spacing: 0) {
                 ForEach(listData, id: \.title) { row in
-                    row
-                        .padding(.horizontal, 16)
-                        .background(
-                            cardTheme()
-                        )
-                        .padding(.bottom, 10)
+                    Group {
+                        if let trip = row.associatedTrip {
+                            NavigationLink(destination: DetailView(trip: trip))
+                            {
+                                row
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            row
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .background(
+                        cardTheme()
+                    )
+                    .padding(.bottom, 10)
                 }
             }
         }
@@ -88,11 +96,20 @@ struct DetailView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
 
-            primaryRow!
-                .padding(.leading, 16)
-                .background(
-                    cardTheme()
-                )
+            Group {
+                if let trip = primaryRow?.associatedTrip {
+                    NavigationLink(destination: DetailView(trip: trip)) {
+                        primaryRow!
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    primaryRow!
+                }
+            }
+            .padding(.leading, 16)
+            .background(
+                cardTheme()
+            )
         }
         .padding(.bottom, 25)
     }
@@ -129,7 +146,9 @@ struct DetailView: View {
             if let detailText = self.detailText {
                 TextWithCopyView(text: detailText)
             }
-            statusCapsule
+            if statusBadge != nil {
+                statusCapsule
+            }
         }
         .padding(20)
         .frame(maxWidth: .infinity)
@@ -139,7 +158,7 @@ struct DetailView: View {
     }
 
     var statusCapsule: some View {
-        StatusCapsuleView(statusBadge: statusBadge)
+        StatusCapsuleView(statusBadge: statusBadge!)
     }
 
     var displayImage: some View {
@@ -163,7 +182,6 @@ struct DetailView: View {
     }
 }
 
-
 // MARK: Init
 extension DetailView {
     init(aircraft: Aircraft) {
@@ -173,7 +191,8 @@ extension DetailView {
             subTitleText: "Total trips - \(aircraft.totalTripsOperated)",
             detailText: aircraft.registrationNumber,
             statusBadge: .from(aircraftStatus: aircraft.currentStatus),
-            primaryRow: aircraft.currentTrip != nil ? ListRow(trip: aircraft.currentTrip!) : nil,
+            primaryRow: aircraft.currentTrip != nil
+                ? ListRow(trip: aircraft.currentTrip!) : nil,
             listData: aircraft.completedTrips.map { data in
                 ListRow(trip: data)
             }
@@ -202,18 +221,24 @@ extension DetailView {
         )
     }
 
-    init(staff: Staff) {
+    init(
+        staff: Staff,
+        onTapAction: (() -> Void)? = nil,
+        actionButtonTitle: String? = nil
+    ) {
         self.init(
             profileImage: staff.avatarImage,
             titleText: staff.name,
             subTitleText: staff.designation.rawValue,
             detailText: staff.email,
             statusBadge: .from(staffStatus: staff.currentStatus),
-            primaryRow: staff.currentTrip != nil ? ListRow(trip: staff.currentTrip!) : nil,
+            primaryRow: staff.currentTrip != nil
+                ? ListRow(trip: staff.currentTrip!) : nil,
             listData: staff.completedTrips.map { trip in
                 ListRow(trip: trip)
             },
-            actionButtonTitle: "Change Availability",
+            onActionButtonTapped: onTapAction,
+            actionButtonTitle: actionButtonTitle ?? "Change Availability",
             currentTaskTitle: "Current Assignment",
             listDataTitle: "Completed Flights"
         )
@@ -237,38 +262,83 @@ extension DetailView {
     }
 }
 
-
 #Preview("Staff") {
-        DetailView(
-            profileImage: Image(systemName: "person.crop.circle.fill"),
-            titleText: "Sarah Johnson",
-            subTitleText: "Senior Software Engineer",
-            detailText: "hp@gmail.com",
-            statusBadge: StatusBadge(label: "Active", backgroundColor: Color.onTime),
-            primaryRow: ListRow(
+    DetailView(
+        profileImage: Image(systemName: "person.crop.circle.fill"),
+        titleText: "Sarah Johnson",
+        subTitleText: "Senior Software Engineer",
+        detailText: "hp@gmail.com",
+        statusBadge: StatusBadge(
+            label: "Active",
+            backgroundColor: Color.onTime
+        ),
+        primaryRow: ListRow(
+            profileImage: nil,
+            title: "Implement User Authentication",
+            subtitle: "Create login and signup functionality with JWT tokens",
+            status: StatusBadge(
+                label: "Cancelled",
+                backgroundColor: Color.tripStatusColor(for: .cancelled)
+            )
+        ),
+        listData: [
+            ListRow(
                 profileImage: nil,
-                title: "Implement User Authentication",
-                subtitle: "Create login and signup functionality with JWT tokens",
-                status: StatusBadge(label: "Cancelled", backgroundColor: Color.tripStatusColor(for: .cancelled))
+                title: "Design Database Schema",
+                subtitle: "Complete"
             ),
-            listData: [
-                ListRow(profileImage: nil, title: "Design Database Schema", subtitle: "Complete"),
-                ListRow(profileImage: nil, title: "Design Database Schem", subtitle: "Complete"),
-                ListRow(profileImage: nil, title: "Design Database Sche", subtitle: "Complete"),
-                ListRow(profileImage: nil, title: "Design Database Sch", subtitle: "Complete"),
-                ListRow(profileImage: nil, title: "Design Database ", subtitle: "Complete"),
-                ListRow(profileImage: nil, title: "Design Databas", subtitle: "Complete")
-            ]
-        )
+            ListRow(
+                profileImage: nil,
+                title: "Design Database Schem",
+                subtitle: "Complete"
+            ),
+            ListRow(
+                profileImage: nil,
+                title: "Design Database Sche",
+                subtitle: "Complete"
+            ),
+            ListRow(
+                profileImage: nil,
+                title: "Design Database Sch",
+                subtitle: "Complete"
+            ),
+            ListRow(
+                profileImage: nil,
+                title: "Design Database ",
+                subtitle: "Complete"
+            ),
+            ListRow(
+                profileImage: nil,
+                title: "Design Databas",
+                subtitle: "Complete"
+            ),
+        ]
+    )
 }
 
 #Preview("Aircraft") {
     let mockRoute = Route(name: "New York to London")
     mockRoute.nodes = [
-        RouteNode(plannedArrivalOffsetMinutes: 120, airport: Airport(code: "JFK", name: "John F. Kennedy", city: "New York", country: "USA")),
-        RouteNode(plannedArrivalOffsetMinutes: 480, airport: Airport(code: "LHR", name: "London Heathrow", city: "London", country: "UK"))
+        RouteNode(
+            plannedArrivalOffsetMinutes: 120,
+            airport: Airport(
+                code: "JFK",
+                name: "John F. Kennedy",
+                city: "New York",
+                country: "USA"
+            )
+        ),
+        RouteNode(
+            plannedArrivalOffsetMinutes: 480,
+            airport: Airport(
+                code: "LHR",
+                name: "London Heathrow",
+                city: "London",
+                country: "UK"
+            )
+        ),
     ]
-    
+
     let mockTrip1 = Trip(
         staff: [],
         aircraft: Aircraft(
@@ -284,7 +354,7 @@ extension DetailView {
         isCancelled: false
     )
     mockTrip1.isCompleted = true
-    
+
     let mockTrip2 = Trip(
         staff: [],
         aircraft: Aircraft(
@@ -300,7 +370,7 @@ extension DetailView {
         isCancelled: false
     )
     mockTrip2.isCompleted = true
-    
+
     let mockCurrent = Trip(
         staff: [],
         aircraft: Aircraft(
@@ -315,7 +385,7 @@ extension DetailView {
         flightNumber: "AA-102",
         isCancelled: false
     )
-    
+
     let mockAircraft = Aircraft(
         registrationNumber: "N12345",
         type: "Boeing 737",
@@ -324,6 +394,11 @@ extension DetailView {
     )
     mockAircraft.trips = [mockTrip1, mockTrip2, mockCurrent]
     mockAircraft.currentTrip = mockCurrent
-    
+
     return DetailView(aircraft: mockAircraft)
+}
+
+#Preview {
+    return UserDetailView()
+        .environment(SessionManager.shared)
 }
