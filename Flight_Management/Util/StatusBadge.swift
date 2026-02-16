@@ -11,8 +11,8 @@ struct StatusCapsuleView: View {
                 .fill(statusBadge.backgroundColor.opacity(20))
                 .contrast(1)
                 .frame(maxWidth: 10, maxHeight: 10)
-                .padding(.leading, onlyIndicator ? 0 : 10)
                 .glassEffect(.regular)
+                .padding(.leading, onlyIndicator ? 0 : 10)
             
             if !onlyIndicator {
                 Text(statusBadge.label)
@@ -93,4 +93,8 @@ struct StatusBadge {
             )
         }
     }
+}
+
+#Preview {
+    StatusCapsuleView(statusBadge: StatusBadge(label: "Hello", backgroundColor: .red), onlyIndicator: false)
 }
