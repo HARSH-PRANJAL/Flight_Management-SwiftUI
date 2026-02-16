@@ -5,15 +5,11 @@ struct UpcomingTripCard: View {
     let trip: Trip
 
     private var departure: String {
-        let fmt = DateFormatter()
-        fmt.timeStyle = .short
-        return fmt.string(from: trip.scheduledDepartureTime)
+        return formatDate(trip.scheduledDepartureTime, format: "h:mm a")
     }
 
     private var arrival: String {
-        let fmt = DateFormatter()
-        fmt.timeStyle = .short
-        return fmt.string(from: trip.estimatedArrivalTime)
+        return formatDate(trip.estimatedArrivalTime, format: "h:mm a")
     }
 
     var body: some View {

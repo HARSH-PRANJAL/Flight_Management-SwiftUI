@@ -16,6 +16,7 @@ struct CrewStatusChartView: View {
                         innerRadius: .ratio(0.4),
                         angularInset: 1
                     )
+                    .foregroundStyle(by: .value("Status", label))
                     .foregroundStyle(color)
                 }
             }

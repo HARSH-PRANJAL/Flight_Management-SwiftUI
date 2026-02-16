@@ -13,13 +13,14 @@ struct TripsDonutChartView: View {
         if metaData != 0 {
             Chart {
                 ForEach(Array(data.enumerated()), id: \.offset) { _, tuple in
-                    let (label, value, _) = tuple
+                    let (label, value, color) = tuple
                     SectorMark(
                         angle: .value("Count", value),
                         innerRadius: .ratio(0.6),
                         angularInset: 1
                     )
                     .foregroundStyle(by: .value("Status", label))
+                    .foregroundStyle(color)
                     .annotation(position: .overlay) {
                         EmptyView()
                     }

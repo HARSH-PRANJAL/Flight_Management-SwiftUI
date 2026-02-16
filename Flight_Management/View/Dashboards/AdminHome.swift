@@ -11,38 +11,6 @@ struct AdminHome: View {
             Tab("Home", systemImage: "house") {
                 NavigationStack {
                     AdminDashboardView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Menu {
-                                    Button("Logout") {
-                                        session.logout()
-                                    }
-                                } label: {
-                                    Group {
-                                        if let user = session.user,
-                                            let imageData = user.profileImage,
-                                            let uiImage = UIImage(
-                                                data: imageData
-                                            )
-                                        {
-
-                                            Image(uiImage: uiImage)
-                                                .resizable()
-                                                .scaledToFill()
-                                        } else {
-                                            Image(systemName: "person.fill")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .padding(6)
-                                                .foregroundStyle(.gray)
-                                        }
-                                    }
-                                    .frame(width: 32, height: 32)
-                                    .clipShape(Circle())
-                                }
-                            }
-                        }
-                        .toolbarColorScheme(.none, for: .navigationBar)
                 }
             }
 
@@ -97,13 +65,6 @@ struct AdminHome: View {
 #Preview {
     let sampleImage = UIImage(systemName: "person.crop.circle.fill")!
     let sampleData = sampleImage.pngData()
-
-    SessionManager.shared.user = LoggedInUser(
-        id: "123",
-        name: "Hp",
-        role: "Admin",
-        profileImage: nil
-    )
     return AdminHome()
         .environment(SessionManager.shared)
 }

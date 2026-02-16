@@ -5,6 +5,7 @@ import SwiftData
 struct AdminDashboardView: View {
     @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips: [Trip]
     @Query(sort: \Staff.name, order: .forward) var staffs: [Staff]
+    @State private var showingTripList: Bool = false
     
     var body: some View {
         ZStack {
@@ -83,6 +84,14 @@ struct AdminDashboardView: View {
                             
                             UpcomingTripsScrollView(trips: upcomingTrips)
                                 .frame(height: 140)
+                            HStack {
+                                Spacer()
+                                Button("View more") {
+                                    showingTripList = true
+                                }
+                                .font(.subheadline)
+                                .tint(Color(.systemBlue))
+                            }
                         }
                         .padding(.horizontal, 16)
                     }
@@ -92,6 +101,9 @@ struct AdminDashboardView: View {
                 .padding(.top, 16)
             }
             .scrollIndicators(.hidden)
+        }
+        .sheet(isPresented: $showingTripList) {
+            TripListView(externalTrips: upcomingTrips)
         }
     }
 }
@@ -117,24 +129,26 @@ extension AdminDashboardView {
     private var tripsSummary: [(String, Int, Color)] {
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         let delayed = todayTrips.filter { $0.currentStatus == .delayed }.count
-        let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }.count
-        let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }.count
+        let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }
+            .count
+        let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
+            .count
         return [
-            ("On-Time", onTime, Color(red: 0.91, green: 0.47, blue: 0.38)),
-            ("Delayed", delayed, Color.green),
-            ("Cancelled", cancelled, Color.gray),
-            ("Scheduled", scheduled, Color.yellow)
+            ("On-Time", onTime, Color.tripStatusColor(for: .onTime)),
+            ("Delayed", delayed, Color.tripStatusColor(for: .delayed)),
+            ("Cancelled", cancelled, Color.tripStatusColor(for: .cancelled)),
+            ("Scheduled", scheduled, Color.tripStatusColor(for: .scheduled)),
         ]
     }
 
     private var crewStatusCounts: [(String, Int, Color)] {
-        let active = staffs.filter { $0.currentStatus == .available }.count
+        let available = staffs.filter { $0.currentStatus == .available }.count
         let onDuty = staffs.filter { $0.currentStatus == .onDuty }.count
-        let inactive = staffs.filter { $0.currentStatus == .unavailable }.count
+        let unavailable = staffs.filter { $0.currentStatus == .unavailable }.count
         return [
-            ("Active", active, Color(red: 0.91, green: 0.47, blue: 0.38)),
-            ("On Duty", onDuty, Color.teal),
-            ("Inactive", inactive, Color.blue)
+            ("Available", available, Color.staffStatusColor(for: .available)),
+            ("On Duty", onDuty, Color.staffStatusColor(for: .onDuty)),
+            ("Unavailable", unavailable, Color.staffStatusColor(for: .unavailable))
         ]
     }
 
@@ -142,7 +156,7 @@ extension AdminDashboardView {
         let now = Date()
         let until = Calendar.current.date(byAdding: .hour, value: 6, to: now) ?? now
         return trips.filter {
-            !$0.isCancelled && !$0.isCompleted && $0.scheduledDepartureTime >= now && $0.scheduledDepartureTime <= until
+            $0.currentStatus == .scheduled && !$0.isCancelled && !$0.isCompleted && $0.scheduledDepartureTime >= now && $0.scheduledDepartureTime <= until
         }
         .sorted { $0.scheduledDepartureTime < $1.scheduledDepartureTime }
     }
