@@ -235,6 +235,9 @@ class TripNodeStatus {
 
     // total delay from the source of the trip
     func totalDelayMinutes(tripStartTime: Date) -> Int {
+        if actualArrivalTime == nil && actualDepartureTime == nil {
+            return 0
+        }
         if actualArrivalTime == nil {
             // trip is started from source
             return Calendar.current.dateComponents(
