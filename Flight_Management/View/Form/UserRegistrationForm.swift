@@ -5,22 +5,12 @@ import SwiftUI
 struct UserRegistrationForm: View {
     @Environment(\.modelContext) var context
     @Environment(SessionManager.self) var session
+    @Environment(NotificationManager.self) var notificationManager
 
     @Binding var isPresented: Bool
-
-    // For edit mode
-    @State var editForm: Bool = false
+    
+    @State private var viewModel = UserRegistrationFormViewModel()
     @State var user: User? = nil
-
-    @State private var name: String = ""
-    @State private var password: String = ""
-    @State private var confirmPassword: String = ""
-    @State private var passwordFieldText: String = ""
-    @State private var selectedRole: UserRole? = nil
-
-    @State var selectedPhoto: PhotosPickerItem?
-    @State var photoData: Data?
-    @State var profilePreview: Image?
 
     @FocusState private var focusState: FormFocus?
 
@@ -29,42 +19,22 @@ struct UserRegistrationForm: View {
             ScrollView {
                 VStack(spacing: 16) {
                     ProfilePhotoField(
-                        selectedPhoto: $selectedPhoto,
-                        profilePreview: $profilePreview,
+                        selectedPhoto: $viewModel.selectedPhoto,
+                        profilePreview: $viewModel.profilePreview,
                         onChangeAction: { item in
-                            await processPhoto(item)
+                            await viewModel.processPhoto(item)
                         }
                     )
-                    userNameField.disabled(editForm)
-                    passwordField
-                    confirmPasswordField
-                    rolePicker.disabled(editForm)
+                    
+                    userNameFieldSection
+                    emailFieldSection
+                    passwordFieldSection
+                    confirmPasswordFieldSection
+                    roleFieldSection
 
                     registerButton
                 }
-                .onAppear {
-                    if editForm {
-                        password = ""
-                        confirmPassword = ""
-                        passwordFieldText = ""
-                    } else {
-                        password = user?.password ?? ""
-                        confirmPassword = user?.password ?? ""
-                        passwordFieldText = user?.password ?? ""
-                    }
-
-                    if let imageData = user?.profileImage,
-                        let uiImage = UIImage(data: imageData)
-                    {
-                        profilePreview = Image(uiImage: uiImage)
-                    }
-
-                    if let user = user {
-                        name = user.name
-                        selectedRole = user.role
-                    }
-                }
-                .navigationTitle("User registration")
+                .navigationTitle(viewModel.isEditMode ? "Edit Profile" : "User Registration")
                 .navigationBarTitleDisplayMode(.inline)
                 .padding()
                 Spacer()
@@ -73,126 +43,140 @@ struct UserRegistrationForm: View {
             .onAppear {
                 if session.isLoggedIn {
                     user = session.getUserFromDB(modelContext: context)
-                    name = user?.name ?? ""
-                    selectedRole = user?.role ?? nil
-                    
-                    if let photoData = user?.profileImage,
-                        let uiImage = UIImage(data: photoData)
-                    {
-                        profilePreview = Image(uiImage: uiImage)
+                    if let user = user {
+                        viewModel.userToEdit = user
+                        viewModel.isEditMode = true
+                        viewModel.loadUserData(user)
                     }
-
-                    editForm = true
                 }
             }
+        }
+    }
+    
+    private func loadUserData(_ user: User) {
+        viewModel.name = user.name
+        viewModel.email = user.email
+        viewModel.selectedRole = user.role
+        
+        if let imageData = user.profileImage,
+            let uiImage = UIImage(data: imageData)
+        {
+            viewModel.profilePreview = Image(uiImage: uiImage)
         }
     }
 }
 
-// MARK: UI
+// MARK: - Form Field Sections
 extension UserRegistrationForm {
-
-    var userNameField: some View {
-        FormInputField(
-            label: "Username",
-            placeholder: "Enter your name",
-            focus: .name,
-            hasError: false,
-            maxLength: 100,
-            allowedCharacter: {
-                $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "."
-            },
-            trimWhitespace: true,
-            text: $name,
-            focusedField: $focusState
-        )
-        .onChange(of: name) { oldValue, newValue in
-            if newValue.count > 100 {
-                name = String(newValue.prefix(100))
-                return
+    
+    private var userNameFieldSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Username",
+                placeholder: "Enter your name",
+                focus: .name,
+                hasError: viewModel.fieldErrors[.name] != nil,
+                maxLength: 100,
+                text: $viewModel.name,
+                focusedField: $focusState
+            )
+            .disabled(viewModel.isEditMode)
+            .onChange(of: viewModel.name) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .name)
             }
-
-            var allowed = newValue.allSatisfy {
-                $0.isLetter || $0.isNumber
-                    || $0.isWhitespace
-            }
-
-            if !allowed {
-                name = newValue.filter {
-                    $0.isLetter || $0.isNumber
-                        || $0.isWhitespace
-                }
-            }
-
-            allowed = newValue.allSatisfy(\.isWhitespace)
-            if allowed {
-                name = ""
-            }
+            
+            FormErrorMessage(error: viewModel.fieldErrors[.name])
         }
     }
 
-    var confirmPasswordField: some View {
-        FormInputField(
-            label: "Confirm Password",
-            placeholder: "Repeat your password",
-            focus: .confirmPassword,
-            hasError: !confirmPassword.isEmpty && confirmPassword != password,
-            maxLength: 100,
-            text: $confirmPassword,
-            focusedField: $focusState
-        )
-    }
-
-    var passwordField: some View {
-        FormInputField(
-            label: "Password",
-            placeholder: "Enter your password",
-            focus: .password,
-            hasError: false,
-            maxLength: 100,
-            text: $passwordFieldText,
-            focusedField: $focusState
-        )
-        .onAppear {
-            passwordFieldText = password
-        }
-        .onChange(of: passwordFieldText) { _, newValue in
-            if focusState == .password {
-                password = newValue
+    private var emailFieldSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Email",
+                placeholder: "Enter your email",
+                focus: .email,
+                hasError: viewModel.fieldErrors[.email] != nil,
+                maxLength: 255,
+                text: $viewModel.email,
+                focusedField: $focusState
+            )
+            .onChange(of: viewModel.email) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .email)
             }
-        }
-        .onChange(of: focusState) { _, newVal in
-            if newVal == .password {
-                passwordFieldText = password
-            } else {
-                passwordFieldText = String(
-                    repeating: "*",
-                    count: password.count
-                )
-            }
+            
+            FormErrorMessage(error: viewModel.fieldErrors[.email])
         }
     }
 
-    var rolePicker: some View {
-        FormPickerField<UserRole>(
-            label: "Role",
-            placeholder: "User role",
-            focus: .role,
-            hasError: false,
-            selection: $selectedRole,
-            focusedField: $focusState
-        )
+    private var passwordFieldSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Password",
+                placeholder: "Enter your password",
+                focus: .password,
+                hasError: viewModel.fieldErrors[.password] != nil,
+                maxLength: 100,
+                text: $viewModel.password,
+                focusedField: $focusState
+            )
+            .onChange(of: viewModel.password) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .password)
+            }
+            
+            FormErrorMessage(error: viewModel.fieldErrors[.password])
+        }
+    }
+
+    private var confirmPasswordFieldSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Confirm Password",
+                placeholder: "Repeat your password",
+                focus: .confirmPassword,
+                hasError: viewModel.fieldErrors[.confirmPassword] != nil,
+                maxLength: 100,
+                text: $viewModel.confirmPassword,
+                focusedField: $focusState
+            )
+            .onChange(of: viewModel.confirmPassword) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .confirmPassword)
+            }
+            
+            FormErrorMessage(error: viewModel.fieldErrors[.confirmPassword])
+        }
+    }
+
+    private var roleFieldSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            FormPickerField<UserRole>(
+                label: "Role",
+                placeholder: "User role",
+                focus: .role,
+                hasError: viewModel.fieldErrors[.role] != nil,
+                selection: $viewModel.selectedRole,
+                focusedField: $focusState
+            )
+            .disabled(viewModel.isEditMode)
+            .onChange(of: viewModel.selectedRole) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .role)
+            }
+            
+            FormErrorMessage(error: viewModel.fieldErrors[.role])
+        }
     }
 
     var registerButton: some View {
         Button(action: {
-            if editForm {
-                handleUpdateUser()
-            } else {
-                handleRegister()
+            if viewModel.validateAll() {
+                if viewModel.isEditMode {
+                    handleUpdateUser()
+                } else {
+                    handleRegister()
+                }
             }
+            viewModel.submissionState = viewModel.fieldErrors.isEmpty ? .success : .error
         }) {
-            Text(editForm ? "Update" : "Register")
+            Text(viewModel.isEditMode ? "Update" : "Register")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -209,61 +193,63 @@ extension UserRegistrationForm {
     }
 
     private var isFormValid: Bool {
+        let hasValidName = !viewModel.name.isEmpty
+        let hasValidEmail = !viewModel.email.isEmpty
+        let hasValidRole = viewModel.selectedRole != nil
+        
         let hasValidPasswordForCreation =
-            !password.isEmpty && password == confirmPassword
+            !viewModel.password.isEmpty && viewModel.password == viewModel.confirmPassword
         let hasValidPasswordForEdit =
-            password.isEmpty
-            || (password == confirmPassword && !password.isEmpty)
+            viewModel.password.isEmpty
+            || (viewModel.password == viewModel.confirmPassword && !viewModel.password.isEmpty)
 
-        if editForm {
-            return hasValidPasswordForEdit
+        if viewModel.isEditMode {
+            return hasValidEmail && hasValidPasswordForEdit && hasValidRole
         } else {
-            return !name.isEmpty && hasValidPasswordForCreation
-                && selectedRole != nil
+            return hasValidName && hasValidEmail && hasValidPasswordForCreation && hasValidRole
         }
     }
 }
 
-//MARK: Util
+//MARK: Handlers
 extension UserRegistrationForm {
-    func processPhoto(_ item: PhotosPickerItem) async {
-        do {
-            guard let data = try await item.loadTransferable(type: Data.self)
-            else { return }
-            profilePreview = handleImageData(data, photo: &(photoData))
-        } catch {
-            print("Photo loading failed: \(error.localizedDescription)")
-        }
-    }
 
     private func handleRegister() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let newUser = User(
             name: trimmedName,
-            password: password,
-            role: selectedRole!,
-            profileImage: photoData
+            email: trimmedEmail,
+            password: viewModel.password,
+            role: viewModel.selectedRole!,
+            profileImage: viewModel.photoData
         )
         context.insert(newUser)
 
         do {
             try context.save()
-            withAnimation(.easeOut) {
-                isPresented = false
+            notificationManager.showSuccess("User registered successfully")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation(.easeOut) {
+                    isPresented = false
+                }
             }
         } catch {
-            //            errorMessage = "Unable to save user."
+            notificationManager.showError("Failed to register user. Please try again.")
         }
     }
 
     private func handleUpdateUser() {
-        guard let targetUser = user else { return }
+        guard let targetUser = viewModel.userToEdit else { return }
 
-        if !password.isEmpty {
-            targetUser.password = password
+        let trimmedEmail = viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        targetUser.email = trimmedEmail
+
+        if !viewModel.password.isEmpty {
+            targetUser.password = viewModel.password
         }
-        if let newPhotoData = photoData {
+        if let newPhotoData = viewModel.photoData {
             targetUser.profileImage = newPhotoData
         }
 
@@ -272,11 +258,14 @@ extension UserRegistrationForm {
             if session.user?.id == targetUser.id.uuidString {
                 session.loginUser(targetUser)
             }
-            withAnimation(.easeOut) {
-                isPresented = false
+            notificationManager.showSuccess("Profile updated successfully")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation(.easeOut) {
+                    isPresented = false
+                }
             }
         } catch {
-            print("Failed to update user: \(error)")
+            notificationManager.showError("Failed to update profile. Please try again.")
         }
     }
 }
@@ -285,4 +274,5 @@ extension UserRegistrationForm {
     @Previewable @State var shown = true
     return UserRegistrationForm(isPresented: $shown)
         .modelContainer(for: User.self, inMemory: true)
+        .environment(SessionManager.shared)
 }

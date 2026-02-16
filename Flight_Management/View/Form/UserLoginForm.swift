@@ -4,8 +4,9 @@ import SwiftUI
 struct UserLoginForm: View {
     @Environment(\.modelContext) var context
     @Environment(SessionManager.self) private var session
+    @Environment(NotificationManager.self) var notificationManager
 
-    @State private var name: String = ""
+    @State private var email: String = ""
     @State private var password: String = ""
     @State private var showRegistration = false
     @State private var errorMessage: String? = nil
@@ -27,49 +28,37 @@ struct UserLoginForm: View {
                             .padding(.top, 32)
                         VStack(alignment: .leading, spacing: 8) {
                             FormInputField(
-                                label: "Username",
-                                placeholder: "Enter your name",
-                                focus: .name,
-                                hasError: false,
-                                text: $name,
+                                label: "Email",
+                                placeholder: "Enter your email",
+                                focus: .email,
+                                hasError: errorMessage != nil,
+                                maxLength: 255,
+                                text: $email,
                                 focusedField: $focusState
                             )
-                            .onChange(of: name) { oldValue, newValue in
-                                if newValue.count > 100 {
-                                    name = String(newValue.prefix(100))
+                            .onChange(of: email) { oldValue, newValue in
+                                if newValue.count > 255 {
+                                    email = String(newValue.prefix(255))
                                     return
                                 }
-
-                                var allowed = newValue.allSatisfy {
-                                    $0.isLetter || $0.isNumber
-                                        || $0.isWhitespace
-                                }
-
-                                if !allowed {
-                                    name = newValue.filter {
-                                        $0.isLetter || $0.isNumber
-                                            || $0.isWhitespace
-                                    }
-                                }
-
-                                allowed = newValue.allSatisfy(\.isWhitespace)
-                                if allowed {
-                                    name = ""
-                                }
+                                errorMessage = nil
                             }
+                            FormErrorMessage(error: errorMessage)
 
                             FormInputField(
                                 label: "Password",
                                 placeholder: "Enter your password",
                                 focus: .password,
-                                hasError: false,
+                                hasError: errorMessage != nil,
+                                maxLength: 100,
                                 text: $password,
                                 focusedField: $focusState
                             )
                             .onChange(of: password) { oldValue, newValue in
-                                if newValue.count > 255 {
-                                    password = String(newValue.prefix(255))
+                                if newValue.count > 100 {
+                                    password = String(newValue.prefix(100))
                                 }
+                                errorMessage = nil
                             }
                         }
                         .padding()
@@ -81,13 +70,13 @@ struct UserLoginForm: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(
-                                    name == "" || password == ""
+                                    email == "" || password == ""
                                         ? Color(.systemBlue).opacity(0.7)
                                         : Color(.systemBlue)
                                 )
                                 .cornerRadius(12)
                         }
-                        .disabled(name == "" || password == "")
+                        .disabled(email == "" || password == "")
                         .padding(.horizontal, 16)
                         .padding(.top, 24)
 
@@ -137,17 +126,15 @@ struct UserLoginForm: View {
     private func handleLogin() {
         errorMessage = nil
 
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let matched = users.first(where: {
-            $0.name == trimmedName && $0.password == password
+            $0.email == trimmedEmail && $0.password == password
         }) {
             session.loginUser(matched)
-            if matched.profileImage == nil {
-                print("No profile image")
-            }
+            notificationManager.showSuccess("Logged in as \(matched.name)")
         } else {
-            errorMessage = "Invalid credentials"
+            notificationManager.showError("Invalid email or password")
         }
     }
 }
