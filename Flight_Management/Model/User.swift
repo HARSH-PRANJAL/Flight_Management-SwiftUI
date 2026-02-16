@@ -1,7 +1,7 @@
 import Foundation
+import Observation
 import SwiftData
 import SwiftUI
-import Observation
 
 @Model
 class User {
@@ -13,7 +13,12 @@ class User {
     var role: UserRole
     var profileImage: Data?
 
-    init(name: String, password: String, role: UserRole = .crew, profileImage: Data? = nil) {
+    init(
+        name: String,
+        password: String,
+        role: UserRole = .crew,
+        profileImage: Data? = nil
+    ) {
         self.id = UUID()
         self.name = name
         self.password = password
@@ -50,7 +55,11 @@ final class SessionManager {
 
     private init() {
         if let data = UserDefaults.standard.data(forKey: "loggedInUser"),
-           let savedUser = try? JSONDecoder().decode(LoggedInUser.self, from: data) {
+            let savedUser = try? JSONDecoder().decode(
+                LoggedInUser.self,
+                from: data
+            )
+        {
             user = savedUser
         }
     }
@@ -58,13 +67,41 @@ final class SessionManager {
     func logout() {
         user = nil
     }
-    
+
     func loginUser(_ matched: User) {
-            user = LoggedInUser(
-                id: matched.id.uuidString,
-                name: matched.name,
-                role: matched.role.rawValue,
-                profileImage: matched.profileImage
-            )
+        user = LoggedInUser(
+            id: matched.id.uuidString,
+            name: matched.name,
+            role: matched.role.rawValue,
+            profileImage: matched.profileImage
+        )
+    }
+
+    func getUserFromDB(modelContext: ModelContext) -> User? {
+        if !self.isLoggedIn {
+            return nil
         }
+
+        guard let userIdString = user?.id,
+            let userUUID = UUID(uuidString: userIdString)
+        else { return nil }
+
+        do {
+            let predicate = #Predicate<User> { $0.id == userUUID }
+            let descriptor = FetchDescriptor<User>(
+                predicate: predicate,
+                sortBy: []
+            )
+            let results = try modelContext.fetch(descriptor)
+
+            if let fetchedUser = results.first {
+                print(fetchedUser.name)
+                return fetchedUser
+            }
+        } catch {
+            print("Failed to fetch user: \(error)")
+        }
+        
+        return nil
+    }
 }

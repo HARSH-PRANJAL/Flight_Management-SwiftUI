@@ -4,19 +4,23 @@ import SwiftUI
 
 struct UserRegistrationForm: View {
     @Environment(\.modelContext) var context
+    @Environment(SessionManager.self) var session
+
     @Binding var isPresented: Bool
+
+    // For edit mode
+    @State var editForm: Bool = false
+    @State var user: User? = nil
 
     @State private var name: String = ""
     @State private var password: String = ""
     @State private var confirmPassword: String = ""
     @State private var passwordFieldText: String = ""
     @State private var selectedRole: UserRole? = nil
-    
+
     @State var selectedPhoto: PhotosPickerItem?
     @State var photoData: Data?
     @State var profilePreview: Image?
-    
-    
 
     @FocusState private var focusState: FormFocus?
 
@@ -31,12 +35,34 @@ struct UserRegistrationForm: View {
                             await processPhoto(item)
                         }
                     )
-                    userNameField
+                    userNameField.disabled(editForm)
                     passwordField
                     confirmPasswordField
-                    rolePicker
-                    
+                    rolePicker.disabled(editForm)
+
                     registerButton
+                }
+                .onAppear {
+                    if editForm {
+                        password = ""
+                        confirmPassword = ""
+                        passwordFieldText = ""
+                    } else {
+                        password = user?.password ?? ""
+                        confirmPassword = user?.password ?? ""
+                        passwordFieldText = user?.password ?? ""
+                    }
+
+                    if let imageData = user?.profileImage,
+                        let uiImage = UIImage(data: imageData)
+                    {
+                        profilePreview = Image(uiImage: uiImage)
+                    }
+
+                    if let user = user {
+                        name = user.name
+                        selectedRole = user.role
+                    }
                 }
                 .navigationTitle("User registration")
                 .navigationBarTitleDisplayMode(.inline)
@@ -44,6 +70,14 @@ struct UserRegistrationForm: View {
                 Spacer()
             }
             .scrollIndicators(.hidden)
+            .onAppear {
+                if session.isLoggedIn {
+                    user = session.getUserFromDB(modelContext: context)
+                    name = user?.name ?? ""
+                    selectedRole = user?.role ?? nil
+                    editForm = true
+                }
+            }
         }
     }
 }
@@ -89,7 +123,7 @@ extension UserRegistrationForm {
             }
         }
     }
-    
+
     var confirmPasswordField: some View {
         FormInputField(
             label: "Confirm Password",
@@ -124,7 +158,10 @@ extension UserRegistrationForm {
             if newVal == .password {
                 passwordFieldText = password
             } else {
-                passwordFieldText = String(repeating: "*", count: password.count)
+                passwordFieldText = String(
+                    repeating: "*",
+                    count: password.count
+                )
             }
         }
     }
@@ -141,22 +178,42 @@ extension UserRegistrationForm {
     }
 
     var registerButton: some View {
-        Button(action: handleRegister) {
-            Text("Register")
+        Button(action: {
+            if editForm {
+                handleUpdateUser()
+            } else {
+                handleRegister()
+            }
+        }) {
+            Text(editForm ? "Update" : "Register")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(
-                    name == "" || password == ""
-                        ? Color(.systemGreen).opacity(0.7)
-                        : Color(.systemGreen)
+                    isFormValid
+                        ? Color(.systemGreen) : Color(.systemGreen).opacity(0.7)
                 )
                 .cornerRadius(12)
         }
-        .disabled(name == "" || password == "" || selectedRole == nil || password != confirmPassword)
+        .disabled(!isFormValid)
         .padding(.horizontal, 16)
         .padding(.top, 24)
+    }
+
+    private var isFormValid: Bool {
+        let hasValidPasswordForCreation =
+            !password.isEmpty && password == confirmPassword
+        let hasValidPasswordForEdit =
+            password.isEmpty
+            || (password == confirmPassword && !password.isEmpty)
+
+        if editForm {
+            return hasValidPasswordForEdit
+        } else {
+            return !name.isEmpty && hasValidPasswordForCreation
+                && selectedRole != nil
+        }
     }
 }
 
@@ -186,10 +243,33 @@ extension UserRegistrationForm {
         do {
             try context.save()
             withAnimation(.easeOut) {
-                isPresented.toggle()
+                isPresented = false
             }
         } catch {
-//            errorMessage = "Unable to save user."
+            //            errorMessage = "Unable to save user."
+        }
+    }
+
+    private func handleUpdateUser() {
+        guard let targetUser = user else { return }
+
+        if !password.isEmpty {
+            targetUser.password = password
+        }
+        if let newPhotoData = photoData {
+            targetUser.profileImage = newPhotoData
+        }
+
+        do {
+            try context.save()
+            if session.user?.id == targetUser.id.uuidString {
+                session.loginUser(targetUser)
+            }
+            withAnimation(.easeOut) {
+                isPresented = false
+            }
+        } catch {
+            print("Failed to update user: \(error)")
         }
     }
 }

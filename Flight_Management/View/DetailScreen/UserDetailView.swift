@@ -3,18 +3,18 @@ import SwiftUI
 
 struct UserDetailView: View {
     @Environment(SessionManager.self) var session
-    @Environment(\.modelContext) var modelContext
+    @Environment(\.modelContext) var context
     
     @State var isEditPageShowing: Bool = false
-    @State var userToEdit: User? = nil
+    @State var user: User? = nil
     
     var profileImage: Image? {
-        if let user = session.user,
+        if let user = user,
             let imageData = user.profileImage,
             let uiImage = UIImage(data: imageData) {
             return Image(uiImage: uiImage)
         } else {
-            return nil
+            return Image(systemName: "person")
         }
     }
 
@@ -25,12 +25,12 @@ struct UserDetailView: View {
 
             DetailView(
                 profileImage: profileImage,
-                titleText: session.user?.name ?? "Unknown User",
-                subTitleText: session.user?.role ?? "Unknown Designation",
+                titleText: user?.name ?? "Unknown User",
+                subTitleText: user?.role.rawValue ?? "Unknown Designation",
                 statusBadge: nil,
                 listData: [],
                 onActionButtonTapped: {
-                    handleEditButtonTapped()
+                    isEditPageShowing.toggle()
                 },
                 actionButtonTitle: "Update Profile"
             )
@@ -39,31 +39,15 @@ struct UserDetailView: View {
             .scrollDisabled(true)
             .toolbar(.hidden, for: .bottomBar)
         }
-        
         .sheet(isPresented: $isEditPageShowing) {
             UserRegistrationForm(
-                isPresented: $isEditPageShowing,
-                editForm: true,
-                user: userToEdit
+                isPresented: $isEditPageShowing
             )
         }
-    }
-    
-    private func handleEditButtonTapped() {
-        guard let userIdString = session.user?.id,
-              let userUUID = UUID(uuidString: userIdString) else { return }
-
-        do {
-            let predicate = #Predicate<User> { $0.id == userUUID }
-            let descriptor = FetchDescriptor<User>(predicate: predicate, sortBy: [])
-            let results = try modelContext.fetch(descriptor)
-
-            if let fetchedUser = results.first {
-                userToEdit = fetchedUser
-                isEditPageShowing = true
+        .task {
+            if session.isLoggedIn == true {
+                user = session.getUserFromDB(modelContext: context)
             }
-        } catch {
-            print("Failed to fetch user: \(error)")
         }
     }
 }
