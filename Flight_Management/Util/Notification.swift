@@ -14,7 +14,7 @@ struct SuccessOverlay: View {
         }
         .padding()
         .clipShape(Capsule())
-        .glassEffect(.regular.tint(Color(.systemGreen).opacity(0.25)))
+        .glassEffect(.clear.tint(Color(.systemGreen).opacity(0.05)))
         .padding(.top, 16)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
@@ -34,7 +34,7 @@ struct ErrorOverlay: View {
         }
         .padding()
         .clipShape(Capsule())
-        .glassEffect(.regular.tint(Color(.systemRed).opacity(0.25)))
+        .glassEffect(.clear.tint(Color(.systemRed).opacity(0.05)))
         .padding(.top, 16)
         .transition(.move(edge: .top).combined(with: .opacity))
     }

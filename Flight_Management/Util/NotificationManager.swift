@@ -25,7 +25,7 @@ final class NotificationManager {
     
     private func scheduleDismissal() {
         dismissTimer?.invalidate()
-        dismissTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+        dismissTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { [weak self] _ in
             self?.dismiss()
         }
     }
@@ -33,7 +33,6 @@ final class NotificationManager {
 
 struct NotificationView: View {
     let notificationType: NotificationType
-    @Environment(NotificationManager.self) var notificationManager
     
     var body: some View {
         switch notificationType {
