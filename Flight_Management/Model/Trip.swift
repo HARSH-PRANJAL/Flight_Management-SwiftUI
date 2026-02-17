@@ -63,7 +63,8 @@ class Trip {
         } else if isCancelled {
             // if flight is cancelled midway between airport A and B
             if nodeStatuses.last!.actualArrivalTime == nil {
-                if let totalTime = nodeStatuses[nodeStatuses.count - 1].actualDepartureTime
+                if let totalTime = nodeStatuses[nodeStatuses.count - 1]
+                    .actualDepartureTime
                 {
                     return totalTime
                 } else {
@@ -129,7 +130,7 @@ extension Trip {
         if isCancelled {
             return
         }
-        
+
         // can not arrive on source trip node
         if !nodeStatuses.isEmpty {
             nodeStatuses.last!.actualArrivalTime = arrivalTime
@@ -149,7 +150,7 @@ extension Trip {
         if isCancelled {
             return
         }
-        
+
         if nodeStatuses.isEmpty {
             startTrip(departureTime: departureTime)
         } else {
@@ -200,7 +201,7 @@ extension Trip {
         if aircraft.currentTrip?.id == self.id {
             aircraft.currentTrip = nil
         }
-        
+
         // if trip has started then this is the last completed trip for the aircraft
         if hasStarted {
             aircraft.lastCompletedTrip = self
@@ -216,10 +217,11 @@ extension Trip {
             // if trip has started then this is the last completed trip for the staff
             if hasStarted {
                 staff.lastCompletedTrip = self
+                staff.currentTrip = nil
             }
             staff.updateNextScheduledTrip(after: self)
         }
-        
+
         isCancelled = true
     }
 }
@@ -295,7 +297,7 @@ class Aircraft {
             $0.currentStatus == .scheduled
         })
     }
-    
+
     var completedTrips: [Trip] {
         return trips.filter({
             $0.isCompleted == true
@@ -382,7 +384,7 @@ class Staff {
     var profileImage: Data?
     var designation: StaffRole
     var dob: Date
-    
+
     var lastCompletedTrip: Trip? = nil
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
@@ -422,18 +424,26 @@ class Staff {
             }
         }
     }
-    
+
     var avatarImage: Image {
         if let data = profileImage,
-           let uiImage = UIImage(data: data) {
+            let uiImage = UIImage(data: data)
+        {
             return Image(uiImage: uiImage)
         }
-        
+
         return Image(systemName: "person.crop.circle.fill")
             .symbolRenderingMode(.monochrome)
     }
 
-    init(name: String, designation: StaffRole, gender: Gender, email: String, profileImage: Data? = nil, dob: Date) {
+    init(
+        name: String,
+        designation: StaffRole,
+        gender: Gender,
+        email: String,
+        profileImage: Data? = nil,
+        dob: Date
+    ) {
         self.id = UUID()
         self.name = name
         self.designation = designation
@@ -451,6 +461,7 @@ class Staff {
     }
 
     func updateLastAndNextScheduledTrip(completedTrip: Trip) {
+        currentTrip = nil
         lastCompletedTrip = completedTrip
         updateNextScheduledTrip(after: completedTrip)
     }
@@ -465,5 +476,16 @@ class Staff {
                     && $0.scheduledDepartureTime > referenceTime
             }
             .min(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
+    }
+
+    func markUnavailable() {
+
+        for trip in self.scheduledTrips {
+            trip.cancel()
+        }
+            
+        self.lastCompletedTrip = self.currentTrip
+        self.currentTrip = nil
+        self.isMarkedUnavailable = true
     }
 }
