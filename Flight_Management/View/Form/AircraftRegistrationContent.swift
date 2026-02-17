@@ -2,9 +2,10 @@ import SwiftData
 import SwiftUI
 
 struct AircraftRegistrationContent: View {
-    @State var viewModel: AircraftRegistrationFormViewModel
+    @State var viewModel: AircraftRegistrationFormViewModel =
+        AircraftRegistrationFormViewModel()
     @State private var showConfirmCloseAlert = false
-    
+
     @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
@@ -49,10 +50,16 @@ struct AircraftRegistrationContent: View {
             }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
         }
         .interactiveDismissDisabled(hasChanges)
     }
+}
+
+// MARK: UI
+extension AircraftRegistrationContent {
 
     private var registrationNumberFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -181,12 +188,14 @@ struct AircraftRegistrationContent: View {
         .padding(.top, 16)
         .padding(.bottom, 30)
     }
+}
 
+// MARK: Util
+extension AircraftRegistrationContent {
     private var hasChanges: Bool {
-        return !viewModel.registrationNumber.isEmpty ||
-               !viewModel.type.isEmpty ||
-               !viewModel.seatingCapacity.isEmpty ||
-               !viewModel.minimumStaffRequired.values.allSatisfy { $0.isEmpty }
+        return !viewModel.registrationNumber.isEmpty || !viewModel.type.isEmpty
+            || !viewModel.seatingCapacity.isEmpty
+            || !viewModel.minimumStaffRequired.values.allSatisfy { $0.isEmpty }
     }
 
     private func handleRegistration() {
@@ -194,7 +203,9 @@ struct AircraftRegistrationContent: View {
             notificationManager.showSuccess("Aircraft registered successfully")
             isPresented = false
         } else {
-            notificationManager.showError("Failed to register aircraft. Please try again.")
+            notificationManager.showError(
+                "Failed to register aircraft. Please try again."
+            )
         }
     }
 }

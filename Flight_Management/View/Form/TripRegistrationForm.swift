@@ -2,9 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct TripRegistrationForm: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) var context
-
     @State private var viewModel: TripRegistrationFormViewModel
     
     var isPresented: Binding<Bool>?

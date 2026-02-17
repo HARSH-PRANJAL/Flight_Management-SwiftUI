@@ -38,7 +38,7 @@ struct RouteRegistrationContent: View {
             .sheet(
                 isPresented: $isAirportRegistrationFormDisplayed,
                 content: {
-                    AirportRegistrationForm()
+                    AirportRegistrationForm(isPresented: $isAirportRegistrationFormDisplayed)
                 }
             )
         }

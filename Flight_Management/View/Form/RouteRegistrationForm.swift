@@ -2,9 +2,6 @@ import SwiftData
 import SwiftUI
 
 struct RouteRegistrationForm: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) var context
-
     @State private var viewModel: RouteRegistrationFormViewModel
     
     var isPresented: Binding<Bool>?

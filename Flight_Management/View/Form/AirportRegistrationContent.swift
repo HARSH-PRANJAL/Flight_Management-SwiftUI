@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct AirportRegistrationContent: View {
-    @State var viewModel: AirportRegistrationFormViewModel
+    @State var viewModel: AirportRegistrationFormViewModel =
+        AirportRegistrationFormViewModel()
     @State private var showConfirmCloseAlert = false
 
     @Binding var isPresented: Bool
@@ -50,7 +51,9 @@ struct AirportRegistrationContent: View {
             }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
         }
     }
 
@@ -155,10 +158,8 @@ struct AirportRegistrationContent: View {
     }
 
     private var hasChanges: Bool {
-        return !viewModel.code.isEmpty ||
-               !viewModel.name.isEmpty ||
-               !viewModel.city.isEmpty ||
-               !viewModel.country.isEmpty
+        return !viewModel.code.isEmpty || !viewModel.name.isEmpty
+            || !viewModel.city.isEmpty || !viewModel.country.isEmpty
     }
 
     private func handleRegistration() {

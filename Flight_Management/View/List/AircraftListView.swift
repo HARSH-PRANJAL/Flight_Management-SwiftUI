@@ -43,7 +43,7 @@ struct AircraftListView: View {
             .searchToolbarBehavior(.minimize)
             .sheet(isPresented: $showAircraftRegistration) {
                 NavigationStack {
-                    AircraftRegistrationForm(isSheetVisible: $showAircraftRegistration)
+                    AircraftRegistrationContent(isPresented: $showAircraftRegistration)
                 }
             }
         }
