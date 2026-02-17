@@ -39,8 +39,8 @@ struct CrewStatusChartView: View {
 struct CrewStatusChartView_Previews: PreviewProvider {
     static var previews: some View {
         CrewStatusChartView(data: [
-            ("Active", 10, .orange), ("On Duty", 8, .teal),
-            ("Inactive", 4, .blue),
+            ("Active", 100, Color.staffStatusColor(for: .available)), ("On Duty", 8, Color.staffStatusColor(for: .onDuty)),
+            ("Inactive", 4,Color.staffStatusColor(for: .unavailable)),
         ])
         .padding()
         .previewLayout(.sizeThatFits)

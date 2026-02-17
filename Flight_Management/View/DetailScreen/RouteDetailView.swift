@@ -8,19 +8,22 @@ struct RouteDetailView: View {
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
 
-            VStack {
-                primaryCard
-                tripDetails
-                
-                if currentTrip.count != 0 {
-                    currentTripCards
-                } else {
-                    Text("No trips started yet.")
-                        .font(.largeTitle)
-                        .fontWeight(.ultraLight)
-                        .foregroundStyle(Color(.systemGray5))
+            ScrollView {
+                VStack {
+                    primaryCard
+                    tripDetails
+                    
+                    if currentTrip.count != 0 {
+                        currentTripCards
+                    } else {
+                        Text("No trips started yet.")
+                            .font(.largeTitle)
+                            .fontWeight(.ultraLight)
+                            .foregroundStyle(Color(.systemGray5))
+                    }
                 }
             }
+            .scrollIndicators(.hidden)
 
         }
     }

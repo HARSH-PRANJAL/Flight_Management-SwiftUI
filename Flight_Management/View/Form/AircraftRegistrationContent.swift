@@ -3,7 +3,8 @@ import SwiftUI
 
 struct AircraftRegistrationContent: View {
     @State var viewModel: AircraftRegistrationFormViewModel
-
+    
+    @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @Environment(NotificationManager.self) var notificationManager
@@ -161,9 +162,7 @@ struct AircraftRegistrationContent: View {
     private func handleRegistration() {
         if viewModel.saveAircraft(to: context) {
             notificationManager.showSuccess("Aircraft registered successfully")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                dismiss()
-            }
+            isPresented = false
         } else {
             notificationManager.showError("Failed to register aircraft. Please try again.")
         }
@@ -173,7 +172,8 @@ struct AircraftRegistrationContent: View {
 #Preview {
     NavigationStack {
         AircraftRegistrationContent(
-            viewModel: AircraftRegistrationFormViewModel()
+            viewModel: AircraftRegistrationFormViewModel(),
+            isPresented: .constant(false)
         )
         .modelContainer(for: Aircraft.self, inMemory: true)
     }

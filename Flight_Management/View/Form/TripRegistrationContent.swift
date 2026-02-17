@@ -269,10 +269,9 @@ extension TripRegistrationContent {
 
         do {
             context.insert(newTrip)
-            // also attach to aircraft and staff collections
             aircraft.trips.append(newTrip)
-            for s in selectedStaff {
-                s.trips.append(newTrip)
+            for staff in selectedStaff {
+                staff.trips.append(newTrip)
             }
             try context.save()
             notificationManager.showSuccess("Trip scheduled successfully")
