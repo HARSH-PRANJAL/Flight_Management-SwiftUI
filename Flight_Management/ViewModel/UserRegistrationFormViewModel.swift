@@ -1,4 +1,5 @@
 import PhotosUI
+import SwiftData
 import SwiftUI
 
 @Observable
@@ -8,32 +9,27 @@ final class UserRegistrationFormViewModel {
     var password: String = ""
     var confirmPassword: String = ""
     var selectedRole: UserRole? = nil
-    
+
     var selectedPhoto: PhotosPickerItem?
     var photoData: Data?
     var profilePreview: Image?
-    
+
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
-    
+
     var isEditMode: Bool = false
     var userToEdit: User?
 
     init() {}
-    
-    init(user: User) {
-        self.isEditMode = true
-        self.userToEdit = user
-        self.loadUserData(user)
-    }
-    
-    func loadUserData(_ user: User) {
+
+    func loadUserData(_ user: User) async {
         self.name = user.name
         self.email = user.email
         self.selectedRole = user.role
-        
+
         if let imageData = user.profileImage,
-           let uiImage = UIImage(data: imageData) {
+            let uiImage = UIImage(data: imageData)
+        {
             self.profilePreview = Image(uiImage: uiImage)
         }
     }
@@ -48,7 +44,7 @@ final class UserRegistrationFormViewModel {
         profilePreview = nil
         fieldErrors = [:]
     }
-    
+
     func processPhoto(_ item: PhotosPickerItem) async {
         do {
             guard let data = try await item.loadTransferable(type: Data.self)
@@ -82,13 +78,42 @@ extension UserRegistrationFormViewModel {
         return true
     }
 
+    func checkEmailUniqueness(context: ModelContext) -> Bool {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        let editingID = userToEdit?.id
+
+        do {
+            let predicate = #Predicate<User> { user in
+                user.email == trimmedEmail
+                    && (editingID == nil || user.id != editingID!)
+            }
+
+            let descriptor = FetchDescriptor<User>(predicate: predicate)
+            let results = try context.fetch(descriptor)
+
+            if !results.isEmpty {
+                fieldErrors[.email] = "This email is already registered."
+                return false
+            }
+
+            fieldErrors.removeValue(forKey: .email)
+            return true
+
+        } catch {
+            fieldErrors[.email] = "Error checking email uniqueness."
+            return false
+        }
+    }
+
     func validatePassword() -> Bool {
         // For edit mode, password is optional
         if isEditMode && password.isEmpty {
             fieldErrors.removeValue(forKey: .password)
             return true
         }
-        
+
         let result = FormValidators.validatePassword(password)
         if !result.isValid {
             fieldErrors[.password] = result.error
@@ -104,8 +129,11 @@ extension UserRegistrationFormViewModel {
             fieldErrors.removeValue(forKey: .confirmPassword)
             return true
         }
-        
-        let result = FormValidators.validatePasswordMatch(password, confirmPassword)
+
+        let result = FormValidators.validatePasswordMatch(
+            password,
+            confirmPassword
+        )
         if !result.isValid {
             fieldErrors[.confirmPassword] = result.error
             return false

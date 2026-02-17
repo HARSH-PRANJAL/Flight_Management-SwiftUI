@@ -16,107 +16,108 @@ struct UserLoginForm: View {
     @Query private var users: [User]
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea(.all)
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea(.all)
 
-                VStack(spacing: 0) {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Text("User Login")
-                            .font(Font.largeTitle)
-                            .padding(.top, 32)
-                        VStack(alignment: .leading, spacing: 8) {
-                            FormInputField(
-                                label: "Email",
-                                placeholder: "Enter your email",
-                                focus: .email,
-                                hasError: errorMessage != nil,
-                                maxLength: 255,
-                                text: $email,
-                                focusedField: $focusState
-                            )
-                            .onChange(of: email) { oldValue, newValue in
-                                if newValue.count > 255 {
-                                    email = String(newValue.prefix(255))
-                                    return
-                                }
-                                errorMessage = nil
+            VStack(spacing: 0) {
+                Spacer()
+                VStack(spacing: 16) {
+                    Text("User Login")
+                        .font(Font.largeTitle)
+                        .padding(.top, 32)
+                    VStack(alignment: .leading, spacing: 8) {
+                        FormInputField(
+                            label: "Email",
+                            placeholder: "Enter your email",
+                            focus: .email,
+                            hasError: errorMessage != nil,
+                            maxLength: 255,
+                            text: $email,
+                            focusedField: $focusState
+                        )
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: email) { oldValue, newValue in
+                            if newValue.count > 255 {
+                                email = String(newValue.prefix(255))
+                                return
                             }
-                            FormErrorMessage(error: errorMessage)
+                            errorMessage = nil
+                        }
+                        FormErrorMessage(error: errorMessage)
 
-                            FormInputField(
-                                label: "Password",
-                                placeholder: "Enter your password",
-                                focus: .password,
-                                hasError: errorMessage != nil,
-                                maxLength: 100,
-                                text: $password,
-                                focusedField: $focusState
-                            )
-                            .onChange(of: password) { oldValue, newValue in
-                                if newValue.count > 100 {
-                                    password = String(newValue.prefix(100))
-                                }
-                                errorMessage = nil
+                        FormInputField(
+                            label: "Password",
+                            placeholder: "Enter your password",
+                            focus: .password,
+                            hasError: errorMessage != nil,
+                            maxLength: 100,
+                            text: $password,
+                            focusedField: $focusState
+                        )
+                        .onChange(of: password) { oldValue, newValue in
+                            if newValue.count > 100 {
+                                password = String(newValue.prefix(100))
                             }
+                            errorMessage = nil
                         }
-                        .padding()
-
-                        Button(action: handleLogin) {
-                            Text("Login")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(
-                                    email == "" || password == ""
-                                        ? Color(.systemBlue).opacity(0.7)
-                                        : Color(.systemBlue)
-                                )
-                                .cornerRadius(12)
-                        }
-                        .disabled(email == "" || password == "")
-                        .padding(.horizontal, 16)
-                        .padding(.top, 24)
-
-                        HStack {
-                            Text("Don't have an account?")
-                                .font(.caption)
-                            Button(action: { showRegistration = true }) {
-                                Text("Register")
-                                    .font(.caption)
-                                    .underline()
-                            }
-                        }
-                        .padding(.bottom, 32)
-                    }
-                    .background {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.systemBackground))
-                            .stroke(Color(.systemGray4), lineWidth: 1)
-                            .shadow(
-                                color: Color.black.opacity(0.05),
-                                radius: 8,
-                                x: 0,
-                                y: 3
-                            )
-                    }
-                    .sheet(isPresented: $showRegistration) {
-                        UserRegistrationForm(isPresented: $showRegistration)
                     }
                     .padding()
-                    Spacer()
-                }
-                .overlay {
-                    if errorMessage != nil {
-                        ErrorOverlay(message: errorMessage!)
-                    } else {
-                        if session.isLoggedIn {
-                            SuccessOverlay(
-                                message: "Logged in as \(session.user!.name)"
+
+                    Button(action: handleLogin) {
+                        Text("Login")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                email == "" || password == ""
+                                    ? Color(.systemBlue).opacity(0.7)
+                                    : Color(.systemBlue)
                             )
+                            .cornerRadius(12)
+                    }
+                    .disabled(email == "" || password == "")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 24)
+
+                    HStack {
+                        Text("Don't have an account?")
+                            .font(.caption)
+                        Button(action: { showRegistration = true }) {
+                            Text("Register")
+                                .font(.caption)
+                                .underline()
                         }
+                    }
+                    .padding(.bottom, 32)
+                }
+                .background {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.systemBackground))
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                        .shadow(
+                            color: Color.black.opacity(0.05),
+                            radius: 8,
+                            x: 0,
+                            y: 3
+                        )
+                }
+                .sheet(isPresented: $showRegistration) {
+                    UserRegistrationForm(isPresented: $showRegistration)
+                }
+                .padding()
+                Spacer()
+            }
+            .overlay {
+                if errorMessage != nil {
+                    ErrorOverlay(message: errorMessage!)
+                } else {
+                    if session.isLoggedIn {
+                        SuccessOverlay(
+                            message: "Logged in as \(session.user!.name)"
+                        )
                     }
                 }
             }
