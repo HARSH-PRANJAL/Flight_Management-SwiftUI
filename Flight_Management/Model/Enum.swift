@@ -129,7 +129,7 @@ enum FormFocus: Hashable {
     case flightNumber
 }
 
-enum NotificationType {
+enum NotificationType: Equatable {
     case success(message: String)
     case error(message: String)
     case none

@@ -31,9 +31,7 @@ struct StaffDetailView: View {
                 onTapAction: isCurrentUser ? { isEditPageShowing = true } : nil,
                 actionButtonTitle: "Update Profile"
             )
-            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .scrollDisabled(true)
             .toolbar(.hidden, for: .bottomBar)
         }
         

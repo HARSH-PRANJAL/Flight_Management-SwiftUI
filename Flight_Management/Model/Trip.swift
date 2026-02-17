@@ -22,14 +22,14 @@ class Trip {
     var currentAirportSequence: Int = 1  // sequence of the trip node to visit
 
     var currentStatus: TripStatus {
-        if nodeStatuses.isEmpty {
-            return .scheduled
-        } else if totalDelayedMinutes > 0 {
-            return .delayed
-        } else if isCancelled {
+        if isCancelled {
             return .cancelled
         } else if isCompleted {
             return .completed
+        } else if nodeStatuses.isEmpty {
+            return .scheduled
+        } else if totalDelayedMinutes > 0 {
+            return .delayed
         }
 
         return .onTime
@@ -63,7 +63,12 @@ class Trip {
         } else if isCancelled {
             // if flight is cancelled midway between airport A and B
             if nodeStatuses.last!.actualArrivalTime == nil {
-                return nodeStatuses[nodeStatuses.count - 1].actualDepartureTime!
+                if let totalTime = nodeStatuses[nodeStatuses.count - 1].actualDepartureTime
+                {
+                    return totalTime
+                } else {
+                    return arrivalTime
+                }
             } else {
                 // if flight is cancelled after landing on airport B
                 return nodeStatuses.last!.actualArrivalTime!
@@ -81,6 +86,10 @@ class Trip {
     // route node for the current airport
     var plannedRouteNode: RouteNode {
         // 0 based indexing
+        if currentAirportSequence >= route.nodes.count {
+            isCompleted = true
+            return route.nodes.last!
+        }
         return route.nodes[currentAirportSequence - 1]
     }
 
@@ -306,9 +315,9 @@ class Aircraft {
 
     var currentStatus: AircraftStatus {
         if currentTrip != nil {
-            return .available
-        } else {
             return .assigned
+        } else {
+            return .available
         }
     }
 

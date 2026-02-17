@@ -10,3 +10,19 @@ func cardTheme() -> some View {
             y: 2
         )
 }
+
+struct DetailRowView: View {
+    var label: String
+    var value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .foregroundStyle(Color(.systemGray))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(value)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+}
