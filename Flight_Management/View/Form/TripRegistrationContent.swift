@@ -4,6 +4,9 @@ import SwiftUI
 struct TripRegistrationContent: View {
     @State var viewModel: TripRegistrationFormViewModel
 
+    var isPresented: Binding<Bool>?
+    @State private var showConfirmCloseAlert = false
+
     @Environment(\.modelContext) var context
     @Environment(NotificationManager.self) var notificationManager
     @Environment(\.dismiss) var dismiss
@@ -17,25 +20,20 @@ struct TripRegistrationContent: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                VStack(spacing: 12) {
-                    Text("Schedule New Trip")
-                        .font(.title2)
-                        .bold()
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
 
                 VStack(spacing: 12) {
                     tripNumber
                     datePicker
+                        .disabled(viewModel.isEditMode)
                     routePicker
                     aircraftPicker
+                        .disabled(viewModel.isEditMode)
 
                     if viewModel.selectedRoute != nil {
                         staffSelector
+                            .disabled(viewModel.isEditMode)
                     }
 
-                    // Validation errors
                     if let err = viewModel.fieldErrors["staff"] {
                         Text(err).foregroundColor(.red).font(.caption)
                     }
@@ -46,15 +44,48 @@ struct TripRegistrationContent: View {
 
                 Spacer()
             }
-            .navigationTitle("Trip Registration")
+            .navigationTitle(
+                viewModel.isEditMode ? "Update Trip" : "Trip Registration"
+            )
             .navigationBarTitleDisplayMode(.inline)
             .padding(.vertical)
         }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) {
+                    if hasChanges {
+                        showConfirmCloseAlert = true
+                    } else {
+                        isPresented?.wrappedValue = false
+                        dismiss()
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                isPresented?.wrappedValue = false
+                dismiss()
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
+        }
+    }
+
+    private var hasChanges: Bool {
+        return !viewModel.flightNumber.isEmpty || viewModel.selectedRoute != nil
+            || viewModel.selectedAircraft != nil
+            || !viewModel.selectedStaffIDs.isEmpty
     }
 
     private var registerButton: some View {
         Button(action: handleRegistration) {
-            Text("Schedule Trip")
+            Text(viewModel.isEditMode ? "Update Trip" : "Schedule Trip")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -71,7 +102,7 @@ struct TripRegistrationContent: View {
 
 // MARK: UI
 extension TripRegistrationContent {
-    
+
     var aircraftPicker: some View {
         Menu {
             ForEach(availableAircraft, id: \.id) { ac in
@@ -157,6 +188,8 @@ extension TripRegistrationContent {
                 Color(.systemGray6)
             ).stroke(Color(.systemGray2), lineWidth: 1)
         )
+        .disabled(viewModel.isEditMode)
+        .opacity(viewModel.isEditMode ? 0.6 : 1.0)
     }
 
     @ViewBuilder
@@ -288,31 +321,46 @@ extension TripRegistrationContent {
             viewModel.selectedStaffIDs.contains($0.id.uuidString)
         }
 
-        let newTrip = Trip(
-            staff: selectedStaff,
-            aircraft: aircraft,
-            nodeStatuses: [],
-            route: route,
-            scheduledDepartureTime: viewModel.scheduledDeparture,
-            flightNumber: viewModel.flightNumber,
-            isCancelled: false
-        )
-
         do {
-            context.insert(newTrip)
-            aircraft.trips.append(newTrip)
-            for staff in selectedStaff {
-                staff.trips.append(newTrip)
+            if viewModel.isEditMode, let tripToEdit = viewModel.tripToEdit {
+                // Update existing trip
+                tripToEdit.flightNumber = viewModel.flightNumber
+                tripToEdit.route = route
+
+            } else {
+                // Create new trip
+                let newTrip = Trip(
+                    staff: selectedStaff,
+                    aircraft: aircraft,
+                    nodeStatuses: [],
+                    route: route,
+                    scheduledDepartureTime: viewModel.scheduledDeparture,
+                    flightNumber: viewModel.flightNumber,
+                    isCancelled: false
+                )
+
+                context.insert(newTrip)
+                aircraft.trips.append(newTrip)
+                for staff in selectedStaff {
+                    staff.trips.append(newTrip)
+                }
             }
+
             try context.save()
-            notificationManager.showSuccess("Trip scheduled successfully")
+            let message =
+                viewModel.isEditMode
+                ? "Trip updated successfully" : "Trip scheduled successfully"
+            notificationManager.showSuccess(message)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                isPresented?.wrappedValue = false
                 dismiss()
             }
         } catch {
-            notificationManager.showError(
-                "Failed to schedule trip. Please try again."
-            )
+            let message =
+                viewModel.isEditMode
+                ? "Failed to update trip. Please try again."
+                : "Failed to schedule trip. Please try again."
+            notificationManager.showError(message)
             print("Failed to save trip: \(error)")
         }
     }
