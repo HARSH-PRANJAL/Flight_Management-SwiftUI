@@ -33,7 +33,7 @@ struct StaffDetailView: View {
     
     var profileImage: Image? {
         if let imageData = staff.profileImage,
-            let uiImage = UIImage(data: imageData) {
+           let uiImage = UIImage(data: imageData) {
             return Image(uiImage: uiImage)
         } else {
             return nil
@@ -47,16 +47,16 @@ struct StaffDetailView: View {
     var hasScheduledTrips: Bool {
         !staff.scheduledTrips.isEmpty
     }
-
+    
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
-
+            
             DetailView(
                 staff: staff,
-                onTapAction: isCurrentUser ? { isEditPageShowing = true } : (isAdmin && !staff.isMarkedUnavailable ? { initiateMarkUnavailable() } : nil),
-                actionButtonTitle: isCurrentUser ? "Update Profile" : (isAdmin && !staff.isMarkedUnavailable ? "Mark Unavailable" : "")
+                onTapAction: isCurrentUser ? { isEditPageShowing = true } : (isAdmin ? { handleAdminAction() } : nil),
+                actionButtonTitle: isCurrentUser ? "Update Profile" : (isAdmin ? (staff.isMarkedUnavailable ? "Mark Active" : "Mark Unavailable") : "")
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .bottomBar)
@@ -122,7 +122,13 @@ struct StaffDetailView: View {
         }
     }
     
-    // MARK: - Flow Methods
+    private func handleAdminAction() {
+        if staff.isMarkedUnavailable {
+            markStaffAvailable()
+        } else {
+            initiateMarkUnavailable()
+        }
+    }
     
     private func initiateMarkUnavailable() {
         if isStaffOnDuty {
@@ -146,32 +152,32 @@ struct StaffDetailView: View {
         do {
             let designation = staff.designation
             let staffID = staff.id
-
+            
             let predicate = #Predicate<Staff> { candidate in
                 candidate.id != staffID &&
                 candidate.isMarkedUnavailable == false
             }
-
+            
             let descriptor = FetchDescriptor<Staff>(predicate: predicate)
             let fetched = try modelContext.fetch(descriptor)
-
+            
             availableReplacementStaff = fetched.filter {
                 $0.designation == designation &&
                 $0.currentTrip == nil
             }
-
+            
             if availableReplacementStaff.isEmpty {
                 showNoReplacementAlert = true
             } else {
                 showReplaceStaffSheet = true
             }
-
+            
         } catch {
             notificationManager.showError("Failed to find replacement staff: \(error.localizedDescription)")
         }
     }
-
-
+    
+    
     
     private func handleReplacementSelected() {
         showReplacementConfirmationAlert = true
@@ -186,6 +192,8 @@ struct StaffDetailView: View {
         // Assign replacement to the current trip
         if let index = currentTrip.staffs.firstIndex(where: { $0.id == staff.id }) {
             currentTrip.staffs[index] = replacement
+            replacement.trips.append(currentTrip)
+            replacement.currentTrip = currentTrip
         }
         
         // Mark original staff unavailable
@@ -206,7 +214,7 @@ struct StaffDetailView: View {
     }
     
     private func markStaffUnavailable() {
-        staff.isMarkedUnavailable = true
+        staff.markUnavailable()
         
         do {
             try modelContext.save()
@@ -214,6 +222,18 @@ struct StaffDetailView: View {
         } catch {
             notificationManager.showError("Failed to mark staff as unavailable")
             staff.isMarkedUnavailable = false
+        }
+    }
+    
+    private func markStaffAvailable() {
+        staff.isMarkedUnavailable = false
+        
+        do {
+            try modelContext.save()
+            notificationManager.showSuccess("\(staff.name) has been marked as available")
+        } catch {
+            notificationManager.showError("Failed to mark staff as available")
+            staff.isMarkedUnavailable = true
         }
     }
 }
