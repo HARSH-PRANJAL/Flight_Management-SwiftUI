@@ -6,6 +6,7 @@ struct RouteListView: View {
     @Query var routes: [Route]
 
     @State private var selectedSort: RouteSort = .name
+    @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
 
     var body: some View {
@@ -45,13 +46,21 @@ extension RouteListView {
                 Section("Sort by") {
                     ForEach(RouteSort.allCases, id: \.self) { sort in
                         Button {
-                            selectedSort = sort
+                            if selectedSort == sort {
+                                // Toggle sort order if same option clicked
+                                selectedSortOrder = selectedSortOrder == .ascending ? .descending : .ascending
+                            } else {
+                                // Select new sort option
+                                selectedSort = sort
+                                selectedSortOrder = .ascending
+                            }
                         } label: {
                             HStack {
                                 Text(sort.rawValue)
+                                Spacer()
                                 if selectedSort == sort {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
+                                    Image(systemName: selectedSortOrder == .ascending ? "arrow.up" : "arrow.down")
+                                        .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -79,10 +88,14 @@ extension RouteListView {
 
     var displayedRoutes: [Route] {
         return routes.sorted { lhs, rhs in
+            let isAscending = selectedSortOrder == .ascending
+            
             if selectedSort == .name {
-                return lhs.name.lowercased() < rhs.name.lowercased()
+                let comparison = lhs.name.lowercased() < rhs.name.lowercased()
+                return isAscending ? comparison : !comparison
             } else {
-                return lhs.trips.count < rhs.trips.count
+                let comparison = lhs.trips.count < rhs.trips.count
+                return isAscending ? comparison : !comparison
             }
         }
     }

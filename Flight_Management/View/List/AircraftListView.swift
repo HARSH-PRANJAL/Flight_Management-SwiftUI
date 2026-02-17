@@ -6,6 +6,7 @@ struct AircraftListView: View {
     @Query var aircrafts: [Aircraft]
 
     @State private var selectedSort: AircraftSort = .registration
+    @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
     @State private var showAircraftRegistration: Bool = false
 
@@ -58,13 +59,21 @@ extension AircraftListView {
                 Section("Sort by") {
                     ForEach(AircraftSort.allCases, id: \.self) { sort in
                         Button {
-                            selectedSort = sort
+                            if selectedSort == sort {
+                                // Toggle sort order if same option clicked
+                                selectedSortOrder = selectedSortOrder == .ascending ? .descending : .ascending
+                            } else {
+                                // Select new sort option
+                                selectedSort = sort
+                                selectedSortOrder = .ascending
+                            }
                         } label: {
                             HStack {
                                 Text(sort.rawValue)
+                                Spacer()
                                 if selectedSort == sort {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
+                                    Image(systemName: selectedSortOrder == .ascending ? "arrow.up" : "arrow.down")
+                                        .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -103,10 +112,14 @@ extension AircraftListView {
         }
 
         return filtered.sorted { lhs, rhs in
+            let isAscending = selectedSortOrder == .ascending
+            
             if selectedSort == .registration {
-                return lhs.registrationNumber.lowercased() < rhs.registrationNumber.lowercased()
+                let comparison = lhs.registrationNumber.lowercased() < rhs.registrationNumber.lowercased()
+                return isAscending ? comparison : !comparison
             } else {
-                return lhs.seatingCapacity < rhs.seatingCapacity
+                let comparison = lhs.seatingCapacity < rhs.seatingCapacity
+                return isAscending ? comparison : !comparison
             }
         }
     }

@@ -7,22 +7,39 @@ struct StaffListView: View {
 
     @State private var selectedFilter: StaffAvailabilityStatus? = nil
     @State private var selectedSort: StaffSort = .name
+    @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             Group {
                 if displayedStaffs.isEmpty {
                     fallbackBackground
                 } else {
                     List {
                         ForEach(displayedStaffs, id: \.id) { staff in
-                            NavigationLink(destination: StaffDetailView(staff: staff)) {
+                            NavigationLink(
+                                destination: StaffDetailView(staff: staff)
+                            ) {
                                 ListRow(staff: staff)
                             }
                         }
                     }
                 }
+            }
+            .safeAreaInset(edge: .top) {
+                Picker("Availability", selection: $selectedFilter) {
+                    Text("All").tag(StaffAvailabilityStatus?(nil))
+                    ForEach(StaffAvailabilityStatus.allCases, id: \.self) {
+                        status in
+                        Text(status.rawValue).tag(Optional(status))
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 15)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 8)
             }
             .navigationTitle("Staff List")
             .toolbar {
@@ -43,48 +60,30 @@ extension StaffListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Section("Filter") {
-                    VStack(spacing: 0) {
-                        Button {
-                            selectedFilter = nil
-                        } label: {
-                            HStack {
-                                Text("All")
-                                if selectedFilter == nil {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                        ForEach(
-                            StaffAvailabilityStatus.allCases,
-                            id: \.self
-                        ) { filter in
-                            Button {
-                                selectedFilter = filter
-                            } label: {
-                                HStack {
-                                    Text(filter.rawValue)
-                                    if selectedFilter == filter {
-                                        Spacer()
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Divider()
                 Section("Sort by") {
                     ForEach(StaffSort.allCases, id: \.self) { sort in
                         Button {
-                            selectedSort = sort
+                            if selectedSort == sort {
+                                // Toggle sort order if same option clicked
+                                selectedSortOrder =
+                                    selectedSortOrder == .ascending
+                                    ? .descending : .ascending
+                            } else {
+                                // Select new sort option
+                                selectedSort = sort
+                                selectedSortOrder = .ascending
+                            }
                         } label: {
                             HStack {
                                 Text(sort.rawValue)
+                                Spacer()
                                 if selectedSort == sort {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
+                                    Image(
+                                        systemName: selectedSortOrder
+                                            == .ascending
+                                            ? "arrow.up" : "arrow.down"
+                                    )
+                                    .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -134,13 +133,20 @@ extension StaffListView {
             return nameMatch || flightMatch
         }
 
-        return filtered.sorted { lhs, rhs in
+        let sorted = filtered.sorted { lhs, rhs in
+            let isAscending = selectedSortOrder == .ascending
+
             if selectedSort == .name {
-                return lhs.name.lowercased() < rhs.name.lowercased()
+                let comparison = lhs.name.lowercased() < rhs.name.lowercased()
+                return isAscending ? comparison : !comparison
             } else {
-                return lhs.currentStatus.rawValue < rhs.currentStatus.rawValue
+                let comparison =
+                    lhs.currentStatus.rawValue < rhs.currentStatus.rawValue
+                return isAscending ? comparison : !comparison
             }
         }
+
+        return sorted
     }
 }
 

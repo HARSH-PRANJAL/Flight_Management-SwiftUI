@@ -1,6 +1,11 @@
 import SwiftData
 import SwiftUI
 
+enum SortOrder: String, CaseIterable {
+    case ascending = "Ascending"
+    case descending = "Descending"
+}
+
 struct TripListView: View {
 
     var externalTrips: [Trip] = []
@@ -10,10 +15,23 @@ struct TripListView: View {
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
+    @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            // Filter Picker
+            if externalTrips.isEmpty {
+                Picker("Status", selection: $selectedFilter) {
+                    Text("All").tag(Optional<TripStatus>(nil))
+                    ForEach(TripStatus.allCases, id: \.self) { status in
+                        Text(status.rawValue).tag(Optional(status))
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding()
+            }
+            
             Group {
                 if displayedTrips.isEmpty {
                     fallbackBackground
@@ -48,48 +66,24 @@ extension TripListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Section("Filter") {
-                    VStack(spacing: 0) {
-                        Button {
-                            selectedFilter = nil
-                        } label: {
-                            HStack {
-                                Text("All")
-                                if selectedFilter == nil {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                        ForEach(
-                            TripStatus.allCases,
-                            id: \.self
-                        ) { filter in
-                            Button {
-                                selectedFilter = filter
-                            } label: {
-                                HStack {
-                                    Text(filter.rawValue)
-                                    if selectedFilter == filter {
-                                        Spacer()
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Divider()
                 Section("Sort by") {
                     ForEach(TripSort.allCases, id: \.self) { sort in
                         Button {
-                            selectedSort = sort
+                            if selectedSort == sort {
+                                // Toggle sort order if same option clicked
+                                selectedSortOrder = selectedSortOrder == .ascending ? .descending : .ascending
+                            } else {
+                                // Select new sort option
+                                selectedSort = sort
+                                selectedSortOrder = .ascending
+                            }
                         } label: {
                             HStack {
                                 Text(sort.rawValue)
+                                Spacer()
                                 if selectedSort == sort {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
+                                    Image(systemName: selectedSortOrder == .ascending ? "arrow.up" : "arrow.down")
+                                        .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -140,14 +134,19 @@ extension TripListView {
             return flightMatch || routeMatch
         }
 
-        return filtered.sorted { lhs, rhs in
+        let sorted = filtered.sorted { lhs, rhs in
+            let isAscending = selectedSortOrder == .ascending
+            
             if selectedSort == .flightNumber {
-                return lhs.flightNumber.lowercased()
-                    < rhs.flightNumber.lowercased()
+                let comparison = lhs.flightNumber.lowercased() < rhs.flightNumber.lowercased()
+                return isAscending ? comparison : !comparison
             } else {
-                return lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
+                let comparison = lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
+                return isAscending ? comparison : !comparison
             }
         }
+        
+        return sorted
     }
 }
 
