@@ -19,6 +19,7 @@ struct FormInputField: View {
                 .formFieldLabel()
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
+                .autocorrectionDisabled()
                 .padding()
                 .background {
                     RoundedRectangle(cornerRadius: 12)
