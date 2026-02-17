@@ -79,7 +79,6 @@ struct ProfilePhotoField: View {
                 selectedPhoto: $selectedPhoto,
                 profilePreview: $profilePreview,
                 onChangeAction: { item in
-                    // Load a SwiftUI Image preview from the selected photo for preview purposes
                     if let data = try? await item.loadTransferable(type: Data.self),
                        let uiImage = UIImage(data: data) {
                         profilePreview = Image(uiImage: uiImage)
