@@ -9,9 +9,7 @@ struct StatusCapsuleView: View {
         HStack {
             Circle()
                 .fill(statusBadge.backgroundColor.opacity(20))
-                .contrast(1.5)
                 .frame(maxWidth: 10, maxHeight: 10)
-                .glassEffect(.regular)
                 .padding(.leading, onlyIndicator ? 0 : 10)
 
             if !onlyIndicator {
