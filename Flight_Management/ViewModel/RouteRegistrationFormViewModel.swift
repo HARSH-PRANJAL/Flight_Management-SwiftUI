@@ -17,6 +17,28 @@ final class RouteRegistrationFormViewModel {
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
     
+    var isEditMode: Bool = false
+    var routeToEdit: Route?
+    
+    init() {}
+    
+    init(route: Route) {
+        self.isEditMode = true
+        self.routeToEdit = route
+        self.loadRouteData(route)
+    }
+    
+    private func loadRouteData(_ route: Route) {
+        self.routeName = route.name
+        self.selectedNodes = route.nodes.map { node in
+            RouteNodeData(
+                airport: node.airport,
+                journeyTimeMinutes: "\(node.plannedArrivalOffsetMinutes)",
+                turnAroundTime: 30
+            )
+        }
+    }
+    
     func resetForm() {
         routeName = ""
         selectedNodes = []
@@ -56,9 +78,11 @@ extension RouteRegistrationFormViewModel {
 
     func validateJourneyTimes() -> Bool {
         for (index, node) in selectedNodes.enumerated() {
-            guard let journeyTime = Int(node.journeyTimeMinutes), journeyTime > 0 else {
-                fieldErrors[.journeyTime] = "Journey time for leg \(index + 1) must be greater than 0 minutes."
-                return false
+            if index != 0 {
+                guard let journeyTime = Int(node.journeyTimeMinutes), journeyTime > 0 else {
+                    fieldErrors[.journeyTime] = "Journey time for leg \(index + 1) must be greater than 0 minutes."
+                    return false
+                }
             }
         }
         
@@ -107,20 +131,34 @@ extension RouteRegistrationFormViewModel {
     func saveRoute(to context: ModelContext) -> Bool {
         guard validateAll() else { return false }
         
-        let route = Route(name: routeName.trimmingCharacters(in: .whitespacesAndNewlines))
-        
-        // Add nodes using the Route's addNode function
-        for node in selectedNodes {
-            if let journeyTime = Int(node.journeyTimeMinutes) {
-                route.addNode(
-                    airport: node.airport,
-                    journeyTimeMinutes: journeyTime,
-                    turnAroundTimeMinutes: node.turnAroundTime
-                )
+        if isEditMode, let routeToEdit = routeToEdit {
+            routeToEdit.name = routeName.trimmingCharacters(in: .whitespacesAndNewlines)
+            routeToEdit.nodes.removeAll()
+            
+            for node in selectedNodes {
+                if let journeyTime = Int(node.journeyTimeMinutes) {
+                    routeToEdit.addNode(
+                        airport: node.airport,
+                        journeyTimeMinutes: journeyTime,
+                        turnAroundTimeMinutes: node.turnAroundTime
+                    )
+                }
             }
+        } else {
+            let route = Route(name: routeName.trimmingCharacters(in: .whitespacesAndNewlines))
+            
+            for node in selectedNodes {
+                if let journeyTime = Int(node.journeyTimeMinutes) {
+                    route.addNode(
+                        airport: node.airport,
+                        journeyTimeMinutes: journeyTime,
+                        turnAroundTimeMinutes: node.turnAroundTime
+                    )
+                }
+            }
+            
+            context.insert(route)
         }
-        
-        context.insert(route)
         
         do {
             try context.save()

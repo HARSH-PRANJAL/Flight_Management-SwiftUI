@@ -12,6 +12,25 @@ final class TripRegistrationFormViewModel {
 
     var fieldErrors: [String: String] = [:]
     var submissionState: SubmissionState = .none
+    
+    var isEditMode: Bool = false
+    var tripToEdit: Trip?
+    
+    init() {}
+    
+    init(trip: Trip) {
+        self.isEditMode = true
+        self.tripToEdit = trip
+        self.loadTripData(trip)
+    }
+    
+    private func loadTripData(_ trip: Trip) {
+        self.flightNumber = trip.flightNumber
+        self.scheduledDeparture = trip.scheduledDepartureTime
+        self.selectedRoute = trip.route
+        self.selectedAircraft = trip.aircraft
+        self.selectedStaffIDs = Set(trip.staffs.map { $0.id.uuidString })
+    }
 
     func toggleStaff(_ staff: Staff) {
         let id = staff.id.uuidString
