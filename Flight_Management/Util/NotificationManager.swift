@@ -1,4 +1,6 @@
 import SwiftUI
+import AVFoundation
+import AudioToolbox
 
 @Observable
 final class NotificationManager {
@@ -6,14 +8,19 @@ final class NotificationManager {
     
     var notification: NotificationType = .none
     private var dismissTimer: Timer?
+    private let audioEngine = AudioEngine()
     
     func showSuccess(_ message: String) {
         notification = .success(message: message)
+        playSuccessSound()
+        triggerSuccessHaptic()
         scheduleDismissal()
     }
     
     func showError(_ message: String) {
         notification = .error(message: message)
+        playErrorSound()
+        triggerErrorHaptic()
         scheduleDismissal()
     }
     
@@ -28,6 +35,34 @@ final class NotificationManager {
         dismissTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { [weak self] _ in
             self?.dismiss()
         }
+    }
+    
+    private func playSuccessSound() {
+        audioEngine.playErrorSound()
+    }
+    
+    private func playErrorSound() {
+        audioEngine.playErrorSound()
+    }
+    
+    private func triggerSuccessHaptic() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+    
+    private func triggerErrorHaptic() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+    }
+}
+
+final class AudioEngine {
+    func playSuccessSound() {
+        AudioServicesPlaySystemSound(1021)
+    }
+    
+    func playErrorSound() {
+        AudioServicesPlaySystemSound(1051)
     }
 }
 
