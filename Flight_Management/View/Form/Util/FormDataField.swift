@@ -46,8 +46,11 @@ private struct FormDateComponentPicker: View {
     var body: some View {
         Menu {
             ForEach(options, id: \.self) { option in
-                Button(option) {
+                Button {
                     selection.wrappedValue = option
+                } label: {
+                    Text(option)
+                        .lineLimit(1)
                 }
             }
         } label: {
@@ -73,8 +76,8 @@ private struct FormDateComponentPicker: View {
             .background {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.systemGray6))
-                    .stroke(
-                        hasError ? Color(.systemRed) : Color(.systemGray3),
+                    .strokeBorder(
+                        hasError ? Color(.systemRed) : Color(.systemGray2),
                         lineWidth: 1
                     )
             }

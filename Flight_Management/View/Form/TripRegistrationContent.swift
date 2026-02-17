@@ -28,62 +28,9 @@ struct TripRegistrationContent: View {
                 VStack(spacing: 12) {
                     tripNumber
                     datePicker
+                    routePicker
+                    aircraftPicker
 
-                    Menu {
-                        ForEach(routes, id: \.id) { route in
-                            Button(route.name) {
-                                viewModel.selectedRoute = route
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(
-                                viewModel.selectedRoute?.name ?? "Select route"
-                            )
-                            .foregroundColor(
-                                viewModel.selectedRoute == nil
-                                    ? Color(.systemGray3) : Color.primary
-                            )
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12).fill(
-                                Color(.systemGray6)
-                            ).stroke(Color(.systemGray2), lineWidth: 1)
-                        )
-                    }
-
-                    // Aircraft picker
-                    Menu {
-                        ForEach(aircrafts, id: \.id) { ac in
-                            Button(ac.registrationNumber) {
-                                viewModel.selectedAircraft = ac
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(
-                                viewModel.selectedAircraft?.registrationNumber
-                                    ?? "Select aircraft"
-                            )
-                            .foregroundColor(
-                                viewModel.selectedAircraft == nil
-                                    ? Color(.systemGray3) : Color.primary
-                            )
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12).fill(
-                                Color(.systemGray6)
-                            )
-                        )
-                    }
-                    
-                    
                     if viewModel.selectedRoute != nil {
                         staffSelector
                     }
@@ -125,17 +72,78 @@ struct TripRegistrationContent: View {
 // MARK: UI
 extension TripRegistrationContent {
     
+    var aircraftPicker: some View {
+        Menu {
+            ForEach(availableAircraft, id: \.id) { ac in
+                Button(ac.registrationNumber) {
+                    viewModel.selectedAircraft = ac
+                }
+            }
+        } label: {
+            HStack {
+                Text(
+                    viewModel.selectedAircraft?.registrationNumber
+                        ?? "Select aircraft"
+                )
+                .foregroundColor(
+                    viewModel.selectedAircraft == nil
+                        ? Color(.systemGray3) : Color.primary
+                )
+                Spacer()
+                Image(systemName: "chevron.right")
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12).fill(
+                    Color(.systemGray6)
+                )
+            )
+        }
+    }
+
+    var routePicker: some View {
+        Menu {
+            ForEach(routes, id: \.id) { route in
+                Button(route.name) {
+                    viewModel.selectedRoute = route
+                }
+            }
+        } label: {
+            HStack {
+                Text(
+                    viewModel.selectedRoute?.name ?? "Select route"
+                )
+                .foregroundColor(
+                    viewModel.selectedRoute == nil
+                        ? Color(.systemGray3) : Color.primary
+                )
+                Spacer()
+                Image(systemName: "chevron.right")
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12).fill(
+                    Color(.systemGray6)
+                ).stroke(Color(.systemGray2), lineWidth: 1)
+            )
+        }
+    }
+
     var tripNumber: some View {
         FormInputField(
             label: "Trip Number",
-            placeholder: "Enter trip number",
+            placeholder: "Enter trip number eg Trip - 001",
             focus: .flightNumber,
             hasError: viewModel.fieldErrors["flightNumber"] != nil,
+            maxLength: 100,
+            allowedCharacter: {
+                $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "-"
+            },
             text: $viewModel.flightNumber,
             focusedField: $focusedField
         )
     }
-    
+
     var datePicker: some View {
         DatePicker(
             "Departure",
@@ -153,60 +161,61 @@ extension TripRegistrationContent {
 
     @ViewBuilder
     var staffSelector: some View {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Assign Crew")
-                        .font(.headline)
-                    if staffs.isEmpty {
-                        Text("No staff available")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(availableStaffs, id: \.id) { staff in
-                            HStack {
-                                Toggle(
-                                    isOn: Binding(
-                                        get: {
-                                            viewModel.isSelected(staff)
-                                        },
-                                        set: { newVal in
-                                            viewModel.toggleStaff(staff)
-                                        }
-                                    )
-                                ) {
-                                    HStack {
-                                        staff.avatarImage
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 36, height: 36)
-                                            .clipShape(Circle())
-                                        VStack(alignment: .leading) {
-                                            Text(staff.name)
-                                            Text(staff.designation.rawValue)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Assign Crew")
+                    .font(.headline)
+                if staffs.isEmpty {
+                    Text("No staff available")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(availableStaffs, id: \.id) { staff in
+                        HStack {
+                            Toggle(
+                                isOn: Binding(
+                                    get: {
+                                        viewModel.isSelected(staff)
+                                    },
+                                    set: { newVal in
+                                        viewModel.toggleStaff(staff)
+                                    }
+                                )
+                            ) {
+                                HStack {
+                                    staff.avatarImage
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 36, height: 36)
+                                        .clipShape(Circle())
+                                    VStack(alignment: .leading) {
+                                        Text(staff.name)
+                                        Text(staff.designation.rawValue)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
                         }
+                        .padding(.vertical, 4)
                     }
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.systemGray6))
-                            .strokeBorder(borderColor, lineWidth: 1)
-                )
             }
-            .frame(maxHeight: 300)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(borderColor, lineWidth: 1)
+            )
+        }
+        .frame(maxHeight: 300)
     }
-    
+
     var borderColor: Color {
         viewModel.selectedRoute != nil ? .blue : Color(.systemGray2)
     }
 }
 
+// MARK: Util
 extension TripRegistrationContent {
     var tripEndDate: Date? {
         guard let route = viewModel.selectedRoute else { return nil }
@@ -222,7 +231,29 @@ extension TripRegistrationContent {
             $0.isAvailable(from: viewModel.scheduledDeparture, to: endDate)
         }
     }
-    
+
+    var availableAircraft: [Aircraft] {
+        guard let endDate = tripEndDate, availableStaffs.count != 0 else {
+            return []
+        }
+
+        var availableStaffByRole: [StaffRole: Int] = [:]
+        availableStaffByRole[.cabinCrew] =
+            availableStaffs.filter { $0.designation == .cabinCrew }.count
+        availableStaffByRole[.pilot] =
+            availableStaffs.filter { $0.designation == .pilot }.count
+        availableStaffByRole[.coPilot] =
+            availableStaffs.filter { $0.designation == .coPilot }.count
+
+        return aircrafts.filter {
+            $0.isAvailable(
+                from: viewModel.scheduledDeparture,
+                to: endDate,
+                availableStaff: availableStaffByRole
+            )
+        }
+    }
+
     private func handleRegistration() {
         guard viewModel.validate() else { return }
 
@@ -279,7 +310,9 @@ extension TripRegistrationContent {
                 dismiss()
             }
         } catch {
-            notificationManager.showError("Failed to schedule trip. Please try again.")
+            notificationManager.showError(
+                "Failed to schedule trip. Please try again."
+            )
             print("Failed to save trip: \(error)")
         }
     }
