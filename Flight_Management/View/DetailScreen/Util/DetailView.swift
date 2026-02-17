@@ -13,7 +13,7 @@ struct DetailView: View {
     var actionButtonTitle: String = "Change Status"
     var currentTaskTitle: String = "Current Task"
     var listDataTitle: String = "Completed Tasks"
-    
+
     @State private var showImagePreview = false
 
     var body: some View {
@@ -69,19 +69,23 @@ struct DetailView: View {
                 ForEach(listData) { row in
                     Group {
                         if let trip = row.associatedTrip {
-                            NavigationLink(destination: TripDetailView(trip: trip))
-                            {
-                                row
+                            HStack {
+                                NavigationLink(
+                                    destination: TripDetailView(trip: trip)
+                                ) {
+                                    row
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(Color(.systemGray4))
+                                    .padding(.trailing, 16)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.borderless)
                         } else {
                             row
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .background(
-                        cardTheme()
-                    )
+                    .background(cardTheme())
                     .padding(.bottom, 10)
                 }
             }
@@ -105,10 +109,17 @@ struct DetailView: View {
 
             Group {
                 if let trip = primaryRow?.associatedTrip {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        primaryRow!
+                    HStack {
+                        NavigationLink(destination: TripDetailView(trip: trip))
+                        {
+                            primaryRow!
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(Color(.systemGray4))
+                            .padding(.trailing, 16)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.borderless)
                 } else {
                     primaryRow!
                 }
@@ -122,20 +133,22 @@ struct DetailView: View {
     }
 
     var actionButton: some View {
-        Text(actionButtonTitle)
-            .font(.title3)
-            .foregroundColor(Color(.systemBlue).opacity(0.5))
-            .contrast(1.5)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(
-                cardTheme()
-            )
-            .onTapGesture {
-                onActionButtonTapped!()
-            }
-            .padding(.bottom, 30)
+        Button {
+            onActionButtonTapped!()
+        } label: {
+            Text(actionButtonTitle)
+                .font(.title3)
+                .foregroundColor(Color(.systemBlue).opacity(0.5))
+                .contrast(1.5)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(
+                    cardTheme()
+                )
+                .padding(.bottom, 30)
+        }
+        .buttonStyle(.plain)
     }
 
     var primaryCard: some View {
@@ -149,7 +162,7 @@ struct DetailView: View {
             Text(subTitleText)
                 .font(.title2)
                 .foregroundStyle(Color(.systemGray))
-            
+
                 .padding(.bottom, 10)
             if let detailText = self.detailText {
                 TextWithCopyView(text: detailText)
@@ -183,6 +196,10 @@ struct DetailView: View {
                         )
                     )
                     .foregroundStyle(.gray)
+                    .onTapGesture {
+                        showImagePreview = true
+                    }
+                    .hoverEffect(.highlight)
             } else {
                 EmptyView()
             }
@@ -248,7 +265,7 @@ extension DetailView {
             onActionButtonTapped: onTapAction,
             actionButtonTitle: actionButtonTitle ?? "Change Availability",
             currentTaskTitle: "Current Assignment",
-            listDataTitle: "Completed Flights"
+            listDataTitle: "Trip history"
         )
     }
 }
