@@ -24,8 +24,10 @@ struct TripManagerView: View {
                 }
             }
 
-            Tab("Add Aircraft", systemImage: "airplane") {
-                AircraftRegistrationForm()
+            Tab("Aircrafts", systemImage: "airplane") {
+                NavigationStack {
+                    AircraftListView()
+                }
             }
 
             Tab("Routes", systemImage: "map") {

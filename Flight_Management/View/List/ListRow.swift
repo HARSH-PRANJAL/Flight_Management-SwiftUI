@@ -95,7 +95,7 @@ extension ListRow {
             profileImage: nil,
             title: aircraft.registrationNumber,
             subtitle: aircraft.type,
-            status: nil,
+            status: .from(aircraftStatus: aircraft.currentStatus),
             associatedTrip: nil
         )
     }

@@ -7,6 +7,7 @@ struct AircraftListView: View {
 
     @State private var selectedSort: AircraftSort = .registration
     @State private var searchText: String = ""
+    @State private var showAircraftRegistration: Bool = false
 
     var body: some View {
         VStack {
@@ -23,7 +24,15 @@ struct AircraftListView: View {
                     }
                 }
             }
+            .navigationTitle("All Aircrafts")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showAircraftRegistration.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
                 toolbarFilterSortItem
             }
             .searchable(
@@ -31,6 +40,11 @@ struct AircraftListView: View {
                 prompt: "Search by registration or type"
             )
             .searchToolbarBehavior(.minimize)
+            .sheet(isPresented: $showAircraftRegistration) {
+                NavigationStack {
+                    AircraftRegistrationForm(isSheetVisible: $showAircraftRegistration)
+                }
+            }
         }
     }
 }
@@ -92,7 +106,7 @@ extension AircraftListView {
             if selectedSort == .registration {
                 return lhs.registrationNumber.lowercased() < rhs.registrationNumber.lowercased()
             } else {
-                return lhs.type.lowercased() < rhs.type.lowercased()
+                return lhs.seatingCapacity < rhs.seatingCapacity
             }
         }
     }
@@ -101,7 +115,7 @@ extension AircraftListView {
 // MARK: Sorting Enum
 enum AircraftSort: String, CaseIterable {
     case registration = "Registration Number"
-    case type = "Aircraft Type"
+    case seatingCapacity = "Seating Capacity"
 }
 
 #Preview {
