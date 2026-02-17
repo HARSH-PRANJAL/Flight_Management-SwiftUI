@@ -483,7 +483,15 @@ class Staff {
         for trip in self.scheduledTrips {
             trip.cancel()
         }
+        
+        let tripInserted = self.trips.filter {
+            $0.id == self.currentTrip?.id
+        }.count == 0
             
+        if tripInserted && currentTrip != nil{
+            self.trips.append(self.currentTrip!)
+        }
+        
         self.lastCompletedTrip = self.currentTrip
         self.currentTrip = nil
         self.isMarkedUnavailable = true
