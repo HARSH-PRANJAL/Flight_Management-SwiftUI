@@ -1,5 +1,5 @@
-import SwiftData
 import PhotosUI
+import SwiftData
 import SwiftUI
 
 struct StaffRegistrationContent: View {
@@ -10,14 +10,16 @@ struct StaffRegistrationContent: View {
     @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
-    
+
     var isPresented: Binding<Bool>?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 ProfilePhotoField(
-                    selectedPhoto: $viewModel.selectedPhoto, profilePreview: $viewModel.profilePreview, onChangeAction: { item in
+                    selectedPhoto: $viewModel.selectedPhoto,
+                    profilePreview: $viewModel.profilePreview,
+                    onChangeAction: { item in
                         await viewModel.processPhoto(item)
                     }
                 )
@@ -67,8 +69,9 @@ struct StaffRegistrationContent: View {
                 text: $viewModel.email,
                 focusedField: $focusedField
             )
-            .autocorrectionDisabled(true)
             .keyboardType(.emailAddress)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
             .onChange(of: viewModel.email) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .email)
             }
@@ -188,26 +191,28 @@ struct StaffRegistrationContent: View {
     private func submitRegistration() {
         if viewModel.isEditMode {
             guard let staffToEdit = viewModel.staffToEdit else { return }
-            
+
             staffToEdit.name = viewModel.name
             staffToEdit.email = viewModel.email
             if let photoData = viewModel.photoData {
                 staffToEdit.profileImage = photoData
             }
-            
+
             do {
                 try context.save()
-                notificationManager.showSuccess("Staff profile updated successfully")
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    if let isPresented = isPresented {
-                        isPresented.wrappedValue = false
-                    } else {
-                        dismiss()
-                    }
+                notificationManager.showSuccess(
+                    "Staff profile updated successfully"
+                )
+
+                if let isPresented = isPresented {
+                    isPresented.wrappedValue = false
+                } else {
+                    dismiss()
                 }
             } catch {
-                notificationManager.showError("Failed to update staff profile. Please try again.")
+                notificationManager.showError(
+                    "Failed to update staff profile. Please try again."
+                )
             }
         } else {
             let newStaff = Staff(
@@ -216,7 +221,9 @@ struct StaffRegistrationContent: View {
                 gender: viewModel.gender!,
                 email: viewModel.email,
                 profileImage: viewModel.photoData,
-                dob: Calendar.current.date(from: viewModel.dateOfBirthComponents)!
+                dob: Calendar.current.date(
+                    from: viewModel.dateOfBirthComponents
+                )!
             )
 
             do {
@@ -224,12 +231,11 @@ struct StaffRegistrationContent: View {
                 try context.save()
                 notificationManager.showSuccess("Staff added successfully")
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    viewModel.resetForm()
-                    dismiss()
-                }
+                dismiss()
             } catch {
-                notificationManager.showError("Failed to add staff. Please try again.")
+                notificationManager.showError(
+                    "Failed to add staff. Please try again."
+                )
             }
         }
     }
