@@ -12,16 +12,40 @@ struct RouteDetailView: View {
                 VStack {
                     primaryCard
                     tripDetails
-                    
+
                     if currentTrip.count != 0 {
-                        currentTripCards
+                        tripCards(
+                            title: "Current Trip",
+                            count: currentTrip.count,
+                            trips: currentTrip,
+                            imageName: "clock.badge.airplane",
+                            imageColor: Color(.systemCyan)
+                        )
                     } else {
-                        Text("No trips started yet.")
+                        Text("No active trips yet…")
                             .font(.largeTitle)
-                            .fontWeight(.ultraLight)
-                            .foregroundStyle(Color(.systemGray5))
+                            .fontWeight(.light)
+                            .foregroundStyle(Color(.systemGray3))
+                            .padding(.vertical, 20)
+                    }
+
+                    if tripHistory.count != 0 {
+                        tripCards(
+                            title: "Trip history",
+                            count: tripHistory.count,
+                            trips: tripHistory,
+                            imageName: "checkmark.circle",
+                            imageColor: Color(.systemGreen)
+                        )
+                    } else {
+                        Text("No trip history yet…")
+                            .font(.largeTitle)
+                            .fontWeight(.light)
+                            .foregroundStyle(Color(.systemGray3))
+                            .padding(.vertical, 20)
                     }
                 }
+                .padding()
             }
             .scrollIndicators(.hidden)
 
@@ -53,7 +77,7 @@ struct RouteDetailView: View {
                 .fontWeight(.semibold)
                 .padding(.bottom, 10)
             HStack {
-                Text("Completed Trips : \(countCompletedTrips)")
+                Text("Total Trips : \(route.trips.count)")
                 Text("Scheduled Trips : \(countScheduleTrips)")
             }
         }
@@ -63,50 +87,23 @@ struct RouteDetailView: View {
             cardTheme()
         )
     }
-    
-    var currentTripCards: some View {
-        VStack(alignment: .leading, spacing: 0) {
-                Label {
-                    Text("Current Trips")
-                        .font(.headline)
-                        .foregroundStyle(Color.primary)
-                } icon: {
-                    Image(systemName: "clock.badge.airplane")
-                        .foregroundStyle(Color(.systemCyan))
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-
-            Group {
-                ForEach(currentTrip, id: \.id) { trip in
-                    NavigationLink(destination: {
-                        TripDetailView(trip: trip)
-                    }, label: {
-                        ListRow(trip: trip)
-                    })
-                }
-            }
-            .padding(.leading, 16)
-            .background(
-                cardTheme()
-            )
-        }
-        .padding(.bottom, 25)
-    }
-
-    var countCompletedTrips: Int {
-        return route.trips.filter(\.isCompleted).count
-    }
 
     var countScheduleTrips: Int {
         return route.trips.filter { $0.currentStatus == .scheduled }.count
     }
-    
+
     var currentTrip: [Trip] {
         return route.trips.filter {
             $0.currentStatus == .onTime || $0.currentStatus == .delayed
         }.sorted(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
     }
+
+    var tripHistory: [Trip] {
+        return route.trips.filter {
+            $0.isCompleted == true || $0.isCancelled == true
+        }.sorted(by: { $0.estimatedArrivalTime > $1.estimatedArrivalTime })
+    }
+
 }
 
 #Preview {

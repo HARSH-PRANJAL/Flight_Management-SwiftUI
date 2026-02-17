@@ -26,3 +26,46 @@ struct DetailRowView: View {
         }
     }
 }
+
+@ViewBuilder
+func tripCards(title: String, count: Int, trips: [Trip], imageName: String, imageColor: Color) -> some View {
+    VStack(alignment: .leading, spacing: 10) {
+            Label {
+                HStack(spacing: 0) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                    Text(" (\(count))")
+                        .font(.footnote)
+                        .fontWeight(.light)
+                    Spacer()
+                }
+            } icon: {
+                Image(systemName: imageName)
+                    .foregroundStyle(imageColor)
+            }
+            .padding(.horizontal, 16)
+
+        Group {
+            ForEach(trips, id: \.id) { trip in
+                HStack {
+                    NavigationLink(destination: {
+                        TripDetailView(trip: trip)
+                    }, label: {
+                        ListRow(trip: trip)
+                    })
+                    
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(Color(.systemGray4))
+                        .padding(.trailing, 16)
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(.leading, 16)
+        .background(
+            cardTheme()
+        )
+    }
+}
