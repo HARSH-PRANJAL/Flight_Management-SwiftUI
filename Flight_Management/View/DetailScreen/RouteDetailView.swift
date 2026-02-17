@@ -2,6 +2,15 @@ import SwiftUI
 
 struct RouteDetailView: View {
     let route: Route
+    
+    @Environment(SessionManager.self) var session
+    @Environment(NotificationManager.self) var notificationManager
+    
+    @State private var isEditPageShowing: Bool = false
+
+    var isAdmin: Bool {
+        session.user?.role == UserRole.admin.rawValue
+    }
 
     var body: some View {
         ZStack {
@@ -49,6 +58,18 @@ struct RouteDetailView: View {
             }
             .scrollIndicators(.hidden)
 
+        }
+        .toolbar {
+            if isAdmin {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { isEditPageShowing = true }) {
+                        Image(systemName: "pencil")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $isEditPageShowing) {
+            RouteRegistrationForm(route: route, isPresented: $isEditPageShowing)
         }
     }
 

@@ -4,6 +4,9 @@ import SwiftUI
 struct RouteRegistrationContent: View {
     @State var viewModel: RouteRegistrationFormViewModel
     @State var isAirportRegistrationFormDisplayed = false
+    @State private var showConfirmCloseAlert = false
+    
+    var isPresented: Binding<Bool>?
 
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
@@ -23,12 +26,49 @@ struct RouteRegistrationContent: View {
                 .padding(.vertical, 20)
 
                 saveButton
-                disclaimerText
+                if !viewModel.isEditMode {
+                    disclaimerText
+                }
             }
-            .sheet(isPresented: $isAirportRegistrationFormDisplayed, content: {
-                AirportRegistrationForm()
-            })
+            .onAppear {
+                if viewModel.routeName.isEmpty {
+                    focusedField = .routeName
+                }
+            }
+            .sheet(
+                isPresented: $isAirportRegistrationFormDisplayed,
+                content: {
+                    AirportRegistrationForm()
+                }
+            )
         }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) {
+                    if hasChanges {
+                        showConfirmCloseAlert = true
+                    } else {
+                        isPresented?.wrappedValue = false
+                        dismiss()
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                isPresented?.wrappedValue = false
+                dismiss()
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to discard them?")
+        }
+    }
+    
+    private var hasChanges: Bool {
+        return !viewModel.routeName.isEmpty || !viewModel.selectedNodes.isEmpty
     }
 
     // MARK: - Form Sections
@@ -88,39 +128,41 @@ struct RouteRegistrationContent: View {
                                 Spacer()
 
                                 // Journey Time Input
-                                VStack(alignment: .trailing, spacing: 4) {
-                                    Text("Trip")
-                                        .font(
-                                            .system(size: 12, weight: .semibold)
-                                        )
-                                        .foregroundColor(Color(.systemGray))
-
-                                    HStack(spacing: 4) {
-                                        TextField(
-                                            "0",
-                                            text: Binding(
-                                                get: {
-                                                    // read directly from viewModel to keep binding in sync
-                                                    viewModel.selectedNodes[index].journeyTimeMinutes
-                                                },
-                                                set: { newValue in
-                                                    viewModel.updateJourneyTime(
-                                                        at: index,
-                                                        minutes: newValue
-                                                    )
-                                                }
+                                if index > 0 {
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text("Trip")
+                                            .font(
+                                                .system(
+                                                    size: 12,
+                                                    weight: .semibold
+                                                )
                                             )
-                                        )
-                                        .font(
-                                            .system(size: 16, weight: .semibold)
-                                        )
-                                        .keyboardType(.numberPad)
-                                        .multilineTextAlignment(.trailing)
-                                        .frame(width: 40)
-
-                                        Text("min")
-                                            .font(.system(size: 14))
                                             .foregroundColor(Color(.systemGray))
+
+                                        ScrollView {
+                                            HStack(spacing: 4) {
+                                                TextField(
+                                                    "0",
+                                                    text: textBinding(for: index)
+                                                )
+                                                .font(
+                                                    .system(
+                                                        size: 16,
+                                                        weight: .semibold
+                                                    )
+                                                )
+                                                .keyboardType(.numberPad)
+                                                .multilineTextAlignment(.trailing)
+                                                .scrollDismissesKeyboard(.interactively)
+                                                .frame(width: 40)
+
+                                                Text("min")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(
+                                                        Color(.systemGray)
+                                                    )
+                                            }
+                                        }
                                     }
                                 }
 
@@ -219,7 +261,7 @@ struct RouteRegistrationContent: View {
 
     private var saveButton: some View {
         Button(action: handleSave) {
-            Text("Save Route")
+            Text(viewModel.isEditMode ? "Update Route" : "Save Route")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -244,14 +286,28 @@ struct RouteRegistrationContent: View {
         .padding(.bottom, 30)
     }
 
+    private func textBinding(for index: Int) -> Binding<String> {
+        Binding(
+            get: {
+                viewModel.selectedNodes[index].journeyTimeMinutes
+            },
+            set: { newValue in
+                viewModel.updateJourneyTime(at: index, minutes: newValue)
+            }
+        )
+    }
+
     private func handleSave() {
         if viewModel.saveRoute(to: context) {
-            notificationManager.showSuccess("Route created successfully")
+            let message = viewModel.isEditMode ? "Route updated successfully" : "Route created successfully"
+            notificationManager.showSuccess(message)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                isPresented?.wrappedValue = false
                 dismiss()
             }
         } else {
-            notificationManager.showError("Failed to create route. Please try again.")
+            let message = viewModel.isEditMode ? "Failed to update route. Please try again." : "Failed to create route. Please try again."
+            notificationManager.showError(message)
         }
     }
 }
