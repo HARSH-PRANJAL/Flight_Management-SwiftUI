@@ -9,9 +9,7 @@ struct AircraftDetailView: View {
                 .ignoresSafeArea()
 
             DetailView(aircraft: aircraft)
-                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .scrollDisabled(true)
                 .toolbar(.hidden, for: .bottomBar)
         }
     }
