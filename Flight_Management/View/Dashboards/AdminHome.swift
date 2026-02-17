@@ -65,11 +65,6 @@ struct AdminHome: View {
                 }
             }
             
-            VStack {
-                NotificationView(notificationType: notificationManager.notification)
-                Spacer()
-            }
-            
         }
     }
 }

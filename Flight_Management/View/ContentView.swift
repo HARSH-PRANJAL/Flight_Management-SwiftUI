@@ -20,6 +20,7 @@ struct ContentView: View {
             
             VStack {
                 NotificationView(notificationType: notificationManager.notification)
+                    .animation(.smooth, value: notificationManager.notification)
                 Spacer()
             }
         }
