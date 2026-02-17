@@ -12,8 +12,8 @@ final class NotificationManager {
     
     func showSuccess(_ message: String) {
         notification = .success(message: message)
-        playSuccessSound()
-        triggerSuccessHaptic()
+//        playSuccessSound()
+//        triggerSuccessHaptic()
         scheduleDismissal()
     }
     
