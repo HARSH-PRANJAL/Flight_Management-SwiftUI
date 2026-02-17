@@ -20,7 +20,7 @@ struct TripListView: View {
                 } else {
                     List {
                         ForEach(displayedTrips, id: \.id) { trip in
-                            NavigationLink(destination: DetailView(trip: trip))
+                            NavigationLink(destination: TripDetailView(trip: trip))
                             {
                                 ListRow(trip: trip)
                             }
@@ -28,17 +28,17 @@ struct TripListView: View {
                     }
                 }
             }
-            .toolbar {
-                if externalTrips.isEmpty {
-                    toolbarFilterSortItem
-                }
-            }
-            .searchable(
-                text: $searchText,
-                prompt: "Search by flight number or route"
-            )
-            .searchToolbarBehavior(.minimize)
         }
+        .toolbar {
+            if externalTrips.count == 0 {
+                toolbarFilterSortItem
+            }
+        }
+        .searchable(
+            text: $searchText,
+            prompt: "Search by trip number"
+        )
+        .searchToolbarBehavior(.minimize)
     }
 }
 

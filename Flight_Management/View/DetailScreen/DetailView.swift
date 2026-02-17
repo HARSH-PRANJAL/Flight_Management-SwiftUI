@@ -64,7 +64,7 @@ struct DetailView: View {
                 ForEach(listData) { row in
                     Group {
                         if let trip = row.associatedTrip {
-                            NavigationLink(destination: DetailView(trip: trip))
+                            NavigationLink(destination: TripDetailView(trip: trip))
                             {
                                 row
                             }
@@ -100,7 +100,7 @@ struct DetailView: View {
 
             Group {
                 if let trip = primaryRow?.associatedTrip {
-                    NavigationLink(destination: DetailView(trip: trip)) {
+                    NavigationLink(destination: TripDetailView(trip: trip)) {
                         primaryRow!
                     }
                     .buttonStyle(.plain)

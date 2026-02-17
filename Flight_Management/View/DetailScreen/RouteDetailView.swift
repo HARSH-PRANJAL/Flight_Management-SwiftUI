@@ -77,7 +77,7 @@ struct RouteDetailView: View {
             Group {
                 ForEach(currentTrip, id: \.id) { trip in
                     NavigationLink(destination: {
-                        DetailView(trip: trip)
+                        TripDetailView(trip: trip)
                     }, label: {
                         ListRow(trip: trip)
                     })

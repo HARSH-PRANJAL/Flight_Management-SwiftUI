@@ -49,7 +49,7 @@ struct UpcomingTripsScrollView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(trips, id: \.id) { trip in
-                    NavigationLink(destination: DetailView(trip: trip)) {
+                    NavigationLink(destination: TripDetailView(trip: trip)) {
                         UpcomingTripCard(trip: trip)
                     }
                     .buttonStyle(.plain)
