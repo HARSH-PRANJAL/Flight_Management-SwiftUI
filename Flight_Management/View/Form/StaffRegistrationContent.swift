@@ -10,6 +10,7 @@ struct StaffRegistrationContent: View {
     @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
+    @State private var showConfirmCloseAlert = false
 
     var isPresented: Binding<Bool>?
 
@@ -37,6 +38,48 @@ struct StaffRegistrationContent: View {
 
                 disclaimerText
             }
+        }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) {
+                    if hasChanges {
+                        showConfirmCloseAlert = true
+                    } else {
+                        if let binding = isPresented {
+                            binding.wrappedValue = false
+                        } else {
+                            dismiss()
+                        }
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                if let binding = isPresented {
+                    binding.wrappedValue = false
+                } else {
+                    dismiss()
+                }
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to discard them?")
+        }
+    }
+    
+    private var hasChanges: Bool {
+        if viewModel.isEditMode {
+            return !viewModel.email.isEmpty ||
+                   viewModel.photoData != nil
+        } else {
+            return !viewModel.name.isEmpty ||
+                   !viewModel.email.isEmpty ||
+                    viewModel.role != nil ||
+                   viewModel.gender != nil ||
+                   viewModel.photoData != nil
         }
     }
 
@@ -147,6 +190,7 @@ struct StaffRegistrationContent: View {
                 .background(Color.blue)
                 .cornerRadius(12)
         }
+        .buttonStyle(.plain)
         .padding(.horizontal, 16)
         .padding(.top, 24)
     }
@@ -162,7 +206,6 @@ struct StaffRegistrationContent: View {
         .padding(.top, 16)
     }
 
-    // MARK: - Register
     private func handleRegistration() {
         viewModel.fieldErrors.removeAll()
         var isValid = true
@@ -194,6 +237,9 @@ struct StaffRegistrationContent: View {
 
             staffToEdit.name = viewModel.name
             staffToEdit.email = viewModel.email
+            if let role = viewModel.role {
+                staffToEdit.designation = role
+            }
             if let photoData = viewModel.photoData {
                 staffToEdit.profileImage = photoData
             }

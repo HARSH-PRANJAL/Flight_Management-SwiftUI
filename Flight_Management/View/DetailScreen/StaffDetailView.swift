@@ -61,6 +61,15 @@ struct StaffDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .bottomBar)
         }
+        .toolbar {
+            if isAdmin {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { isEditPageShowing = true }) {
+                        Image(systemName: "pencil")
+                    }
+                }
+            }
+        }
         
         .sheet(isPresented: $isEditPageShowing) {
             StaffRegistrationForm(staff: staff, isPresented: $isEditPageShowing)
