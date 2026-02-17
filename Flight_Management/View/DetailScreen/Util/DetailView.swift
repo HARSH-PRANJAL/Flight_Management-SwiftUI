@@ -13,6 +13,8 @@ struct DetailView: View {
     var actionButtonTitle: String = "Change Status"
     var currentTaskTitle: String = "Current Task"
     var listDataTitle: String = "Completed Tasks"
+    
+    @State private var showImagePreview = false
 
     var body: some View {
         ZStack {
@@ -44,6 +46,9 @@ struct DetailView: View {
                 .padding(.horizontal, 15)
             }
             .scrollIndicators(.hidden)
+        }
+        .fullScreenCover(isPresented: $showImagePreview) {
+            ImagePreviewModal(image: profileImage, title: titleText)
         }
     }
 
