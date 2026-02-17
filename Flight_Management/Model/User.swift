@@ -81,7 +81,7 @@ final class SessionManager {
         )
     }
 
-    func getUserFromDB(modelContext: ModelContext) -> User? {
+    func getUserFromDB(modelContext: ModelContext) async -> User? {
         if !self.isLoggedIn {
             return nil
         }

@@ -47,7 +47,7 @@ struct UserDetailView: View {
         }
         .task {
             if session.isLoggedIn == true {
-                user = session.getUserFromDB(modelContext: context)
+                user = await session.getUserFromDB(modelContext: context)
             }
         }
     }
