@@ -114,7 +114,13 @@ extension ListRow {
     }
 
     init(route: Route) {
-        self.init(profileImage: nil, title: route.name, subtitle: "Airports: \(route.nodes.count)   Total trips: \(route.trips.count)", status: nil)
+        self.init(
+            profileImage: nil,
+            title: route.name,
+            subtitle:
+                "Airports: \(route.nodes.count)   Total trips: \(route.trips.count)",
+            status: nil
+        )
     }
 }
 
