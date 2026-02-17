@@ -26,16 +26,19 @@ func profileHandlerToolbarItem(session: SessionManager) -> some ToolbarContent {
 
     return ToolbarItem(placement: .topBarTrailing) {
         Menu {
-            Button("Logout") {
-                session.logout()
-            }
-
             NavigationLink(
                 "Profile",
                 destination: {
                     UserDetailView()
                 }
             )
+            Section{
+                Button("Logout", role: .destructive) {
+                    session.logout()
+                }
+                .buttonSizing(.flexible)
+                .buttonStyle(.plain)
+            }
         } label: {
             toolbarLabel
                 .frame(width: 32, height: 32)
