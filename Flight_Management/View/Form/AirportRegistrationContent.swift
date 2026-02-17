@@ -133,11 +133,11 @@ struct AirportRegistrationContent: View {
     private func handleRegistration() {
         if viewModel.saveAirport(to: context) {
             notificationManager.showSuccess("Airport registered successfully")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                dismiss()
-            }
+            dismiss()
         } else {
-            notificationManager.showError("Failed to register airport. Please try again.")
+            notificationManager.showError(
+                "Failed to register airport. Please try again."
+            )
         }
     }
 }
