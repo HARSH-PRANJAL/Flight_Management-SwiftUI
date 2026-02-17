@@ -3,6 +3,7 @@ import SwiftUI
 
 struct AircraftRegistrationContent: View {
     @State var viewModel: AircraftRegistrationFormViewModel
+    @State private var showConfirmCloseAlert = false
     
     @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
@@ -29,6 +30,28 @@ struct AircraftRegistrationContent: View {
             .navigationTitle("Aircraft Registration")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) {
+                    if hasChanges {
+                        showConfirmCloseAlert = true
+                    } else {
+                        isPresented = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                isPresented = false
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to discard them?")
+        }
+        .interactiveDismissDisabled(hasChanges)
     }
 
     private var registrationNumberFieldSection: some View {
@@ -157,6 +180,13 @@ struct AircraftRegistrationContent: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 30)
+    }
+
+    private var hasChanges: Bool {
+        return !viewModel.registrationNumber.isEmpty ||
+               !viewModel.type.isEmpty ||
+               !viewModel.seatingCapacity.isEmpty ||
+               !viewModel.minimumStaffRequired.values.allSatisfy { $0.isEmpty }
     }
 
     private func handleRegistration() {

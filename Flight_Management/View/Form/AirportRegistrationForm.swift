@@ -6,9 +6,11 @@ struct AirportRegistrationForm: View {
     @Environment(\.modelContext) var context
 
     @State private var viewModel = AirportRegistrationFormViewModel()
+    
+    var isPresented: Binding<Bool>?
 
     var body: some View {
-        AirportRegistrationContent(viewModel: viewModel)
+        AirportRegistrationContent(viewModel: viewModel, isPresented: isPresented ?? .constant(false))
     }
 }
 

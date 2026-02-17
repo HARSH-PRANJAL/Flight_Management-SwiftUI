@@ -3,7 +3,9 @@ import SwiftUI
 
 struct AirportRegistrationContent: View {
     @State var viewModel: AirportRegistrationFormViewModel
+    @State private var showConfirmCloseAlert = false
 
+    @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @Environment(NotificationManager.self) var notificationManager
@@ -27,6 +29,28 @@ struct AirportRegistrationContent: View {
             }
             .navigationTitle("Airport Registration")
             .navigationBarTitleDisplayMode(.inline)
+        }
+        .interactiveDismissDisabled(hasChanges)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(role: .close) {
+                    if hasChanges {
+                        showConfirmCloseAlert = true
+                    } else {
+                        isPresented = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                isPresented = false
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to discard them?")
         }
     }
 
@@ -130,6 +154,13 @@ struct AirportRegistrationContent: View {
         .padding(.bottom, 30)
     }
 
+    private var hasChanges: Bool {
+        return !viewModel.code.isEmpty ||
+               !viewModel.name.isEmpty ||
+               !viewModel.city.isEmpty ||
+               !viewModel.country.isEmpty
+    }
+
     private func handleRegistration() {
         if viewModel.saveAirport(to: context) {
             notificationManager.showSuccess("Airport registered successfully")
@@ -145,7 +176,8 @@ struct AirportRegistrationContent: View {
 #Preview {
     NavigationStack {
         AirportRegistrationContent(
-            viewModel: AirportRegistrationFormViewModel()
+            viewModel: AirportRegistrationFormViewModel(),
+            isPresented: .constant(false)
         )
         .modelContainer(for: Airport.self, inMemory: true)
     }

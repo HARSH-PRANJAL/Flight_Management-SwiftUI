@@ -65,6 +65,7 @@ struct RouteRegistrationContent: View {
         } message: {
             Text("You have unsaved changes. Are you sure you want to discard them?")
         }
+        .interactiveDismissDisabled(hasChanges)
     }
     
     private var hasChanges: Bool {

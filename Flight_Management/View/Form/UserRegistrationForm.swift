@@ -11,6 +11,7 @@ struct UserRegistrationForm: View {
 
     @State private var viewModel = UserRegistrationFormViewModel()
     @State var user: User? = nil
+    @State private var showConfirmCloseAlert = false
 
     @FocusState private var focusState: FormFocus?
 
@@ -52,6 +53,43 @@ struct UserRegistrationForm: View {
                     }
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        if hasChanges {
+                            showConfirmCloseAlert = true
+                        } else {
+                            isPresented = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+            }
+        }
+        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+            Button("Discard", role: .destructive) {
+                isPresented = false
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text("You have unsaved changes. Are you sure you want to discard them?")
+        }
+        .interactiveDismissDisabled(hasChanges)
+    }
+    
+    private var hasChanges: Bool {
+        if viewModel.isEditMode {
+            return !viewModel.email.isEmpty ||
+                   !viewModel.password.isEmpty ||
+                   viewModel.photoData != nil
+        } else {
+            return !viewModel.name.isEmpty ||
+                   !viewModel.email.isEmpty ||
+                   !viewModel.password.isEmpty ||
+                   !viewModel.confirmPassword.isEmpty ||
+                   viewModel.selectedRole != nil ||
+                   viewModel.photoData != nil
         }
     }
 }
