@@ -11,7 +11,7 @@ struct ContentView: View {
                         if user.role == UserRole.admin.rawValue {
                             AdminHome()
                         } else if user.role == UserRole.tripManager.rawValue {
-                            TripManagerView()
+                            TripManagerHome()
                         }
                     }
             } else {
