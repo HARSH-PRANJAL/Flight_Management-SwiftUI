@@ -13,7 +13,7 @@ struct TextWithCopyView: View {
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(.center)
                 .accessibilityLabel("Detail: \(text)")
             
             Image(systemName: justCopied ? "checkmark.circle.fill" : "doc.on.doc")
