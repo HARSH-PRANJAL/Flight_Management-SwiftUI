@@ -12,11 +12,9 @@ struct StaffDetailView: View {
     @State var showReplaceStaffSheet: Bool = false
     
     // Alert states
-    @State var showStaffOnDutyAlert: Bool = false
+    @State var showMarkUnavailableAlert: Bool = false
     @State var showReplacementConfirmationAlert: Bool = false
     @State var showNoReplacementAlert: Bool = false
-    @State var showTripCancellationAlert: Bool = false
-    @State var showMinimumStaffAlert: Bool = false
     
     // Data for flow
     @State var availableReplacementStaff: [Staff] = []
@@ -88,12 +86,16 @@ struct StaffDetailView: View {
             )
         }
         
-        // Alert: Staff is on active duty
-        .alert("Staff On Active Duty", isPresented: $showStaffOnDutyAlert) {
-            Button("Find Replacement", action: findReplacementStaff)
+        // Alert: Combined unavailable flow - shows future trips will be canceled + option to find replacement
+        .alert("Mark Staff Unavailable", isPresented: $showMarkUnavailableAlert) {
             Button("Cancel", role: .cancel) {}
+            Button("Find Replacement", role: .confirm, action: findReplacementStaff)
         } message: {
-            Text("\(staff.name) is currently assigned to a trip. Would you like to find a replacement staff?")
+            if isStaffOnDuty {
+                Text("\(staff.name) is currently assigned to a trip. \(staff.scheduledTrips.count != 0 ? "Additionally, they have \(staff.scheduledTrips.count) scheduled trip(s) that will be canceled." : "")\n\nWould you like to find a replacement for current trip (only)?")
+            } else {
+                Text("\(staff.scheduledTrips.count != 0 ? "\(staff.name) has \(staff.scheduledTrips.count) scheduled trip(s) that will be canceled." : "")\n\nMark as unavailable?")
+            }
         }
         
         // Alert: Replacement found - confirm assignment
@@ -110,26 +112,10 @@ struct StaffDetailView: View {
         
         // Alert: No replacement available
         .alert("No Replacement Available", isPresented: $showNoReplacementAlert) {
-            Button("Check Minimum Requirement", action: checkMinimumStaffRequirement)
+            Button("Mark Unavailable", role: .destructive, action: markStaffUnavailableWithCancellation)
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("No available staff with \(staff.designation.rawValue) designation found.")
-        }
-        
-        // Alert: Trip cancellation warning
-        .alert("Trip Cancellation Warning", isPresented: $showTripCancellationAlert) {
-            Button("Cancel Trip(s)", role: .destructive, action: cancelScheduledTripsAndMarkUnavailable)
-            Button("Keep Trip(s)", role: .cancel) {}
-        } message: {
-            Text("\(staff.name) is scheduled on \(scheduledTripsToCancel.count) upcoming trip(s). Marking unavailable will cancel these trips. Continue anyway?")
-        }
-        
-        // Alert: Minimum staff requirement check
-        .alert("Minimum Staff Requirement", isPresented: $showMinimumStaffAlert) {
-            Button("Mark Unavailable Anyway", role: .destructive, action: markStaffUnavailable)
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Marking \(staff.name) as unavailable may not meet minimum staff requirements for scheduled trips.")
+            Text("No available staff with \(staff.designation.rawValue) designation found. All scheduled trips will be canceled.")
         }
     }
     
@@ -142,21 +128,9 @@ struct StaffDetailView: View {
     }
     
     private func initiateMarkUnavailable() {
-        if isStaffOnDuty {
-            showStaffOnDutyAlert = true
-        } else {
-            checkScheduledTripsAndMarkUnavailable()
-        }
-    }
-    
-    private func checkScheduledTripsAndMarkUnavailable() {
+        // Prepare data for the combined alert
         scheduledTripsToCancel = staff.scheduledTrips
-        
-        if !scheduledTripsToCancel.isEmpty {
-            showTripCancellationAlert = true
-        } else {
-            markStaffUnavailable()
-        }
+        showMarkUnavailableAlert = true
     }
     
     private func findReplacementStaff() {
@@ -188,8 +162,6 @@ struct StaffDetailView: View {
         }
     }
     
-    
-    
     private func handleReplacementSelected() {
         showReplacementConfirmationAlert = true
     }
@@ -207,20 +179,18 @@ struct StaffDetailView: View {
             replacement.currentTrip = currentTrip
         }
         
-        // Mark original staff unavailable
-        checkScheduledTripsAndMarkUnavailable()
+        // Cancel all scheduled trips and mark original staff unavailable
+        markStaffUnavailableWithCancellation()
         selectedReplacementStaff = nil
     }
     
-    private func checkMinimumStaffRequirement() {
-        // For trips that staff is assigned to, check if removing them would violate minimum requirements
-        showMinimumStaffAlert = true
-    }
-    
-    private func cancelScheduledTripsAndMarkUnavailable() {
+    private func markStaffUnavailableWithCancellation() {
+        // Cancel all scheduled trips
         for trip in scheduledTripsToCancel {
             trip.cancel()
         }
+        
+        // Mark staff unavailable
         markStaffUnavailable()
     }
     
