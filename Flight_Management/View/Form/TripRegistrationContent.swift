@@ -23,15 +23,14 @@ struct TripRegistrationContent: View {
 
                 VStack(spacing: 12) {
                     tripNumber
-                    datePicker
-                        .disabled(viewModel.isEditMode)
                     routePicker
-                    aircraftPicker
-                        .disabled(viewModel.isEditMode)
+                    if viewModel.isEditMode == false {
+                        datePicker
+                        aircraftPicker
 
-                    if viewModel.selectedRoute != nil {
-                        staffSelector
-                            .disabled(viewModel.isEditMode)
+                        if viewModel.selectedRoute != nil {
+                            staffSelector
+                        }
                     }
 
                     if let err = viewModel.fieldErrors["staff"] {
@@ -167,7 +166,6 @@ extension TripRegistrationContent {
             placeholder: "Enter trip number eg Trip - 001",
             focus: .flightNumber,
             hasError: viewModel.fieldErrors["flightNumber"] != nil,
-            maxLength: 100,
             allowedCharacter: {
                 $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "-"
             },

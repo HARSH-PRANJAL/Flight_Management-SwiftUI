@@ -38,7 +38,9 @@ struct RouteRegistrationContent: View {
             .sheet(
                 isPresented: $isAirportRegistrationFormDisplayed,
                 content: {
-                    AirportRegistrationForm(isPresented: $isAirportRegistrationFormDisplayed)
+                    NavigationStack {
+                        AirportRegistrationContent(isPresented: $isAirportRegistrationFormDisplayed)
+                    }
                 }
             )
         }
@@ -80,6 +82,9 @@ struct RouteRegistrationContent: View {
                 placeholder: "e.g., East Coast Loop",
                 focus: .routeName,
                 hasError: viewModel.fieldErrors[.routeName] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isNumber || $0.isWhitespace
+                },
                 text: $viewModel.routeName,
                 focusedField: $focusedField
             )
@@ -226,13 +231,7 @@ struct RouteRegistrationContent: View {
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.systemGray6))
-                        .stroke(Color(.systemGray3), lineWidth: 1)
-                )
-                .shadow(
-                    color: Color.black.opacity(0.07),
-                    radius: 2,
-                    x: 0,
-                    y: 2
+                        .stroke(Color(.systemGray5), lineWidth: 1)
                 )
 
             HStack {
@@ -249,13 +248,7 @@ struct RouteRegistrationContent: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.systemGray6))
-                    .stroke(Color(.systemGray3), lineWidth: 1)
-            )
-            .shadow(
-                color: Color.black.opacity(0.07),
-                radius: 2,
-                x: 0,
-                y: 2
+                    .stroke(Color(.systemGray5), lineWidth: 1)
             )
         }
     }
@@ -269,7 +262,6 @@ struct RouteRegistrationContent: View {
                 .padding()
                 .background(Color(.systemBlue))
                 .cornerRadius(12)
-                .glassEffect(in: .rect)
         }
         .padding(.horizontal, 16)
         .padding(.top, 24)

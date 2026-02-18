@@ -38,11 +38,7 @@ struct UserLoginForm: View {
                         .keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .onChange(of: email) { oldValue, newValue in
-                            if newValue.count > 255 {
-                                email = String(newValue.prefix(255))
-                                return
-                            }
+                        .onChange(of: email) { _, newValue in
                             errorMessage = nil
                         }
                         FormErrorMessage(error: errorMessage)
@@ -52,14 +48,10 @@ struct UserLoginForm: View {
                             placeholder: "Enter your password",
                             focus: .password,
                             hasError: errorMessage != nil,
-                            maxLength: 100,
                             text: $password,
                             focusedField: $focusState
                         )
-                        .onChange(of: password) { oldValue, newValue in
-                            if newValue.count > 100 {
-                                password = String(newValue.prefix(100))
-                            }
+                        .onChange(of: password) { _, newValue in
                             errorMessage = nil
                         }
                     }

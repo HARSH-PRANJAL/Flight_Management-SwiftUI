@@ -6,9 +6,10 @@ struct FormInputField: View {
     let focus: FormFocus
     let hasError: Bool
 
-    var maxLength: Int? = nil
+    var maxLength: Int? = 100
     var allowedCharacter: ((Character) -> Bool)? = nil
     var trimWhitespace: Bool = false
+    var isDisabled: Bool = false
 
     @Binding var text: String
     @FocusState.Binding var focusedField: FormFocus?
@@ -20,6 +21,7 @@ struct FormInputField: View {
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
                 .autocorrectionDisabled()
+                .disabled(isDisabled)
                 .padding()
                 .background {
                     RoundedRectangle(cornerRadius: 12)
@@ -44,6 +46,9 @@ struct FormInputField: View {
     }
 
     private var borderColor: Color {
+        if isDisabled {
+            return Color(.systemGray5)
+        }
         if hasError {
             return Color(.systemRed)
         }

@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct AircraftRegistrationContent: View {
-    @State var viewModel: AircraftRegistrationFormViewModel =
-        AircraftRegistrationFormViewModel()
+    var aircraft: Aircraft? = nil
+    @State var viewModel: AircraftRegistrationFormViewModel
     @State private var showConfirmCloseAlert = false
 
     @Binding var isPresented: Bool
@@ -12,6 +12,16 @@ struct AircraftRegistrationContent: View {
     @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
+    
+    init(aircraft: Aircraft? = nil, isPresented: Binding<Bool>) {
+        self.aircraft = aircraft
+        self._isPresented = isPresented
+        if let aircraft = aircraft {
+            _viewModel = State(initialValue: AircraftRegistrationFormViewModel(aircraft: aircraft))
+        } else {
+            _viewModel = State(initialValue: AircraftRegistrationFormViewModel())
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -28,7 +38,7 @@ struct AircraftRegistrationContent: View {
                 registerButton
                 disclaimerText
             }
-            .navigationTitle("Aircraft Registration")
+            .navigationTitle(aircraft != nil ? "Edit Aircraft" : "Add Aircraft")
             .navigationBarTitleDisplayMode(.inline)
         }
         .toolbar {
@@ -68,6 +78,9 @@ extension AircraftRegistrationContent {
                 placeholder: "e.g., N12345",
                 focus: .registrationNumber,
                 hasError: viewModel.fieldErrors[.registrationNumber] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isNumber
+                },
                 text: $viewModel.registrationNumber,
                 focusedField: $focusedField
             )
@@ -88,6 +101,9 @@ extension AircraftRegistrationContent {
                 placeholder: "e.g., Boeing 737",
                 focus: .type,
                 hasError: viewModel.fieldErrors[.type] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isNumber || $0.isWhitespace
+                },
                 text: $viewModel.type,
                 focusedField: $focusedField
             )
@@ -106,6 +122,9 @@ extension AircraftRegistrationContent {
                 placeholder: "e.g., 180",
                 focus: .seatingCapacity,
                 hasError: viewModel.fieldErrors[.seatingCapacity] != nil,
+                allowedCharacter: {
+                    $0.isNumber
+                },
                 text: $viewModel.seatingCapacity,
                 focusedField: $focusedField
             )
@@ -165,7 +184,7 @@ extension AircraftRegistrationContent {
 
     private var registerButton: some View {
         Button(action: handleRegistration) {
-            Text("Register Aircraft")
+            Text(aircraft != nil ? "Update Aircraft" : "Register Aircraft")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -199,13 +218,26 @@ extension AircraftRegistrationContent {
     }
 
     private func handleRegistration() {
-        if viewModel.saveAircraft(to: context) {
-            notificationManager.showSuccess("Aircraft registered successfully")
-            isPresented = false
+        if let aircraft = aircraft {
+            // Update mode
+            if viewModel.updateAircraft(aircraft, in: context) {
+                notificationManager.showSuccess("Aircraft updated successfully")
+                isPresented = false
+            } else {
+                notificationManager.showError(
+                    "Failed to update aircraft. Please try again."
+                )
+            }
         } else {
-            notificationManager.showError(
-                "Failed to register aircraft. Please try again."
-            )
+            // Create mode
+            if viewModel.saveAircraft(to: context) {
+                notificationManager.showSuccess("Aircraft registered successfully")
+                isPresented = false
+            } else {
+                notificationManager.showError(
+                    "Failed to register aircraft. Please try again."
+                )
+            }
         }
     }
 }
@@ -213,7 +245,6 @@ extension AircraftRegistrationContent {
 #Preview {
     NavigationStack {
         AircraftRegistrationContent(
-            viewModel: AircraftRegistrationFormViewModel(),
             isPresented: .constant(false)
         )
         .modelContainer(for: Aircraft.self, inMemory: true)

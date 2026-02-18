@@ -92,6 +92,9 @@ struct StaffRegistrationContent: View {
                 placeholder: "Enter your full name",
                 focus: .name,
                 hasError: viewModel.fieldErrors[.name] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isWhitespace
+                },
                 text: $viewModel.name,
                 focusedField: $focusedField
             )
@@ -110,6 +113,10 @@ struct StaffRegistrationContent: View {
                 placeholder: "example@example.com",
                 focus: .email,
                 hasError: viewModel.fieldErrors[.email] != nil,
+                maxLength: 255,
+                allowedCharacter: {
+                    $0.isASCII
+                },
                 text: $viewModel.email,
                 focusedField: $focusedField
             )

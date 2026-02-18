@@ -64,6 +64,9 @@ struct AirportRegistrationContent: View {
                 placeholder: "e.g., JFK, LHR",
                 focus: .code,
                 hasError: viewModel.fieldErrors[.code] != nil,
+                allowedCharacter: {
+                    $0.isLetter
+                },
                 text: $viewModel.code,
                 focusedField: $focusedField
             )
@@ -84,6 +87,9 @@ struct AirportRegistrationContent: View {
                 placeholder: "e.g., John F. Kennedy",
                 focus: .name,
                 hasError: viewModel.fieldErrors[.name] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isNumber || $0.isWhitespace
+                },
                 text: $viewModel.name,
                 focusedField: $focusedField
             )
@@ -102,6 +108,9 @@ struct AirportRegistrationContent: View {
                 placeholder: "e.g., New York",
                 focus: .city,
                 hasError: viewModel.fieldErrors[.city] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isWhitespace
+                },
                 text: $viewModel.city,
                 focusedField: $focusedField
             )
@@ -120,6 +129,9 @@ struct AirportRegistrationContent: View {
                 placeholder: "e.g., USA",
                 focus: .country,
                 hasError: viewModel.fieldErrors[.country] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isWhitespace
+                },
                 text: $viewModel.country,
                 focusedField: $focusedField
             )

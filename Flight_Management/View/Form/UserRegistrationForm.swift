@@ -28,10 +28,14 @@ struct UserRegistrationForm: View {
                     )
 
                     userNameFieldSection
-                    emailFieldSection
+                    if viewModel.isEditMode == false {
+                        emailFieldSection
+                    }
                     passwordFieldSection
                     confirmPasswordFieldSection
-                    roleFieldSection
+                    if viewModel.isEditMode == false {
+                        roleFieldSection
+                    }
 
                     registerButton
                 }
@@ -104,7 +108,6 @@ extension UserRegistrationForm {
                 placeholder: "Enter your name",
                 focus: .name,
                 hasError: viewModel.fieldErrors[.name] != nil,
-                maxLength: 100,
                 allowedCharacter: {
                     $0.isLetter || $0.isWhitespace
                 },
@@ -134,7 +137,6 @@ extension UserRegistrationForm {
                 text: $viewModel.email,
                 focusedField: $focusState
             )
-            .disabled(viewModel.isEditMode)
             .keyboardType(.emailAddress)
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
@@ -153,7 +155,6 @@ extension UserRegistrationForm {
                 placeholder: "Enter your password",
                 focus: .password,
                 hasError: viewModel.fieldErrors[.password] != nil,
-                maxLength: 100,
                 allowedCharacter: {
                     $0.isASCII
                 },
@@ -175,7 +176,9 @@ extension UserRegistrationForm {
                 placeholder: "Repeat your password",
                 focus: .confirmPassword,
                 hasError: viewModel.fieldErrors[.confirmPassword] != nil,
-                maxLength: 100,
+                allowedCharacter: {
+                    $0.isASCII
+                },
                 text: $viewModel.confirmPassword,
                 focusedField: $focusState
             )
@@ -197,7 +200,6 @@ extension UserRegistrationForm {
                 selection: $viewModel.selectedRole,
                 focusedField: $focusState
             )
-            .disabled(viewModel.isEditMode)
             .onChange(of: viewModel.selectedRole) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .role)
             }

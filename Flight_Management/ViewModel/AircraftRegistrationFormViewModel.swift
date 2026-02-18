@@ -13,7 +13,17 @@ final class AircraftRegistrationFormViewModel {
 
     init() {
         for role in StaffRole.allCases {
-            minimumStaffRequired[role] = "0"
+            minimumStaffRequired[role] = ""
+        }
+    }
+    
+    init(aircraft: Aircraft) {
+        self.registrationNumber = aircraft.registrationNumber
+        self.type = aircraft.type
+        self.seatingCapacity = String(aircraft.seatingCapacity)
+        
+        for role in StaffRole.allCases {
+            self.minimumStaffRequired[role] = String(aircraft.minimumStaffRequired[role] ?? 0)
         }
     }
 
@@ -109,6 +119,31 @@ extension AircraftRegistrationFormViewModel {
         )
         
         context.insert(aircraft)
+        
+        do {
+            try context.save()
+            submissionState = .success
+            return true
+        } catch {
+            submissionState = .error
+            return false
+        }
+    }
+    
+    func updateAircraft(_ aircraft: Aircraft, in context: ModelContext) -> Bool {
+        guard validateAll() else { return false }
+        
+        aircraft.registrationNumber = registrationNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        aircraft.type = type.trimmingCharacters(in: .whitespacesAndNewlines)
+        aircraft.seatingCapacity = Int(seatingCapacity) ?? 0
+        
+        var staffDict: [StaffRole: Int] = [:]
+        for role in StaffRole.allCases {
+            if let count = Int(minimumStaffRequired[role] ?? "0") {
+                staffDict[role] = max(0, count)
+            }
+        }
+        aircraft.minimumStaffRequired = staffDict
         
         do {
             try context.save()
