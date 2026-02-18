@@ -1,16 +1,17 @@
-import SwiftUI
 import Charts
 import SwiftData
+import SwiftUI
 
 struct AdminDashboardView: View {
-    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips: [Trip]
+    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
+        [Trip]
     @Query(sort: \Staff.name, order: .forward) var staffs: [Staff]
     @State private var showingTripList: Bool = false
-    
+
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
-            
+
             ScrollView {
                 VStack(spacing: 20) {
                     HStack(spacing: 12) {
@@ -22,7 +23,7 @@ struct AdminDashboardView: View {
                             iconColor: Color(.systemGreen).opacity(0.75),
                             background: Color(.systemBackground)
                         )
-                        
+
                         DashboardCardView(
                             title: "Delayed Flights",
                             value: "\(delayedCount)",
@@ -33,27 +34,30 @@ struct AdminDashboardView: View {
                         )
                     }
                     .padding(.horizontal, 16)
-                    
+
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
-                            Text("Daily Flight Status")
+                            Text("Daily Trip Status")
                                 .font(.headline)
-                            Text("Overview of all flights today")
+                            Text("Overview of all trips today")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        TripsDonutChartView(data: tripsSummary)
-                            .frame(height: 220)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(.systemBackground)))
-                            .shadow(color: Color.black.opacity(0.05),
-                                radius: 5, x:0, y:2)
+
+                        DonutChartView(
+                            data: tripsSummary,
+                            defaultTitle: "Total trips"
+                        )
+                        .frame(height: 300)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            cardTheme()
+                        )
                     }
                     .padding(.horizontal, 16)
-                    
+
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
                             Text("Crew Status Overview")
@@ -63,17 +67,20 @@ struct AdminDashboardView: View {
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        CrewStatusChartView(data: crewStatusCounts)
-                            .frame(height: 200)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(.systemBackground)))
-                            .shadow(color: Color.black.opacity(0.05),
-                                radius: 5, x:0, y:2)
+
+                        DonutChartView(
+                            data: crewStatusCounts,
+                            defaultTitle: "Total staff"
+                        )
+                        .frame(height: 300)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            cardTheme()
+                        )
                     }
                     .padding(.horizontal, 16)
-                    
+
                     if upcomingTrips.count != 0 {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Upcoming Flights")
@@ -81,7 +88,7 @@ struct AdminDashboardView: View {
                             Text("Next 6 hours")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                            
+
                             UpcomingTripsScrollView(trips: upcomingTrips)
                                 .frame(height: 140)
                             HStack {
@@ -95,7 +102,7 @@ struct AdminDashboardView: View {
                         }
                         .padding(.horizontal, 16)
                     }
-                    
+
                     Spacer(minLength: 24)
                 }
                 .padding(.top, 16)
@@ -113,7 +120,9 @@ struct AdminDashboardView: View {
 extension AdminDashboardView {
     private var todayTrips: [Trip] {
         let calendar = Calendar.current
-        return trips.filter { calendar.isDateInToday($0.scheduledDepartureTime) }
+        return trips.filter {
+            calendar.isDateInToday($0.scheduledDepartureTime)
+        }
     }
 
     private var onTimePercentage: Int {
@@ -127,7 +136,7 @@ extension AdminDashboardView {
         todayTrips.filter { $0.currentStatus == .delayed }.count
     }
 
-    private var tripsSummary: [(String, Int, Color)] {
+    private var tripsSummary: [(String, Int)] {
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         let delayed = todayTrips.filter { $0.currentStatus == .delayed }.count
         let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }
@@ -135,29 +144,33 @@ extension AdminDashboardView {
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
         return [
-            ("On-Time", onTime, Color.tripStatusColor(for: .onTime)),
-            ("Delayed", delayed, Color.tripStatusColor(for: .delayed)),
-            ("Cancelled", cancelled, Color.tripStatusColor(for: .cancelled)),
-            ("Scheduled", scheduled, Color.tripStatusColor(for: .scheduled)),
+            (category: "On-Time", count: onTime),
+            (category: "Delayed", count: delayed),
+            (category: "Cancelled", count: cancelled),
+            (category: "Scheduled", count: scheduled),
         ]
     }
 
-    private var crewStatusCounts: [(String, Int, Color)] {
+    private var crewStatusCounts: [(String, Int)] {
         let available = staffs.filter { $0.currentStatus == .available }.count
         let onDuty = staffs.filter { $0.currentStatus == .onDuty }.count
-        let unavailable = staffs.filter { $0.currentStatus == .unavailable }.count
+        let unavailable = staffs.filter { $0.currentStatus == .unavailable }
+            .count
         return [
-            ("Available", available, Color.staffStatusColor(for: .available)),
-            ("On Duty", onDuty, Color.staffStatusColor(for: .onDuty)),
-            ("Unavailable", unavailable, Color.staffStatusColor(for: .unavailable))
+            (category: "Available", count: available),
+            (category: "On Duty", count: onDuty),
+            (category: "Unavailable", count: unavailable),
         ]
     }
 
     private var upcomingTrips: [Trip] {
         let now = Date()
-        let until = Calendar.current.date(byAdding: .hour, value: 6, to: now) ?? now
+        let until =
+            Calendar.current.date(byAdding: .hour, value: 6, to: now) ?? now
         return trips.filter {
-            $0.currentStatus == .scheduled && !$0.isCancelled && !$0.isCompleted && $0.scheduledDepartureTime >= now && $0.scheduledDepartureTime <= until
+            $0.currentStatus == .scheduled && !$0.isCancelled && !$0.isCompleted
+                && $0.scheduledDepartureTime >= now
+                && $0.scheduledDepartureTime <= until
         }
         .sorted { $0.scheduledDepartureTime < $1.scheduledDepartureTime }
     }
