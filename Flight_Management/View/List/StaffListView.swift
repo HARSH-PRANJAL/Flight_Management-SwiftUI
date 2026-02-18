@@ -117,12 +117,12 @@ extension StaffListView {
 extension StaffListView {
     var fallbackBackground: some View {
         VStack(alignment: .center, spacing: 0) {
-            Image(systemName: "person.3")
+            fallbackNoStaffDataImage()
                 .resizable()
-                .opacity(0.15)
-                .frame(maxWidth: 150, maxHeight: 100)
-            Text("No Staff Data Available.")
                 .opacity(0.25)
+                .frame(maxWidth: 150, maxHeight: 150)
+            Text("No Staff Data Available")
+                .opacity(0.55)
         }
     }
 
