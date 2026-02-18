@@ -1,379 +1,532 @@
 import Foundation
 import SwiftData
-import SwiftUI
 
-/// DemoDataSeeder
-/// - Modular seeder for inserting mock airports, aircrafts, staff, routes and trips into a ModelContext.
-/// - Designed to be detachable: call `seed(in:)` to insert data and `startAutoUpdates(in:)` to begin status updates every 2 minutes.
-/// - For demo/testing only — schedules trips relative to `Date()` so they change each app restart.
-
-public final class DemoDataSeeder {
-    public static let shared = DemoDataSeeder()
-
-    private var updateTask: Task<Void, Never>? = nil
-    // count how many scheduled trips we've auto-started (one per tick)
-    private var initialAutoStarted: Int = 0
-    private var isSeedingKey = "DemoDataSeeder.seeded"
-
-    public init() {}
-
+@Observable
+final class DemoDataSeeder {
+    static let shared = DemoDataSeeder()
+    
+    private var updateTimer: Timer?
+    private var isSeeded = false
+    private var delayedTripIDs: Set<UUID> = []
+    
+    private var seedCount: Int {
+        get {
+            UserDefaults.standard.integer(forKey: "flightSeedCount")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "flightSeedCount")
+        }
+    }
+    
     // MARK: - Public API
-
-    /// Seed demo data. Safe to call multiple times - will not reseed if already seeded in UserDefaults.
-    public func seedIfNeeded(in context: ModelContext, force: Bool = false) async {
-        let already = UserDefaults.standard.bool(forKey: isSeedingKey)
-        if already && !force { return }
-        await seed(in: context)
-        UserDefaults.standard.set(true, forKey: isSeedingKey)
+    
+    func seedIfNeeded(in context: ModelContext) async {
+        if isSeeded {
+            return
+        }
+        
+        // Check if data already exists in database
+        if hasExistingData(in: context) {
+            isSeeded = true
+            return
+        }
+        
+        await forceReseed(in: context)
     }
-
-    /// Force reseed (clears flag and runs seed)
-    public func forceReseed(in context: ModelContext) async {
-        UserDefaults.standard.set(false, forKey: isSeedingKey)
-        await seed(in: context)
-        UserDefaults.standard.set(true, forKey: isSeedingKey)
-    }
-
-    /// Start periodic updates that randomly update trip states every 2 minutes.
-    /// Call `stopAutoUpdates()` to cancel.
-    public func startAutoUpdates(in context: ModelContext) {
-        stopAutoUpdates()
-        updateTask = Task.detached { [weak self] in
-            guard let self = self else { return }
-            while !Task.isCancelled {
-                await MainActor.run {
-                    Task {
-                        await self.performRandomTripUpdates(in: context)
+    
+    func forceReseed(in context: ModelContext) async {
+        // Increment seed count for sequential naming
+        seedCount += 1
+        
+        // Check if we already have data - if so, just add new trips
+        let hasExistingData = hasExistingData(in: context)
+        
+        if hasExistingData {
+            // Just create and add new trips to existing data
+            do {
+                let descriptor = FetchDescriptor<Route>()
+                let routes = try context.fetch(descriptor)
+                
+                let aircraftDescriptor = FetchDescriptor<Aircraft>()
+                let aircrafts = try context.fetch(aircraftDescriptor)
+                
+                let staffDescriptor = FetchDescriptor<Staff>()
+                let staffs = try context.fetch(staffDescriptor)
+                
+                if !routes.isEmpty && !aircrafts.isEmpty && !staffs.isEmpty {
+                    let newTrips = createTrips(routes: routes, aircrafts: aircrafts, staff: staffs, currentDate: Date())
+                    for trip in newTrips {
+                        context.insert(trip)
                     }
+                    try context.save()
+                    printNewTripsSeeded(trips: newTrips)
+                    return
                 }
-                do {
-                    try await Task.sleep(nanoseconds: 2 * 60 * 1_000_000_000) // 2 minutes
-                } catch {
-                    break
-                }
+            } catch {
+                print("Error loading existing data: \(error)")
             }
         }
-    }
-
-    public func stopAutoUpdates() {
-        updateTask?.cancel()
-        updateTask = nil
-    }
-
-    // MARK: - Core Seeding
-
-    @MainActor
-    private func seed(in context: ModelContext) async {
-        // Remove all existing demo objects so we reconstruct clean demo data
-        do {
-            let allTrips: FetchDescriptor<Trip> = FetchDescriptor<Trip>()
-            let trips = (try? context.fetch(allTrips)) as? [Trip] ?? []
-            for t in trips { context.delete(t) }
-
-            let allRoutes: FetchDescriptor<Route> = FetchDescriptor<Route>()
-            let routes = (try? context.fetch(allRoutes)) as? [Route] ?? []
-            for r in routes { context.delete(r) }
-
-            let allAircraft: FetchDescriptor<Aircraft> = FetchDescriptor<Aircraft>()
-            let aircraftsExisting = (try? context.fetch(allAircraft)) as? [Aircraft] ?? []
-            for a in aircraftsExisting { context.delete(a) }
-
-            let allStaff: FetchDescriptor<Staff> = FetchDescriptor<Staff>()
-            let staffsExisting = (try? context.fetch(allStaff)) as? [Staff] ?? []
-            for s in staffsExisting { context.delete(s) }
-
-            let allAirports: FetchDescriptor<Airport> = FetchDescriptor<Airport>()
-            let airportsExisting = (try? context.fetch(allAirports)) as? [Airport] ?? []
-            for ap in airportsExisting { context.delete(ap) }
-
-            try context.save()
-        } catch {
-            print("DemoDataSeeder: failed clearing existing demo data: \(error)")
+        
+        // Create fresh data if nothing exists
+        let airports = createIndianAirports()
+        let aircrafts = createAircrafts()
+        let staff = createStaff()
+        let routes = createRoutes(with: airports)
+        let trips = createTrips(routes: routes, aircrafts: aircrafts, staff: staff, currentDate: Date())
+        
+        // Insert all data
+        for airport in airports {
+            context.insert(airport)
         }
-
-        // 1. Airports (4)
-        let airports = self.createAirports()
-        airports.forEach { context.insert($0) }
-
-        // 2. Aircrafts (3)
-        let aircrafts = self.createAircrafts()
-        aircrafts.forEach { context.insert($0) }
-
-        // 3. Staffs (3 pilots, 3 copilots, 10 crew)
-        let staffs = self.createStaffs()
-        staffs.forEach { context.insert($0) }
-
-        // 4. Routes (3 with specific node orders)
-        let routes = self.createRoutes(using: airports)
-        routes.forEach { context.insert($0) }
-
-        // 5. Create initial trips: 3 immediate scheduled trips (now +10, +20, +30 min)
-        let initialTrips = self.createInitialTrips(routes: routes, aircrafts: aircrafts, staffs: staffs)
-        initialTrips.forEach { context.insert($0) }
-
-        // 6. Schedule 5 additional trips across next 10 days ensuring availability
-        let futureTrips = self.createFutureTrips(routes: routes, aircrafts: aircrafts, staffs: staffs)
-        futureTrips.forEach { context.insert($0) }
-
-        // Save and start simulator
-        do {
-            try context.save()
-            startAutoUpdates(in: context)
-        } catch {
-            print("DemoDataSeeder: failed to save context: \(error)")
+        for aircraft in aircrafts {
+            context.insert(aircraft)
         }
-    }
-
-    // MARK: - Random updates (demo)
-
-    @MainActor
-    private func performRandomTripUpdates(in context: ModelContext) async {
-        let fetch: FetchDescriptor<Trip> = FetchDescriptor<Trip>()
-        guard let trips = try? context.fetch(fetch) as? [Trip], !trips.isEmpty else { return }
-
-        let now = Date()
-
-        print("DemoDataSeeder.tick: performing update at \(now); totalTrips=\(trips.count)")
-
-        // Start one scheduled trip per tick (to simulate staggered starts)
-        let scheduledTrips = trips.filter { $0.currentStatus == .scheduled && !$0.isCancelled }
-            .sorted { $0.scheduledDepartureTime < $1.scheduledDepartureTime }
-
-        if initialAutoStarted < scheduledTrips.count {
-            let tripToStart = scheduledTrips[initialAutoStarted]
-            print("DemoDataSeeder: auto-starting trip \(tripToStart.flightNumber) scheduled=\(tripToStart.scheduledDepartureTime) index=\(initialAutoStarted)")
-            tripToStart.startTrip(departureTime: Date())
-            initialAutoStarted += 1
+        for staffMember in staff {
+            context.insert(staffMember)
         }
-
-        // For ongoing trips, simulate arrival/departure actions every tick
+        for route in routes {
+            context.insert(route)
+        }
         for trip in trips {
-            if trip.isCompleted || trip.isCancelled { continue }
-
-            if !trip.nodeStatuses.isEmpty && !trip.isCompleted {
-                let rand = Int.random(in: 0...100)
-                if rand < 15 {
-                    // small chance to introduce delay
-                    let delay = Int.random(in: 3...10)
-                    print("DemoDataSeeder: trip \(trip.flightNumber) - introducing delay of \(delay) mins")
-                    if let lastIndex = trip.nodeStatuses.indices.last {
-                        trip.nodeStatuses[lastIndex].actualArrivalTime = Date().addingTimeInterval(TimeInterval(delay * 60))
-                    }
-                } else if rand < 60 {
-                    // schedule arrival at current airport
-                    print("DemoDataSeeder: trip \(trip.flightNumber) - scheduling arrival")
-                    trip.scheduleCurrentAirportArrival(arrivalTime: Date())
+            context.insert(trip)
+        }
+        
+        do {
+            try context.save()
+            isSeeded = true
+            printSeedingData(airports: airports, aircrafts: aircrafts, staff: staff, routes: routes, trips: trips)
+        } catch {
+            print("Failed to seed demo data: \(error)")
+        }
+    }
+    
+    func startAutoUpdates(in context: ModelContext) {
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.simulateFlightProgression(in: context)
+        }
+    }
+    
+    func stopAutoUpdates() {
+        updateTimer?.invalidate()
+        updateTimer = nil
+    }
+    
+    // MARK: - Data Creation
+    
+    private func createIndianAirports() -> [Airport] {
+        let airportData: [(code: String, name: String, city: String)] = [
+            ("DEL", "Indira Gandhi International", "Delhi"),
+            ("BOM", "Bombay High", "Mumbai"),
+            ("BLR", "Kempegowda International", "Bangalore"),
+            ("HYD", "Rajiv Gandhi International", "Hyderabad"),
+            ("MAA", "Chennai International", "Chennai"),
+            ("COK", "Cochin International", "Kochi"),
+            ("PNQ", "Pune Airport", "Pune"),
+            ("AMD", "Sardar Vallabhbhai Patel International", "Ahmedabad"),
+            ("GOI", "Dabolim Airport", "Goa"),
+            ("CCU", "Netaji Subhas Chandra Bose International", "Kolkata"),
+            ("LKO", "Amausi Airport", "Lucknow"),
+            ("JAI", "Jaipur International", "Jaipur"),
+            ("VTZ", "Vishakhapatnam International", "Vishakhapatnam"),
+            ("IXC", "Chandigarh International", "Chandigarh"),
+            ("AGR", "Agrasen International", "Agra"),
+            ("VRN", "Varanasi International", "Varanasi"),
+            ("IXM", "Madurai Airport", "Madurai"),
+            ("CjB", "Coimbatore International", "Coimbatore"),
+            ("SXR", "Srinagar International", "Srinagar"),
+            ("JDH", "Jammu Airport", "Jammu"),
+            ("IDR", "Indore Airport", "Indore"),
+            ("RAJ", "Rajkot Airport", "Rajkot"),
+            ("BTV", "Belgaum Airport", "Belgaum"),
+            ("UDR", "Udaipur Airport", "Udaipur"),
+            ("JLR", "Jodhpur Airport", "Jodhpur"),
+            ("KJA", "Kunjapuri Air Strip", "Dehradun"),
+            ("AGX", "Agatti Airport", "Agatti"),
+            ("COI", "Port Blair Airport", "Port Blair"),
+            ("TRZ", "Tirupati Airport", "Tirupati"),
+            ("ZAY", "Zero Zone Airport", "Aurangabad"),
+        ]
+        
+        return airportData.map { Airport(code: $0.code, name: $0.name, city: $0.city, country: "India") }
+    }
+    
+    private func createAircrafts() -> [Aircraft] {
+        let aircrafts: [Aircraft] = [
+            Aircraft(registrationNumber: "VT-ANA", type: "Boeing 777", seatingCapacity: 350, minimumStaffRequired: [.pilot: 1, .coPilot: 0, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANB", type: "Boeing 787", seatingCapacity: 280, minimumStaffRequired: [.pilot: 1, .coPilot: 0, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANC", type: "Airbus A320", seatingCapacity: 180, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-AND", type: "Airbus A330", seatingCapacity: 300, minimumStaffRequired: [.pilot: 1, .coPilot: 0, .cabinCrew: 2]),
+            Aircraft(registrationNumber: "VT-ANE", type: "Embraer E190", seatingCapacity: 200, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANF", type: "Boeing 737", seatingCapacity: 160, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANG", type: "Airbus A321", seatingCapacity: 190, minimumStaffRequired: [.pilot: 1, .coPilot: 0, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANH", type: "Boeing 767", seatingCapacity: 270, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 2]),
+            Aircraft(registrationNumber: "VT-ANI", type: "Bombardier Q400", seatingCapacity: 90, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANJ", type: "ATR 72", seatingCapacity: 70, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANK", type: "Boeing 777", seatingCapacity: 350, minimumStaffRequired: [.pilot: 2, .coPilot: 0, .cabinCrew: 2]),
+            Aircraft(registrationNumber: "VT-ANL", type: "Airbus A380", seatingCapacity: 500, minimumStaffRequired: [.pilot: 2, .coPilot: 1, .cabinCrew: 3]),
+            Aircraft(registrationNumber: "VT-ANM", type: "Boeing 787", seatingCapacity: 280, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANN", type: "Airbus A350", seatingCapacity: 325, minimumStaffRequired: [.pilot: 1, .coPilot: 0, .cabinCrew: 2]),
+            Aircraft(registrationNumber: "VT-ANO", type: "Boeing 737", seatingCapacity: 160, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANP", type: "Embraer E195", seatingCapacity: 220, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANQ", type: "Airbus A320", seatingCapacity: 180, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANR", type: "Boeing 767", seatingCapacity: 270, minimumStaffRequired: [.pilot: 2, .coPilot: 0, .cabinCrew: 2]),
+            Aircraft(registrationNumber: "VT-ANS", type: "Airbus A321", seatingCapacity: 190, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 1]),
+            Aircraft(registrationNumber: "VT-ANT", type: "Boeing 777", seatingCapacity: 350, minimumStaffRequired: [.pilot: 1, .coPilot: 1, .cabinCrew: 2]),
+        ]
+        return aircrafts
+    }
+    
+    private func createStaff() -> [Staff] {
+        let indianPilotNames = [
+            "Captain Rajesh Kumar", "Captain Pradeep Singh", "Captain Virender Sehwag",
+            "Captain Arun Sharma", "Captain Nikhat Khan", "Captain Deepak Nair",
+            "Captain Manish Patel", "Captain Suresh Reddy", "Captain Harinder Sidhu",
+            "Captain Rajiv Mishra", "Captain Ashok Kumar", "Captain Sanjay Verma",
+            "Captain Ramesh Gupta", "Captain Vikram Singh", "Captain Anand Rao",
+            "Captain Ravi Tomar", "Captain Nitin Joshi", "Captain Karthik Subramanian",
+            "Captain Mohan Lal", "Captain Sandeep Singh", "Captain Ajay Kumar",
+            "Captain Bhaskar Roy", "Captain Chandra Mohan", "Captain Dhanraj Pillai",
+            "Captain Eknath Solkar", "Captain Fawad Ali", "Captain Govind Sharma",
+            "Captain Hardik Pandya", "Captain Ishant Sharma", "Captain Jasprit Bumrah",
+        ]
+        
+        let indianCoPilotNames = [
+            "First Officer Priya Sharma", "First Officer Simran Kaur", "First Officer Aisha Khan",
+            "First Officer Neha Gupta", "First Officer Zara Patel", "First Officer Sophia Singh",
+            "First Officer Ananya Desai", "First Officer Diya Verma", "First Officer Erica Nair",
+            "First Officer Fiza Khan", "First Officer Geetika Roy", "First Officer Honey Sharma",
+            "First Officer Isha Malhotra", "First Officer Jasmine Reddy", "First Officer Kalpana Bhat",
+            "First Officer Lakshmi Murthy", "First Officer Megha Chopra", "First Officer Navya Iyer",
+            "First Officer Olivia Fernandes", "First Officer Priya Menon", "First Officer Quinzia D'Souza",
+            "First Officer Ritika Singh", "First Officer Shruti Bhat", "First Officer Tanya Puri",
+            "First Officer Uma Shetty", "First Officer Vaishali Nair", "First Officer Wilma Fernandes",
+            "First Officer Xenia Dasgupta", "First Officer Yasmin Khan", "First Officer Zonia Rao",
+        ]
+        
+        let indianCrewNames = [
+            "Cabin Crew Amit Patel", "Cabin Crew Bhavna Singh", "Cabin Crew Chirag Verma",
+            "Cabin Crew Divya Sharma", "Cabin Crew Emran Khan", "Cabin Crew Farhan Ali",
+            "Cabin Crew Gaurav Desai", "Cabin Crew Heenal Gupta", "Cabin Crew Imran Siddiqui",
+            "Cabin Crew Jitendra Rao", "Cabin Crew Kriti Nair", "Cabin Crew Laxman Pillai",
+            "Cabin Crew Manoj Kumar", "Cabin Crew Nikhil Reddy", "Cabin Crew Omkar Singh",
+            "Cabin Crew Param Bhat", "Cabin Crew Quentin D'Souza", "Cabin Crew Rahul Iyer",
+            "Cabin Crew Sameer Khan", "Cabin Crew Tushar Malhotra", "Cabin Crew Uday Prabhu",
+            "Cabin Crew Varun Chopra", "Cabin Crew Waqar Ahmed", "Cabin Crew Xander Fernandes",
+            "Cabin Crew Yogesh Sharma", "Cabin Crew Zain Mirza", "Cabin Crew Aditya Banerjee",
+            "Cabin Crew Babul Roy", "Cabin Crew Cavin Menon", "Cabin Crew Dheeraj Shetty",
+        ]
+        
+        var staffList: [Staff] = []
+        
+        // Create pilots
+        for name in indianPilotNames {
+            let dob = makeDemoDOB(year: Int.random(in: 2000...2016), month: Int.random(in: 1...12), day: Int.random(in: 1...28))
+            let email = name.lowercased().replacingOccurrences(of: " ", with: ".") + "@airlineindia.com"
+            staffList.append(Staff(
+                name: name,
+                designation: .pilot,
+                gender: name.contains("Captain") ? .male : .female,
+                email: email,
+                dob: dob
+            ))
+        }
+        
+        // Create co-pilots
+        for name in indianCoPilotNames {
+            let dob = makeDemoDOB(year: Int.random(in: 1990...2010), month: Int.random(in: 1...12), day: Int.random(in: 1...28))
+            let email = name.lowercased().replacingOccurrences(of: " ", with: ".") + "@airlineindia.com"
+            staffList.append(Staff(
+                name: name,
+                designation: .coPilot,
+                gender: name.contains("Officer") && name.containsAny("Priya", "Simran", "Aisha", "Neha", "Zara") ? .female : .male,
+                email: email,
+                dob: dob
+            ))
+        }
+        
+        // Create crew members
+        for name in indianCrewNames {
+            let dob = makeDemoDOB(year: Int.random(in: 1995...2012), month: Int.random(in: 1...12), day: Int.random(in: 1...28))
+            let email = name.lowercased().replacingOccurrences(of: " ", with: ".") + "@airlineindia.com"
+            staffList.append(Staff(
+                name: name,
+                designation: .cabinCrew,
+                gender: .random() ? .male : .female,
+                email: email,
+                dob: dob
+            ))
+        }
+        
+        return staffList
+    }
+    
+    private func createRoutes(with airports: [Airport]) -> [Route] {
+        var routes: [Route] = []
+        let airportCount = airports.count
+        
+        for i in 0..<15 {
+            let route = Route(name: "Route-\(i + 1)")
+            
+            // Randomly select 2-6 airports
+            let nodeCount = Int.random(in: 2...6)
+            var selectedIndices = Set<Int>()
+            
+            while selectedIndices.count < nodeCount {
+                selectedIndices.insert(Int.random(in: 0..<airportCount))
+            }
+            
+            let selectedAirports = selectedIndices.sorted().map { airports[$0] }
+            
+            // Add nodes to route
+            for (index, airport) in selectedAirports.enumerated() {
+                if index == 0 {
+                    // First node always has 0 offset
+                    let node = RouteNode(plannedArrivalOffsetMinutes: 0, airport: airport)
+                    route.nodes.append(node)
                 } else {
-                    // schedule departure from current airport
-                    print("DemoDataSeeder: trip \(trip.flightNumber) - scheduling departure")
-                    trip.scheduleCurrentAirportDeparture(departureTime: Date())
+                    // Add journey time between 3-10 minutes
+                    let journeyTime = Int.random(in: 3...10)
+                    let previousOffset = route.nodes.last?.plannedArrivalOffsetMinutes ?? 0
+                    let newOffset = previousOffset + journeyTime
+                    let node = RouteNode(plannedArrivalOffsetMinutes: newOffset, airport: airport)
+                    route.nodes.append(node)
                 }
             }
+            
+            routes.append(route)
         }
-
-        do { try context.save() } catch { print("DemoDataSeeder.update: failed saving - \\(error)") }
-    }
-
-    // MARK: - Helpers to create mock model objects
-
-    private func createAirports() -> [Airport] {
-        // Create 4 airports used in demo routes
-        let codes = ["JFK", "LAX", "SFO", "ORD"]
-        return codes.map { code in
-            Airport(code: code, name: "\(code) International", city: "City \(code)", country: "Country \(code)")
-        }
-    }
-
-    private func createAircrafts() -> [Aircraft] {
-        // Create 3 aircrafts with minimal staff requirements: 1 pilot, 1 copilot, 2 crew
-        var list: [Aircraft] = []
-        for i in 1...3 {
-            let reg = "AC\(100 + i)"
-            let type = "DemoPlane-\(i)"
-            let seating = 120 + i * 10
-            let mins: [StaffRole: Int] = [.pilot: 1, .coPilot: 1, .cabinCrew: 2]
-            list.append(Aircraft(registrationNumber: reg, type: type, seatingCapacity: seating, minimumStaffRequired: mins))
-        }
-        return list
-    }
-
-    private func createStaffs() -> [Staff] {
-        var staffs: [Staff] = []
-        // 3 pilots
-        for i in 1...3 {
-            let name = "Pilot \(i)"
-            staffs.append(Staff(name: name, designation: .pilot, gender: .male, email: "pilot\(i)@demo.com", profileImage: nil, dob: Calendar.current.date(byAdding: .year, value: -30 - i, to: Date())!))
-        }
-        // 3 copilots
-        for i in 1...3 {
-            let name = "CoPilot \(i)"
-            staffs.append(Staff(name: name, designation: .coPilot, gender: .male, email: "copilot\(i)@demo.com", profileImage: nil, dob: Calendar.current.date(byAdding: .year, value: -28 - i, to: Date())!))
-        }
-        // 10 cabin crew
-        for i in 1...10 {
-            let name = "Crew \(i)"
-            staffs.append(Staff(name: name, designation: .cabinCrew, gender: .female, email: "crew\(i)@demo.com", profileImage: nil, dob: Calendar.current.date(byAdding: .year, value: -25 - i, to: Date())!))
-        }
-
-        return staffs
-    }
-
-    private func createRoutes(using airports: [Airport]) -> [Route] {
-        // Create 3 specific routes based on the provided airport ordering
-        // route1: 1->2->3
-        // route2: 2->4->3->1
-        // route3: 1->3->4->2
-        var routes: [Route] = []
-        guard airports.count >= 4 else { return routes }
-
-        let r1 = Route(name: "Route 1")
-        r1.addNode(airport: airports[0], journeyTimeMinutes: 60)
-        r1.addNode(airport: airports[1], journeyTimeMinutes: 90)
-        r1.addNode(airport: airports[2], journeyTimeMinutes: 120)
-
-        let r2 = Route(name: "Route 2")
-        r2.addNode(airport: airports[1], journeyTimeMinutes: 50)
-        r2.addNode(airport: airports[3], journeyTimeMinutes: 70)
-        r2.addNode(airport: airports[2], journeyTimeMinutes: 80)
-        r2.addNode(airport: airports[0], journeyTimeMinutes: 100)
-
-        let r3 = Route(name: "Route 3")
-        r3.addNode(airport: airports[0], journeyTimeMinutes: 45)
-        r3.addNode(airport: airports[2], journeyTimeMinutes: 85)
-        r3.addNode(airport: airports[3], journeyTimeMinutes: 75)
-        r3.addNode(airport: airports[1], journeyTimeMinutes: 95)
-
-        routes.append(contentsOf: [r1, r2, r3])
+        
         return routes
     }
-
-    private func createInitialTrips(routes: [Route], aircrafts: [Aircraft], staffs: [Staff]) -> [Trip] {
-        var created: [Trip] = []
-        let now = Date()
-        let offsets = [10, 20, 30] // minutes
-
-        for (idx, route) in routes.enumerated() where idx < offsets.count {
-            let start = Calendar.current.date(byAdding: .minute, value: offsets[idx], to: now) ?? now
-            // pick an available aircraft and staff similar to createTrips
-            if let (aircraft, staffList) = findResources(for: route, at: start, aircrafts: aircrafts, staffs: staffs) {
-                let flightNumber = "RT\(100 + idx)"
-                let trip = Trip(staff: staffList, aircraft: aircraft, nodeStatuses: [], route: route, scheduledDepartureTime: start, flightNumber: flightNumber, isCancelled: false)
+    
+    private func createTrips(routes: [Route], aircrafts: [Aircraft], staff: [Staff], currentDate: Date) -> [Trip] {
+        var trips: [Trip] = []
+        delayedTripIDs.removeAll()
+        
+        let pilots = staff.filter { $0.designation == .pilot }
+        let coPilots = staff.filter { $0.designation == .coPilot }
+        let crew = staff.filter { $0.designation == .cabinCrew }
+        
+        for (routeIndex, route) in routes.enumerated() {
+            for tripIndex in 0..<5 {
+                let aircraft = aircrafts[Int.random(in: 0..<aircrafts.count)]
+                
+                // Assign staff based on aircraft requirements
+                var assignedStaff: [Staff] = []
+                
+                // Add pilots
+                let pilotsRequired = aircraft.minimumStaffRequired[.pilot] ?? 1
+                for _ in 0..<pilotsRequired {
+                    if let pilot = pilots.randomElement() {
+                        assignedStaff.append(pilot)
+                    }
+                }
+                
+                // Add co-pilots
+                let coPilotsRequired = aircraft.minimumStaffRequired[.coPilot] ?? 0
+                for _ in 0..<coPilotsRequired {
+                    if let coPilot = coPilots.randomElement() {
+                        assignedStaff.append(coPilot)
+                    }
+                }
+                
+                // Add crew
+                let crewRequired = aircraft.minimumStaffRequired[.cabinCrew] ?? 1
+                for _ in 0..<crewRequired {
+                    if let crewMember = crew.randomElement() {
+                        assignedStaff.append(crewMember)
+                    }
+                }
+                
+                // Schedule trip
+                let scheduledTime: Date
+                if tripIndex < 3 {
+                    // First 3 trips: 1, 2, 3 minutes from now
+                    scheduledTime = currentDate.addingTimeInterval(TimeInterval((tripIndex + 1) * 60))
+                } else {
+                    // Other 2 trips: random future time (days from now)
+                    let daysInFuture = Int.random(in: 4...30)
+                    scheduledTime = currentDate.addingTimeInterval(TimeInterval(daysInFuture * 86400))
+                }
+                
+                let trip = Trip(
+                    staff: assignedStaff,
+                    aircraft: aircraft,
+                    nodeStatuses: [],
+                    route: route,
+                    scheduledDepartureTime: scheduledTime,
+                    flightNumber: "FL-\(seedCount)-\(routeIndex + 1)-\(tripIndex + 1)",
+                    isCancelled: false
+                )
+                
+                // Mark first trip of each route to have delays
+                if tripIndex == 0 {
+                    delayedTripIDs.insert(trip.id)
+                }
+                
+                assignedStaff.forEach { $0.trips.append(trip) }
                 aircraft.trips.append(trip)
-                route.trips.append(trip)
-                for s in staffList { s.trips.append(trip) }
-                created.append(trip)
+                
+                trips.append(trip)
             }
         }
-
-        return created
+        
+        return trips
     }
-
-    private func createFutureTrips(routes: [Route], aircrafts: [Aircraft], staffs: [Staff]) -> [Trip] {
-        var created: [Trip] = []
-        let now = Date()
-
-        // pick 5 different days in next 10 days
-        var dayOffsets = Array(1...10).shuffled().prefix(5)
-        var i = 0
-        for day in dayOffsets {
-            let minuteOffset = 9 + i * 60 // vary time
-            let start = Calendar.current.date(byAdding: .day, value: day, to: now) ?? now
-            let startWithTime = Calendar.current.date(byAdding: .minute, value: minuteOffset, to: start) ?? start
-
-            let route = routes[i % routes.count]
-            if let (aircraft, staffList) = findResources(for: route, at: startWithTime, aircrafts: aircrafts, staffs: staffs) {
-                let flightNumber = "FT\(200 + i)"
-                let trip = Trip(staff: staffList, aircraft: aircraft, nodeStatuses: [], route: route, scheduledDepartureTime: startWithTime, flightNumber: flightNumber, isCancelled: false)
-                aircraft.trips.append(trip)
-                route.trips.append(trip)
-                for s in staffList { s.trips.append(trip) }
-                created.append(trip)
+    
+    // MARK: - Flight Simulator
+    
+    private func simulateFlightProgression(in context: ModelContext) {
+        let currentTime = Date()
+        
+        do {
+            // Fetch all trips
+            let descriptor = FetchDescriptor<Trip>()
+            let allTrips = try context.fetch(descriptor)
+            
+            for trip in allTrips {
+                // Check if trip should start
+                if !trip.isCancelled && !trip.isCompleted && trip.nodeStatuses.isEmpty {
+                    if trip.scheduledDepartureTime <= currentTime {
+                        trip.startTrip(departureTime: currentTime)
+                    }
+                }
+                
+                // Progress ongoing trips
+                if !trip.isCancelled && !trip.isCompleted && !trip.nodeStatuses.isEmpty {
+                    progressTrip(trip, currentTime: currentTime)
+                }
             }
-            i += 1
+            
+            try context.save()
+        } catch {
+            print("Error during flight simulation: \(error)")
         }
-
-        return created
     }
-
-    // helper to find available aircraft and staff for a route at a given time
-    private func findResources(for route: Route, at start: Date, aircrafts: [Aircraft], staffs: [Staff]) -> (Aircraft, [Staff])? {
-        let duration = TimeInterval(route.totalPlannedDurationMinutes * 60)
-        let end = start.addingTimeInterval(duration)
-
-        guard let aircraft = aircrafts.first(where: { ac in
-            return !ac.trips.contains(where: { existing in
-                let existingStart = existing.scheduledDepartureTime
-                let existingEnd = existing.estimatedArrivalTime
-                return existingEnd > start && existingStart < end
-            })
-        }) else { return nil }
-
-        guard let pilot = staffs.first(where: { s in s.designation == .pilot && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }) else { return nil }
-        guard let copilot = staffs.first(where: { s in s.designation == .coPilot && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }) else { return nil }
-
-        let requiredCabin = aircraft.minimumStaffRequired[.cabinCrew] ?? 2
-        let availableCrew = staffs.filter { s in s.designation == .cabinCrew && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }
-        if availableCrew.count < requiredCabin { return nil }
-
-        let crewMembers = Array(availableCrew.prefix(requiredCabin))
-        var staffList: [Staff] = [pilot, copilot]
-        staffList.append(contentsOf: crewMembers)
-
-        return (aircraft, staffList)
-    }
-
-    private func createTrips(routes: [Route], aircrafts: [Aircraft], staffs: [Staff]) -> [Trip] {
-        var created: [Trip] = []
-        let now = Date()
-
-        // We'll try to schedule 10 trips for today with non-overlapping resources.
-        var aircraftPool = aircrafts
-
-        for i in 0..<10 {
-            let offsetMinutes = 10 + i * 40 // larger spacing to reduce overlap
-            let start = Calendar.current.date(byAdding: .minute, value: offsetMinutes, to: now) ?? now
-
-            let route = routes[i % routes.count]
-            let duration = TimeInterval(route.totalPlannedDurationMinutes * 60)
-            let end = start.addingTimeInterval(duration)
-
-            // find an aircraft that has no overlapping trips
-            guard let aircraft = aircraftPool.first(where: { ac in
-                return !ac.trips.contains(where: { existing in
-                    let existingStart = existing.scheduledDepartureTime
-                    let existingEnd = existing.estimatedArrivalTime
-                    return existingEnd > start && existingStart < end
-                })
-            }) else {
-                // if none found, skip this slot
-                continue
+    
+    private func progressTrip(_ trip: Trip, currentTime: Date) {
+        guard !trip.isCancelled && !trip.isCompleted else { return }
+        
+        let lastNodeStatus = trip.nodeStatuses.last
+        
+        if let lastNode = lastNodeStatus {
+            // Check if we need to schedule arrival
+            if lastNode.actualArrivalTime == nil {
+                var plannedArrivalTime = trip.scheduledDepartureTime.addingTimeInterval(
+                    TimeInterval(lastNode.routeNode.plannedArrivalOffsetMinutes * 60)
+                )
+                
+                // Add delay if this trip should have delays
+                if delayedTripIDs.contains(trip.id) {
+                    let delayMinutes = Int.random(in: 5...15)
+                    plannedArrivalTime = plannedArrivalTime.addingTimeInterval(TimeInterval(delayMinutes * 60))
+                }
+                
+                if currentTime >= plannedArrivalTime {
+                    trip.scheduleCurrentAirportArrival(arrivalTime: currentTime)
+                    
+                    // Schedule departure 2 minutes after arrival
+                    let departureTime = currentTime.addingTimeInterval(120)
+                    
+                    // Check if this is not the last airport
+                    if trip.currentAirportSequence < trip.route.nodes.count {
+                        scheduleNextDeparture(for: trip, departureTime: departureTime)
+                    }
+                }
             }
-
-            // pick pilot and copilot available
-            guard let pilot = staffs.first(where: { s in s.designation == .pilot && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }) else { continue }
-            guard let copilot = staffs.first(where: { s in s.designation == .coPilot && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }) else { continue }
-
-            // pick required cabin crew
-            let requiredCabin = aircraft.minimumStaffRequired[.cabinCrew] ?? 4
-            let availableCrew = staffs.filter { s in s.designation == .cabinCrew && !s.trips.contains(where: { t in t.estimatedArrivalTime > start && t.scheduledDepartureTime < end }) }
-            if availableCrew.count < requiredCabin { continue }
-
-            let crewMembers = Array(availableCrew.prefix(requiredCabin))
-
-            var staffList: [Staff] = [pilot, copilot]
-            staffList.append(contentsOf: crewMembers)
-
-            let flightNumber = "FL\(100 + i)"
-            let trip = Trip(staff: staffList, aircraft: aircraft, nodeStatuses: [], route: route, scheduledDepartureTime: start, flightNumber: flightNumber, isCancelled: false)
-
-            // maintain relations so future checks see this trip
-            aircraft.trips.append(trip)
-            route.trips.append(trip)
-            for s in staffList { s.trips.append(trip) }
-
-            created.append(trip)
         }
+    }
+    
+    private func scheduleNextDeparture(for trip: Trip, departureTime: Date) {
+        // This will be scheduled in the next simulator cycle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 120) {
+            if !trip.isCancelled && !trip.isCompleted {
+                trip.scheduleCurrentAirportDeparture(departureTime: departureTime)
+            }
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func hasExistingData(in context: ModelContext) -> Bool {
+        do {
+            let airports = try context.fetch(FetchDescriptor<Airport>())
+            return !airports.isEmpty
+        } catch {
+            return false
+        }
+    }
+    
+    private func printSeedingData(airports: [Airport], aircrafts: [Aircraft], staff: [Staff], routes: [Route], trips: [Trip]) {
+        print("\n========== FLIGHT MANAGEMENT SYSTEM - DEMO DATA SEEDED ==========")
+        print("Seed Count: \(seedCount)")
+        
+        print("\n📍 AIRPORTS SEEDED: \(airports.count)")
+        for airport in airports {
+            print("  ✈️  \(airport.code) - \(airport.name), \(airport.city)")
+        }
+        
+        print("\n✈️  AIRCRAFTS SEEDED: \(aircrafts.count)")
+        for aircraft in aircrafts {
+            print("  🛫 \(aircraft.registrationNumber) - \(aircraft.type) (Capacity: \(aircraft.seatingCapacity))")
+        }
+        
+        print("\n👥 STAFF SEEDED: \(staff.count)")
+        let pilots = staff.filter { $0.designation == .pilot }.count
+        let coPilots = staff.filter { $0.designation == .coPilot }.count
+        let crew = staff.filter { $0.designation == .cabinCrew }.count
+        print("  👨‍✈️ Pilots: \(pilots)")
+        print("  👨‍✈️ Co-pilots: \(coPilots)")
+        print("  👨‍💼 Cabin Crew: \(crew)")
+        
+        print("\n🛫 ROUTES SEEDED: \(routes.count)")
+        for route in routes {
+            print("  🗺️  \(route.name) - \(route.nodes.count) airports")
+        }
+        
+        print("\n✈️ TRIPS SEEDED: \(trips.count)")
+        for trip in trips {
+            let isDelayed = delayedTripIDs.contains(trip.id)
+            let delayInfo = isDelayed ? " [DELAYED: 5-15 mins]" : ""
+            print("  🛫 \(trip.flightNumber) - Route: \(trip.route.name)\(delayInfo)")
+        }
+        
+        print("===================================================================\n")
+    }
+    
+    private func printNewTripsSeeded(trips: [Trip]) {
+        print("\n========== NEW TRIPS ADDED - SEED COUNT: \(seedCount) ==========")
+        print("Total Trips Added: \(trips.count)")
+        
+        for trip in trips {
+            let isDelayed = delayedTripIDs.contains(trip.id)
+            let delayInfo = isDelayed ? " [DELAYED: 5-15 mins]" : ""
+            print("  🛫 \(trip.flightNumber) - Route: \(trip.route.name)\(delayInfo)")
+        }
+        
+        print("=================================================================\n")
+    }
+    
+    private func clearAllData(in context: ModelContext) throws {
+        try context.delete(model: Trip.self)
+        try context.delete(model: Staff.self)
+        try context.delete(model: Aircraft.self)
+        try context.delete(model: Route.self)
+        try context.delete(model: Airport.self)
+    }
+}
 
-        return created
+// MARK: - Helper Function
+func makeDemoDOB(year: Int, month: Int, day: Int) -> Date {
+    var components = DateComponents()
+    components.year = year
+    components.month = month
+    components.day = day
+    return Calendar.current.date(from: components) ?? Date()
+}
+
+extension String {
+    func containsAny(_ elements: String...) -> Bool {
+        elements.contains { self.contains($0) }
     }
 }
