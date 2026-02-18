@@ -39,6 +39,7 @@ struct TripManagerDashboardView: View {
                         .background(
                             cardTheme()
                         )
+                        .padding(.bottom, 16)
                     }
 
 //                    ongoingTrips

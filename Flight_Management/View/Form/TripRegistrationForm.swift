@@ -10,11 +10,6 @@ struct TripRegistrationForm: View {
         _viewModel = State(initialValue: TripRegistrationFormViewModel())
         self.isPresented = isPresented
     }
-    
-    init(trip: Trip, isPresented: Binding<Bool>? = nil) {
-        _viewModel = State(initialValue: TripRegistrationFormViewModel(trip: trip))
-        self.isPresented = isPresented
-    }
 
     var body: some View {
         ZStack {

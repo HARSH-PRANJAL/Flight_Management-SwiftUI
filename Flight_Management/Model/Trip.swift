@@ -426,15 +426,14 @@ class Staff {
         }
     }
 
-    var avatarImage: Image {
+    var avatarImage: Image? {
         if let data = profileImage,
             let uiImage = UIImage(data: data)
         {
             return Image(uiImage: uiImage)
         }
 
-        return Image(systemName: "person.crop.circle.fill")
-            .symbolRenderingMode(.monochrome)
+        return nil
     }
 
     init(
@@ -484,15 +483,16 @@ class Staff {
         for trip in self.scheduledTrips {
             trip.cancel()
         }
-        
-        let tripInserted = self.trips.filter {
-            $0.id == self.currentTrip?.id
-        }.count == 0
-            
-        if tripInserted && currentTrip != nil{
+
+        let tripInserted =
+            self.trips.filter {
+                $0.id == self.currentTrip?.id
+            }.count == 0
+
+        if tripInserted && currentTrip != nil {
             self.trips.append(self.currentTrip!)
         }
-        
+
         self.lastCompletedTrip = self.currentTrip
         self.currentTrip = nil
         self.isMarkedUnavailable = true

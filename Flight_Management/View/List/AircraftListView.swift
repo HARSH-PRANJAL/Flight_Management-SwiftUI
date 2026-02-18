@@ -25,7 +25,7 @@ struct AircraftListView: View {
                     }
                 }
             }
-            .navigationTitle("All Aircrafts")
+            .navigationTitle("Aircraft List")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {

@@ -171,20 +171,20 @@ struct StaffRegistrationContent: View {
         VStack(alignment: .leading, spacing: 4) {
             FormDateField(
                 viewModel: viewModel,
-                hasError: viewModel.fieldErrors[.dateOfBirth] != nil,
+                hasError: viewModel.fieldErrors[.date] != nil,
                 focusedField: $focusedField
             )
             .onChange(of: viewModel.day) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .dateOfBirth)
+                viewModel.fieldErrors.removeValue(forKey: .date)
             }
             .onChange(of: viewModel.month) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .dateOfBirth)
+                viewModel.fieldErrors.removeValue(forKey: .date)
             }
             .onChange(of: viewModel.year) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .dateOfBirth)
+                viewModel.fieldErrors.removeValue(forKey: .date)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.dateOfBirth])
+            FormErrorMessage(error: viewModel.fieldErrors[.date])
         }
     }
 

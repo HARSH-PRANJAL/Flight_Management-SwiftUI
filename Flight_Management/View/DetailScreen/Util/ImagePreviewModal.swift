@@ -16,13 +16,11 @@ struct ImagePreviewModal: View {
                     if !title.isEmpty {
                         Text(title)
                             .font(.headline)
-                            .foregroundStyle(.white)
                     }
                     Spacer()
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundStyle(.white)
                     }
                 }
                 .padding(20)
@@ -47,7 +45,7 @@ struct ImagePreviewModal: View {
                 
                 Spacer()
             }
-            .background(Color.black)
+            .background(Color(.systemGroupedBackground))
         }
     }
 }

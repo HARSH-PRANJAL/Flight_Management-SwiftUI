@@ -40,7 +40,7 @@ struct UserRegistrationForm: View {
                     registerButton
                 }
                 .navigationTitle(
-                    viewModel.isEditMode ? "Edit Profile" : "User Registration"
+                    viewModel.isEditMode ? "Update Profile" : "Add User"
                 )
                 .navigationBarTitleDisplayMode(.inline)
                 .padding()

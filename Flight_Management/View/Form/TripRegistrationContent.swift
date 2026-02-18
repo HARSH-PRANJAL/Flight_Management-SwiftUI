@@ -24,12 +24,13 @@ struct TripRegistrationContent: View {
                 VStack(spacing: 12) {
                     tripNumber
                     routePicker
-                    if viewModel.isEditMode == false {
-                        datePicker
-                        aircraftPicker
-
-                        if viewModel.selectedRoute != nil {
-                            staffSelector
+                    datePicker
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        Group {
+                            if !availableStaffs.isEmpty && !availableAircraft.isEmpty {
+                                aircraftPicker
+                                crewSelectors
+                            }
                         }
                     }
 
@@ -43,9 +44,7 @@ struct TripRegistrationContent: View {
 
                 Spacer()
             }
-            .navigationTitle(
-                viewModel.isEditMode ? "Update Trip" : "Trip Registration"
-            )
+            .navigationTitle("Schedule Trip")
             .navigationBarTitleDisplayMode(.inline)
             .padding(.vertical)
         }
@@ -80,12 +79,14 @@ struct TripRegistrationContent: View {
     private var hasChanges: Bool {
         return !viewModel.flightNumber.isEmpty || viewModel.selectedRoute != nil
             || viewModel.selectedAircraft != nil
-            || !viewModel.selectedStaffIDs.isEmpty
+            || viewModel.selectedPilot != nil
+            || viewModel.selectedCoPilot != nil
+            || viewModel.selectedCrewMember != nil
     }
 
     private var registerButton: some View {
         Button(action: handleRegistration) {
-            Text(viewModel.isEditMode ? "Update Trip" : "Schedule Trip")
+            Text("Schedule Trip")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -96,25 +97,25 @@ struct TripRegistrationContent: View {
                 )
                 .cornerRadius(12)
         }
-        .padding(.horizontal)
+        .buttonStyle(.plain)
     }
 }
 
 // MARK: UI
 extension TripRegistrationContent {
 
+    @ViewBuilder
     var aircraftPicker: some View {
         Menu {
-            ForEach(availableAircraft, id: \.id) { ac in
-                Button(ac.registrationNumber) {
-                    viewModel.selectedAircraft = ac
+            ForEach(availableAircraft, id: \.id) { aircraft in
+                Button(aircraft.registrationNumber) {
+                    viewModel.selectedAircraft = aircraft
                 }
             }
         } label: {
             HStack {
                 Text(
-                    viewModel.selectedAircraft?.registrationNumber
-                        ?? "Select aircraft"
+                    viewModel.selectedAircraft?.registrationNumber ?? "Select Aircraft"
                 )
                 .foregroundColor(
                     viewModel.selectedAircraft == nil
@@ -122,16 +123,18 @@ extension TripRegistrationContent {
                 )
                 Spacer()
                 Image(systemName: "chevron.right")
+                    .foregroundStyle(Color(.systemGray3))
             }
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12).fill(
-                    Color(.systemGray6)
-                )
-            )
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(Color(.systemGray2), lineWidth: 1)
+            }
         }
     }
 
+    @ViewBuilder
     var routePicker: some View {
         Menu {
             ForEach(routes, id: \.id) { route in
@@ -150,28 +153,33 @@ extension TripRegistrationContent {
                 )
                 Spacer()
                 Image(systemName: "chevron.right")
+                    .foregroundStyle(Color(.systemGray3))
             }
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12).fill(
-                    Color(.systemGray6)
-                ).stroke(Color(.systemGray2), lineWidth: 1)
-            )
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(Color(.systemGray2), lineWidth: 1)
+            }
         }
     }
 
     var tripNumber: some View {
-        FormInputField(
-            label: "Trip Number",
-            placeholder: "Enter trip number eg Trip - 001",
-            focus: .flightNumber,
-            hasError: viewModel.fieldErrors["flightNumber"] != nil,
-            allowedCharacter: {
-                $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "-"
-            },
-            text: $viewModel.flightNumber,
-            focusedField: $focusedField
-        )
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Trip Number",
+                placeholder: "Enter trip number eg Trip - 001",
+                focus: .flightNumber,
+                hasError: viewModel.fieldErrors["flightNumber"] != nil,
+                allowedCharacter: {
+                    $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "-"
+                },
+                text: $viewModel.flightNumber,
+                focusedField: $focusedField
+            )
+
+            FormErrorMessage(error: viewModel.fieldErrors["flightNumber"])
+        }
     }
 
     var datePicker: some View {
@@ -182,68 +190,126 @@ extension TripRegistrationContent {
         )
         .datePickerStyle(.compact)
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12).fill(
-                Color(.systemGray6)
-            ).stroke(Color(.systemGray2), lineWidth: 1)
-        )
-        .disabled(viewModel.isEditMode)
-        .opacity(viewModel.isEditMode ? 0.6 : 1.0)
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .strokeBorder(
+                    Color(.systemGray2),
+                    lineWidth: 1
+                )
+        }
+    }
+
+    var crewSelectors: some View {
+        HStack(spacing: 12) {
+            pilotPicker
+            coPilotPicker
+            crewMemberPicker
+        }
     }
 
     @ViewBuilder
-    var staffSelector: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Assign Crew")
-                    .font(.headline)
-                if staffs.isEmpty {
-                    Text("No staff available")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(availableStaffs, id: \.id) { staff in
-                        HStack {
-                            Toggle(
-                                isOn: Binding(
-                                    get: {
-                                        viewModel.isSelected(staff)
-                                    },
-                                    set: { newVal in
-                                        viewModel.toggleStaff(staff)
-                                    }
-                                )
-                            ) {
-                                HStack {
-                                    staff.avatarImage
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 36, height: 36)
-                                        .clipShape(Circle())
-                                    VStack(alignment: .leading) {
-                                        Text(staff.name)
-                                        Text(staff.designation.rawValue)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
+    var pilotPicker: some View {
+        Menu {
+            ForEach(availableStaffByRole(.pilot), id: \.id) { staff in
+                Button(staff.name) {
+                    viewModel.selectedPilot = staff
                 }
             }
+        } label: {
+            VStack(alignment: .center, spacing: 4) {
+                Text(
+                    viewModel.selectedPilot?.name ?? "Pilot"
+                )
+                .font(.caption2)
+                .foregroundColor(
+                    viewModel.selectedPilot == nil
+                        ? Color(.systemGray3) : Color.primary
+                )
+                .lineLimit(1)
+                Image(systemName: "person.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color(.systemGray3))
+            }
+            .frame(maxWidth: .infinity)
             .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.systemGray6))
-                    .strokeBorder(borderColor, lineWidth: 1)
-            )
+                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
+            }
+            .contentShape(Rectangle())
         }
-        .frame(maxHeight: 300)
     }
 
-    var borderColor: Color {
-        viewModel.selectedRoute != nil ? .blue : Color(.systemGray2)
+    @ViewBuilder
+    var coPilotPicker: some View {
+        Menu {
+            ForEach(availableStaffByRole(.coPilot), id: \.id) { staff in
+                Button(staff.name) {
+                    viewModel.selectedCoPilot = staff
+                }
+            }
+        } label: {
+            VStack(alignment: .center, spacing: 4) {
+                Text(
+                    viewModel.selectedCoPilot?.name ?? "Co-Pilot"
+                )
+                .font(.caption2)
+                .foregroundColor(
+                    viewModel.selectedCoPilot == nil
+                        ? Color(.systemGray3) : Color.primary
+                )
+                .lineLimit(1)
+                Image(systemName: "person.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color(.systemGray3))
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
+            }
+            .contentShape(Rectangle())
+        }
+        .transaction { $0.animation = nil }
+    }
+
+    @ViewBuilder
+    var crewMemberPicker: some View {
+        Menu {
+            ForEach(availableStaffByRole(.cabinCrew), id: \.id) { staff in
+                Button(staff.name) {
+                    viewModel.selectedCrewMember = staff
+                }
+            }
+        } label: {
+            VStack(alignment: .center, spacing: 4) {
+                Text(
+                    viewModel.selectedCrewMember?.name ?? "Crew"
+                )
+                .font(.caption2)
+                .foregroundColor(
+                    viewModel.selectedCrewMember == nil
+                        ? Color(.systemGray3) : Color.primary
+                )
+                .lineLimit(1)
+                Image(systemName: "person.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color(.systemGray3))
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
+            }
+            .contentShape(Rectangle())
+        }
+        .transaction { $0.animation = nil }
     }
 }
 
@@ -265,101 +331,102 @@ extension TripRegistrationContent {
     }
 
     var availableAircraft: [Aircraft] {
-        guard let endDate = tripEndDate, availableStaffs.count != 0 else {
+        guard let endDate = tripEndDate else {
             return []
         }
 
-        var availableStaffByRole: [StaffRole: Int] = [:]
-        availableStaffByRole[.cabinCrew] =
-            availableStaffs.filter { $0.designation == .cabinCrew }.count
-        availableStaffByRole[.pilot] =
-            availableStaffs.filter { $0.designation == .pilot }.count
-        availableStaffByRole[.coPilot] =
-            availableStaffs.filter { $0.designation == .coPilot }.count
-
-        return aircrafts.filter {
-            $0.isAvailable(
-                from: viewModel.scheduledDeparture,
-                to: endDate,
-                availableStaff: availableStaffByRole
-            )
+        return aircrafts.filter { aircraft in
+            // Check if aircraft is available during the trip
+            let isTimeAvailable = !aircraft.scheduledTrips.contains(where: {
+                $0.estimatedArrivalTime > viewModel.scheduledDeparture && $0.scheduledDepartureTime < endDate
+            })
+            
+            guard isTimeAvailable else { return false }
+            
+            // Check if aircraft minimum staff requirements can be met with our selection
+            // We're assigning exactly 1 pilot, 1 copilot, 1 cabin crew
+            // So aircraft should require <= 1 of each role
+            for (role, minRequired) in aircraft.minimumStaffRequired {
+                if minRequired > 1 {
+                    return false
+                }
+            }
+            
+            // Ensure at least 1 staff of each required role is available
+            for (role, minRequired) in aircraft.minimumStaffRequired {
+                let availableCount = availableStaffByRole(role).count
+                if availableCount < minRequired {
+                    return false
+                }
+            }
+            
+            return true
         }
+    }
+
+    func availableStaffByRole(_ role: StaffRole) -> [Staff] {
+        return availableStaffs.filter { $0.designation == role }
     }
 
     private func handleRegistration() {
         guard viewModel.validate() else { return }
-
-        // check minimum staff per role
+        
+        // Validate that selected aircraft minimum staff requirements can be met
         if let aircraft = viewModel.selectedAircraft {
-            var selectedStaffRolesCount: [StaffRole: Int] = [:]
-            for s in staffs {
-                if viewModel.selectedStaffIDs.contains(s.id.uuidString) {
-                    selectedStaffRolesCount[s.designation, default: 0] += 1
-                }
-            }
-
+            let selectedStaffByRole: [StaffRole: Int] = [
+                .pilot: viewModel.selectedPilot != nil ? 1 : 0,
+                .coPilot: viewModel.selectedCoPilot != nil ? 1 : 0,
+                .cabinCrew: viewModel.selectedCrewMember != nil ? 1 : 0
+            ]
+            
             for (role, minRequired) in aircraft.minimumStaffRequired {
-                let have = selectedStaffRolesCount[role, default: 0]
-                if have < minRequired {
-                    viewModel.fieldErrors["staff"] =
-                        "Require at least \(minRequired) \(role.rawValue)"
+                let assigned = selectedStaffByRole[role] ?? 0
+                if minRequired > assigned {
+                    viewModel.fieldErrors["staff"] = "Aircraft requires \(minRequired) \(role.rawValue) but only \(assigned) assigned"
                     return
                 }
             }
         }
-
+        
         submit()
     }
 
     private func submit() {
         guard let route = viewModel.selectedRoute,
-            let aircraft = viewModel.selectedAircraft
+            let aircraft = viewModel.selectedAircraft,
+            let pilot = viewModel.selectedPilot,
+            let coPilot = viewModel.selectedCoPilot,
+            let crewMember = viewModel.selectedCrewMember
         else { return }
 
-        let selectedStaff = staffs.filter {
-            viewModel.selectedStaffIDs.contains($0.id.uuidString)
-        }
+        let selectedStaff = [pilot, coPilot, crewMember]
 
         do {
-            if viewModel.isEditMode, let tripToEdit = viewModel.tripToEdit {
-                // Update existing trip
-                tripToEdit.flightNumber = viewModel.flightNumber
-                tripToEdit.route = route
+            // Create new trip
+            let newTrip = Trip(
+                staff: selectedStaff,
+                aircraft: aircraft,
+                nodeStatuses: [],
+                route: route,
+                scheduledDepartureTime: viewModel.scheduledDeparture,
+                flightNumber: viewModel.flightNumber,
+                isCancelled: false
+            )
 
-            } else {
-                // Create new trip
-                let newTrip = Trip(
-                    staff: selectedStaff,
-                    aircraft: aircraft,
-                    nodeStatuses: [],
-                    route: route,
-                    scheduledDepartureTime: viewModel.scheduledDeparture,
-                    flightNumber: viewModel.flightNumber,
-                    isCancelled: false
-                )
-
-                context.insert(newTrip)
-                aircraft.trips.append(newTrip)
-                for staff in selectedStaff {
-                    staff.trips.append(newTrip)
-                }
+            context.insert(newTrip)
+            aircraft.trips.append(newTrip)
+            for staff in selectedStaff {
+                staff.trips.append(newTrip)
             }
 
             try context.save()
-            let message =
-                viewModel.isEditMode
-                ? "Trip updated successfully" : "Trip scheduled successfully"
-            notificationManager.showSuccess(message)
+            notificationManager.showSuccess("Trip scheduled successfully")
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 isPresented?.wrappedValue = false
                 dismiss()
             }
         } catch {
-            let message =
-                viewModel.isEditMode
-                ? "Failed to update trip. Please try again."
-                : "Failed to schedule trip. Please try again."
-            notificationManager.showError(message)
+            notificationManager.showError("Failed to schedule trip. Please try again.")
             print("Failed to save trip: \(error)")
         }
     }

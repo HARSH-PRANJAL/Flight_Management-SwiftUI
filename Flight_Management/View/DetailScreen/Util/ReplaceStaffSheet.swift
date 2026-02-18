@@ -36,10 +36,14 @@ struct ReplaceStaffSheet: View {
                                 dismiss()
                             }) {
                                 HStack(spacing: 12) {
-                                    staff.avatarImage
-                                        .resizable()
-                                        .frame(width: 50, height: 50)
-                                        .clipShape(Circle())
+                                    if let avatarImage = staff.avatarImage{
+                                        avatarImage
+                                            .resizable()
+                                            .frame(width: 50, height: 50)
+                                            .clipShape(Circle())
+                                    } else {
+                                        
+                                    }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(staff.name)

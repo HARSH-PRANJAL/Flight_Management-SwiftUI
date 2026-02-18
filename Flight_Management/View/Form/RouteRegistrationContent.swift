@@ -7,13 +7,14 @@ struct RouteRegistrationContent: View {
     @State private var showConfirmCloseAlert = false
     
     var isPresented: Binding<Bool>?
-
+    
     @Environment(\.modelContext) var context
     @Environment(\.dismiss) var dismiss
     @Environment(NotificationManager.self) var notificationManager
-
+    
     @FocusState private var focusedField: FormFocus?
-
+    @FocusState private var timeFieldFocus: FieldFocus?
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -24,11 +25,14 @@ struct RouteRegistrationContent: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 20)
-
+                
                 saveButton
                 if !viewModel.isEditMode {
                     disclaimerText
                 }
+            }
+            .onTapGesture {
+                timeFieldFocus = nil
             }
             .onAppear {
                 if viewModel.routeName.isEmpty {
@@ -43,125 +47,126 @@ struct RouteRegistrationContent: View {
                     }
                 }
             )
-        }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(role: .close) {
-                    if hasChanges {
-                        showConfirmCloseAlert = true
-                    } else {
-                        isPresented?.wrappedValue = false
-                        dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        if hasChanges {
+                            showConfirmCloseAlert = true
+                        } else {
+                            isPresented?.wrappedValue = false
+                            dismiss()
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
                     }
-                } label: {
-                    Image(systemName: "xmark")
                 }
             }
-        }
-        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
-            Button("Discard", role: .destructive) {
-                isPresented?.wrappedValue = false
-                dismiss()
+            .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+                Button("Discard", role: .destructive) {
+                    isPresented?.wrappedValue = false
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text("You have unsaved changes. Are you sure you want to discard them?")
             }
-            Button("Keep Editing", role: .cancel) {}
-        } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
+            .interactiveDismissDisabled(hasChanges)
         }
-        .interactiveDismissDisabled(hasChanges)
     }
-    
-    private var hasChanges: Bool {
-        return !viewModel.routeName.isEmpty || !viewModel.selectedNodes.isEmpty
-    }
-
-    // MARK: - Form Sections
-    private var routeNameFieldSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            FormInputField(
-                label: "Route Name",
-                placeholder: "e.g., East Coast Loop",
-                focus: .routeName,
-                hasError: viewModel.fieldErrors[.routeName] != nil,
-                allowedCharacter: {
-                    $0.isLetter || $0.isNumber || $0.isWhitespace
-                },
-                text: $viewModel.routeName,
-                focusedField: $focusedField
-            )
-            .onChange(of: viewModel.routeName) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .routeName)
+        private var hasChanges: Bool {
+            return !viewModel.routeName.isEmpty || !viewModel.selectedNodes.isEmpty
+        }
+        
+        // MARK: - Form Sections
+        private var routeNameFieldSection: some View {
+            VStack(alignment: .leading, spacing: 4) {
+                FormInputField(
+                    label: "Route Name",
+                    placeholder: "e.g., East Coast Loop",
+                    focus: .routeName,
+                    hasError: viewModel.fieldErrors[.routeName] != nil,
+                    allowedCharacter: {
+                        $0.isLetter || $0.isNumber || $0.isWhitespace
+                    },
+                    text: $viewModel.routeName,
+                    focusedField: $focusedField
+                )
+                .onChange(of: viewModel.routeName) { _, _ in
+                    viewModel.fieldErrors.removeValue(forKey: .routeName)
+                }
+                
+                FormErrorMessage(error: viewModel.fieldErrors[.routeName])
             }
-
-            FormErrorMessage(error: viewModel.fieldErrors[.routeName])
         }
-    }
-
-    private var airportsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Airports")
-                .formFieldLabel()
-
-            // Search Dropdown
-            AirportSearchDropdown(
-                onAirportSelected: { airport in
-                    viewModel.addAirport(airport)
-                },
-                excludeAirports: viewModel.selectedNodes.map { $0.airport }
-            )
-
-            // Selected Airports List
-            if !viewModel.selectedNodes.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(
-                        Array(viewModel.selectedNodes.enumerated()),
-                        id: \.element.id
-                    ) { index, node in
-                        VStack(spacing: 0) {
-                            HStack {
-                                // Airport Info
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(node.airport.code)
-                                        .font(
-                                            .system(size: 16, weight: .semibold)
-                                        )
-                                        .foregroundColor(Color(.label))
-
-                                    Text(node.airport.name)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(Color(.systemGray))
-                                }
-
-                                Spacer()
-
-                                // Journey Time Input
-                                if index > 0 {
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text("Trip")
+        
+        private var airportsSection: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Airports")
+                    .formFieldLabel()
+                
+                // Search Dropdown
+                AirportSearchDropdown(
+                    onAirportSelected: { airport in
+                        viewModel.addAirport(airport)
+                    },
+                    excludeAirports: viewModel.selectedNodes.map { $0.airport }
+                )
+                
+                // Selected Airports List
+                if !viewModel.selectedNodes.isEmpty {
+                    VStack(spacing: 0) {
+                        ForEach(0..<viewModel.selectedNodes.count, id: \.self) { index in
+                            let node = viewModel.selectedNodes[index]
+                            VStack(spacing: 0) {
+                                HStack {
+                                    // Airport Info
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(node.airport.code)
                                             .font(
-                                                .system(
-                                                    size: 12,
-                                                    weight: .semibold
-                                                )
+                                                .system(size: 16, weight: .semibold)
                                             )
+                                            .foregroundColor(Color(.label))
+                                        
+                                        Text(node.airport.name)
+                                            .font(.system(size: 14))
                                             .foregroundColor(Color(.systemGray))
-
-                                        ScrollView {
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Journey Time Input
+                                    if index > 0 {
+                                        VStack(alignment: .trailing, spacing: 4) {
+                                            Text("Trip")
+                                                .font(
+                                                    .system(
+                                                        size: 12,
+                                                        weight: .semibold
+                                                    )
+                                                )
+                                                .foregroundColor(Color(.systemGray))
+                                            
                                             HStack(spacing: 4) {
                                                 TextField(
                                                     "0",
                                                     text: textBinding(for: index)
                                                 )
-                                                .font(
-                                                    .system(
-                                                        size: 16,
-                                                        weight: .semibold
-                                                    )
-                                                )
                                                 .keyboardType(.numberPad)
                                                 .multilineTextAlignment(.trailing)
-                                                .scrollDismissesKeyboard(.interactively)
-                                                .frame(width: 40)
-
+                                                .focused($timeFieldFocus, equals: .field(id: node.id))
+                                                .onTapGesture {
+                                                    timeFieldFocus = nil
+                                                }
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 8)
+                                                .frame(minWidth: 50)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .fill(Color(.secondarySystemBackground))
+                                                        .strokeBorder(Color(.systemGray2), lineWidth: 1)
+                                                )
+                                                .contentShape(Rectangle())
+                                                
                                                 Text("min")
                                                     .font(.system(size: 14))
                                                     .foregroundColor(
@@ -170,144 +175,150 @@ struct RouteRegistrationContent: View {
                                             }
                                         }
                                     }
+                                    
+                                    // Remove Button
+                                    Button(action: {
+                                        viewModel.removeAirport(at: index)
+                                    }) {
+                                        Image(systemName: "xmark")
+                                            .font(
+                                                .system(size: 14, weight: .semibold)
+                                            )
+                                            .foregroundColor(Color(.systemGray2))
+                                            .padding(8)
+                                    }
                                 }
-
-                                // Remove Button
-                                Button(action: {
-                                    viewModel.removeAirport(at: index)
-                                }) {
-                                    Image(systemName: "xmark")
-                                        .font(
-                                            .system(size: 14, weight: .semibold)
-                                        )
-                                        .foregroundColor(Color(.systemGray2))
-                                        .padding(8)
+                                .padding(12)
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                
+                                if index < viewModel.selectedNodes.count - 1 {
+                                    Divider()
+                                        .padding(.vertical, 8)
                                 }
-                            }
-                            .padding(12)
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                            if index < viewModel.selectedNodes.count - 1 {
-                                Divider()
-                                    .padding(.vertical, 8)
                             }
                         }
                     }
                 }
-            }
-
-            Button(action: {
-                isAirportRegistrationFormDisplayed = true
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text("Add another airport")
-                        .font(.system(size: 16, weight: .semibold))
+                
+                Button(action: {
+                    isAirportRegistrationFormDisplayed = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("Add another airport")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(Color(.systemBlue))
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .foregroundColor(Color(.systemBlue))
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemGray5))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .opacity(viewModel.selectedNodes.isEmpty ? 0.5 : 1)
+                
+                FormErrorMessage(error: viewModel.fieldErrors[.airports])
+                FormErrorMessage(error: viewModel.fieldErrors[.journeyTime])
             }
-            .opacity(viewModel.selectedNodes.isEmpty ? 0.5 : 1)
-
-            FormErrorMessage(error: viewModel.fieldErrors[.airports])
-            FormErrorMessage(error: viewModel.fieldErrors[.journeyTime])
         }
-    }
-
-    private var routeSummarySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Route Summary")
-                .formFieldLabel()
-
-            Text(viewModel.routeSummary)
-                .foregroundColor(Color(.label))
+        
+        private var routeSummarySection: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Route Summary")
+                    .formFieldLabel()
+                
+                Text(viewModel.routeSummary)
+                    .foregroundColor(Color(.label))
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                            .stroke(Color(.systemGray5), lineWidth: 1)
+                    )
+                
+                HStack {
+                    Text("Total trip duration")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(.systemGray))
+                    
+                    Spacer()
+                    
+                    Text("\(viewModel.totalDuration) min")
+                        .foregroundColor(Color(.label))
+                }
                 .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.systemGray6))
                         .stroke(Color(.systemGray5), lineWidth: 1)
                 )
-
-            HStack {
-                Text("Total trip duration")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(.systemGray))
-
-                Spacer()
-
-                Text("\(viewModel.totalDuration) min")
-                    .foregroundColor(Color(.label))
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                    .stroke(Color(.systemGray5), lineWidth: 1)
+        }
+        
+        private var saveButton: some View {
+            Button(action: handleSave) {
+                Text(viewModel.isEditMode ? "Update Route" : "Save Route")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(.systemBlue))
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 24)
+        }
+        
+        private var disclaimerText: some View {
+            Text(
+                "Routes will be available for trip scheduling and crew assignment."
+            )
+            .font(.system(size: 13))
+            .foregroundColor(Color(.systemGray))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 30)
+        }
+        
+        private func textBinding(for index: Int) -> Binding<String> {
+            Binding(
+                get: {
+                    viewModel.selectedNodes[index].journeyTimeMinutes
+                },
+                set: { newValue in
+                    viewModel.updateJourneyTime(at: index, minutes: newValue)
+                }
             )
         }
-    }
-
-    private var saveButton: some View {
-        Button(action: handleSave) {
-            Text(viewModel.isEditMode ? "Update Route" : "Save Route")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemBlue))
-                .cornerRadius(12)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
-    }
-
-    private var disclaimerText: some View {
-        Text(
-            "Routes will be available for trip scheduling and crew assignment."
-        )
-        .font(.system(size: 13))
-        .foregroundColor(Color(.systemGray))
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 30)
-    }
-
-    private func textBinding(for index: Int) -> Binding<String> {
-        Binding(
-            get: {
-                viewModel.selectedNodes[index].journeyTimeMinutes
-            },
-            set: { newValue in
-                viewModel.updateJourneyTime(at: index, minutes: newValue)
+        
+        private func handleSave() {
+            if viewModel.saveRoute(to: context) {
+                let message = viewModel.isEditMode ? "Route updated successfully" : "Route created successfully"
+                notificationManager.showSuccess(message)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    isPresented?.wrappedValue = false
+                    dismiss()
+                }
+            } else {
+                let message = viewModel.isEditMode ? "Failed to update route. Please try again." : "Failed to create route. Please try again."
+                notificationManager.showError(message)
             }
-        )
-    }
-
-    private func handleSave() {
-        if viewModel.saveRoute(to: context) {
-            let message = viewModel.isEditMode ? "Route updated successfully" : "Route created successfully"
-            notificationManager.showSuccess(message)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                isPresented?.wrappedValue = false
-                dismiss()
-            }
-        } else {
-            let message = viewModel.isEditMode ? "Failed to update route. Please try again." : "Failed to create route. Please try again."
-            notificationManager.showError(message)
         }
-    }
 }
 
+// MARK: Util
+extension RouteRegistrationContent {
+    enum FieldFocus: Hashable {
+        case field(id: UUID)
+    }
+}
 #Preview {
     NavigationStack {
         RouteRegistrationContent(viewModel: RouteRegistrationFormViewModel())
             .modelContainer(for: [Route.self, Airport.self], inMemory: true)
     }
 }
+

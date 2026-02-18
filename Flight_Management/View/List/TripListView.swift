@@ -36,6 +36,7 @@ struct TripListView: View {
                 }
             }
         }
+        .navigationTitle("Trip List")
         .toolbar {
             if externalTrips.count == 0 {
                 toolbarFilterSortItem

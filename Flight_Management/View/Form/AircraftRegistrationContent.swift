@@ -38,7 +38,7 @@ struct AircraftRegistrationContent: View {
                 registerButton
                 disclaimerText
             }
-            .navigationTitle(aircraft != nil ? "Edit Aircraft" : "Add Aircraft")
+            .navigationTitle(aircraft != nil ? "Update Aircraft" : "Add Aircraft")
             .navigationBarTitleDisplayMode(.inline)
         }
         .toolbar {

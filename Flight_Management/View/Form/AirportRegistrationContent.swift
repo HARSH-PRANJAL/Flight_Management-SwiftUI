@@ -28,7 +28,7 @@ struct AirportRegistrationContent: View {
                 registerButton
                 disclaimerText
             }
-            .navigationTitle("Airport Registration")
+            .navigationTitle("Add Airport")
             .navigationBarTitleDisplayMode(.inline)
         }
         .interactiveDismissDisabled(hasChanges)

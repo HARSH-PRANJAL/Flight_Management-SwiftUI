@@ -144,13 +144,13 @@ extension StaffRegistrationFormViewModel {
 
     func validateDateOfBirth() -> Bool {
         if day.isEmpty || month.isEmpty || year.isEmpty {
-            fieldErrors[.dateOfBirth] = "Date of birth is required"
+            fieldErrors[.date] = "Date of birth is required"
             return false
         }
 
         guard let birthDate = Calendar.current.date(from: dateOfBirthComponents)
         else {
-            fieldErrors[.dateOfBirth] = "Date of birth is required"
+            fieldErrors[.date] = "Date of birth is required"
             return false
         }
 
@@ -163,13 +163,13 @@ extension StaffRegistrationFormViewModel {
                 to: today
             ).year
         else {
-            fieldErrors[.dateOfBirth] = "Invalid date of birth"
+            fieldErrors[.date] = "Invalid date of birth"
             return false
         }
 
         let maxAge = getMaxAgeForRole(role)
         if age > maxAge {
-            fieldErrors[.dateOfBirth] =
+            fieldErrors[.date] =
                 "Maximum age for \(getAgeRoleDescription(role)) is \(maxAge) years"
             return false
         }
