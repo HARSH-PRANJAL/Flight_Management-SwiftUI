@@ -7,19 +7,22 @@ struct ListRow: View, Identifiable {
     let subtitle: String
     let statusBadge: StatusBadge?
     let associatedTrip: Trip?
+    let showFallbackImage: Bool
 
     init(
         profileImage: Image?,
         title: String,
         subtitle: String,
         status: StatusBadge? = nil,
-        associatedTrip: Trip? = nil
+        associatedTrip: Trip? = nil,
+        showFallbackImage: Bool = false
     ) {
         self.profileImage = profileImage
         self.title = title
         self.subtitle = subtitle
         self.statusBadge = status
         self.associatedTrip = associatedTrip
+        self.showFallbackImage = showFallbackImage
     }
 
     var body: some View {
@@ -45,27 +48,30 @@ struct ListRow: View, Identifiable {
                     statusBadgeView
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
     }
 
     @ViewBuilder
     private var profileImageView: some View {
-        if let profileImage = profileImage {
-            profileImage
-                .resizable()
-                .scaledToFill()
-                .foregroundStyle(.gray)
-                .frame(width: 48, height: 48)
-                .clipShape(Circle())
-                .overlay {
-                    Circle()
-                        .stroke(Color(.systemGray4), lineWidth: 1)
+        Group {
+            if let profileImage = profileImage {
+                profileImage
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                if showFallbackImage {
+                    fallbackStaffImage()
+                } else {
+                    EmptyView()
                 }
-        } else {
-            EmptyView()
+            }
+        }
+        .clipShape(Circle())
+        .frame(width: 48, height: 48)
+        .overlay {
+            Circle()
+                .stroke(Color(.systemGray4), lineWidth: 1)
         }
     }
 
@@ -86,7 +92,8 @@ extension ListRow {
             profileImage: staff.avatarImage,
             title: staff.name,
             subtitle: staff.designation.rawValue,
-            status: .from(staffStatus: staff.currentStatus)
+            status: .from(staffStatus: staff.currentStatus),
+            showFallbackImage: true
         )
     }
 
