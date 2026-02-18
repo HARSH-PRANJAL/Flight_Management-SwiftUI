@@ -3,7 +3,6 @@ import Foundation
 enum UserRole: String, Codable, CaseIterable {
     case admin = "Admin"
     case tripManager = "Trip Manager"
-    case crew = "Crew"
 }
 
 enum StaffRole: String, Codable, CaseIterable {
@@ -109,7 +108,7 @@ enum TripSort: String, CaseIterable {
 }
 
 enum FieldError: Hashable {
-    case name, email, gender, role, dateOfBirth
+    case name, email, gender, role, date
     case registrationNumber, type, seatingCapacity, minimumStaffRequired
     case code, city, country
     case routeName, airports, journeyTime
@@ -121,7 +120,7 @@ enum SubmissionState: Equatable {
 }
 
 enum FormFocus: Hashable {
-    case name, email, gender, role, dateOfBirth
+    case name, email, gender, role, date
     case registrationNumber, type, seatingCapacity
     case code, city, country
     case routeName, journeyTime
