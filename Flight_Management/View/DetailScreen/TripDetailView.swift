@@ -12,7 +12,6 @@ struct TripDetailView: View {
     @State private var showSuccessMessage = false
     @State private var successMessage = ""
     @State private var isCancelationDisabled = false
-    @State private var isEditPageShowing: Bool = false
 
     var isTripManager: Bool {
         sessionManager.user?.role == UserRole.tripManager.rawValue
@@ -73,23 +72,6 @@ struct TripDetailView: View {
             }
         } message: {
             Text(successMessage)
-        }
-        .toolbar {
-            if isTripManager {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { isEditPageShowing = true }) {
-                        Image(systemName: "pencil")
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $isEditPageShowing) {
-            NavigationStack {
-                TripRegistrationForm(
-                    trip: trip,
-                    isPresented: $isEditPageShowing
-                )
-            }
         }
     }
 
