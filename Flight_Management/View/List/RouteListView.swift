@@ -87,14 +87,38 @@ extension RouteListView {
     }
 
     var displayedRoutes: [Route] {
-        return routes.sorted { lhs, rhs in
+        var filtered = routes
+        
+        if !searchText.isEmpty {
+            let cleanSearchText = searchText
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            
+            if !cleanSearchText.isEmpty {
+                filtered = routes.filter { route in
+                    let nameMatch = route.name
+                        .lowercased()
+                        .contains(cleanSearchText)
+                    
+                    let airportMatch = route.nodes.contains { node in
+                        node.airport.code.lowercased().contains(cleanSearchText) ||
+                        node.airport.name.lowercased().contains(cleanSearchText) ||
+                        node.airport.city.lowercased().contains(cleanSearchText)
+                    }
+                    
+                    return nameMatch || airportMatch
+                }
+            }
+        }
+        
+        return filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
             
             if selectedSort == .name {
-                let comparison = lhs.name.lowercased() < rhs.name.lowercased()
+                let comparison = lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
-                let comparison = lhs.trips.count < rhs.trips.count
+                let comparison = lhs.trips.count <= rhs.trips.count
                 return isAscending ? comparison : !comparison
             }
         }

@@ -33,7 +33,7 @@ struct StaffListView: View {
             }
             .searchable(
                 text: $searchText,
-                prompt: "Search by staff"
+                prompt: "Enter name, role, or current flight number"
             )
             .searchToolbarBehavior(.minimize)
         }
@@ -138,23 +138,37 @@ extension StaffListView {
 
         filtered = filtered.filter { staff in
             if searchText.isEmpty { return true }
+            
+            let cleanSearchText = searchText
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            
+            if cleanSearchText.isEmpty { return true }
 
             let nameMatch = staff.name
-                .localizedCaseInsensitiveContains(searchText)
+                .lowercased()
+                .replacingOccurrences(of: " ", with: "")
+                .contains(cleanSearchText.replacingOccurrences(of: " ", with: ""))
+
+            let roleMatch = staff.designation.rawValue
+                .lowercased()
+                .replacingOccurrences(of: " ", with: "")
+                .contains(cleanSearchText.replacingOccurrences(of: " ", with: ""))
 
             let flightMatch =
                 staff.currentTrip?
                 .flightNumber
-                .localizedCaseInsensitiveContains(searchText) ?? false
+                .lowercased()
+                .contains(cleanSearchText) ?? false
 
-            return nameMatch || flightMatch
+            return nameMatch || roleMatch || flightMatch
         }
 
         let sorted = filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .name {
-                let comparison = lhs.name.lowercased() < rhs.name.lowercased()
+                let comparison = lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison =
