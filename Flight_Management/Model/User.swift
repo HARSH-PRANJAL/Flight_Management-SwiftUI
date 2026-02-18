@@ -19,7 +19,7 @@ class User {
         name: String,
         email: String,
         password: String,
-        role: UserRole = .crew,
+        role: UserRole,
         profileImage: Data? = nil
     ) {
         self.id = UUID()
