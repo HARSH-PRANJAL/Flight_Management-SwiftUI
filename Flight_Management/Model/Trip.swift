@@ -339,6 +339,7 @@ class Aircraft {
 
     func updateLastAndNextScheduledTrip(completedTrip: Trip) {
         lastCompletedTrip = completedTrip
+        currentTrip = nil
         updateNextScheduledTrip(after: completedTrip)
     }
 
@@ -461,8 +462,8 @@ class Staff {
     }
 
     func updateLastAndNextScheduledTrip(completedTrip: Trip) {
-        currentTrip = nil
         lastCompletedTrip = completedTrip
+        currentTrip = nil
         updateNextScheduledTrip(after: completedTrip)
     }
 
