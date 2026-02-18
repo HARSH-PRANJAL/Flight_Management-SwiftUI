@@ -27,20 +27,6 @@ struct StaffListView: View {
                     }
                 }
             }
-            .safeAreaInset(edge: .top) {
-                Picker("Availability", selection: $selectedFilter) {
-                    Text("All").tag(StaffAvailabilityStatus?(nil))
-                    ForEach(StaffAvailabilityStatus.allCases, id: \.self) {
-                        status in
-                        Text(status.rawValue).tag(Optional(status))
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 15)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .padding(.horizontal, 8)
-            }
             .navigationTitle("Staff List")
             .toolbar {
                 toolbarFilterSortItem
@@ -60,6 +46,37 @@ extension StaffListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                Section("Filter by") {
+                    VStack(spacing: 0) {
+                        Button {
+                            selectedFilter = nil
+                        } label: {
+                            HStack {
+                                Text("All")
+                                if selectedFilter == nil {
+                                    Spacer()
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        ForEach(
+                            StaffAvailabilityStatus.allCases,
+                            id: \.self
+                        ) { filter in
+                            Button {
+                                selectedFilter = filter
+                            } label: {
+                                HStack {
+                                    Text(filter.rawValue)
+                                    if selectedFilter == filter {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 Section("Sort by") {
                     ForEach(StaffSort.allCases, id: \.self) { sort in
                         Button {
