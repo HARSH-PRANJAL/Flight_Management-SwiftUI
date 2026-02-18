@@ -21,10 +21,6 @@ struct StaffDetailView: View {
     @State var selectedReplacementStaff: Staff?
     @State var scheduledTripsToCancel: [Trip] = []
     
-    var isCurrentUser: Bool {
-        session.user?.id == staff.id.uuidString
-    }
-    
     var isAdmin: Bool {
         session.user?.role == UserRole.admin.rawValue
     }
@@ -53,8 +49,8 @@ struct StaffDetailView: View {
             
             DetailView(
                 staff: staff,
-                onTapAction: isCurrentUser ? { isEditPageShowing = true } : (isAdmin ? { handleAdminAction() } : nil),
-                actionButtonTitle: isCurrentUser ? "Update Profile" : (isAdmin ? (staff.isMarkedUnavailable ? "Mark Active" : "Mark Unavailable") : "")
+                onTapAction: isAdmin ? { handleAdminAction() } : nil,
+                actionButtonTitle: isAdmin ? (staff.isMarkedUnavailable ? "Mark Active" : "Mark Unavailable") : ""
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .bottomBar)
