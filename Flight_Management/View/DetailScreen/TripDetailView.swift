@@ -1,27 +1,27 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct TripDetailView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(SessionManager.self) var sessionManager
     @Environment(\.dismiss) var dismiss
-    
+
     var trip: Trip
-    
+
     @State private var showCancellationAlert = false
     @State private var showSuccessMessage = false
     @State private var successMessage = ""
     @State private var isCancelationDisabled = false
     @State private var isEditPageShowing: Bool = false
-    
+
     var isTripManager: Bool {
         sessionManager.user?.role == UserRole.tripManager.rawValue
     }
-    
+
     var canCancelTrip: Bool {
         !trip.isCancelled && !trip.isCompleted && isTripManager
     }
-    
+
     var tripHasStarted: Bool {
         !trip.nodeStatuses.isEmpty
     }
@@ -60,7 +60,9 @@ struct TripDetailView: View {
             Button("Keep Trip", role: .cancel) {}
         } message: {
             if tripHasStarted {
-                Text("This trip is currently ongoing. Are you sure you want to cancel it anyway?")
+                Text(
+                    "This trip is currently ongoing. Are you sure you want to cancel it anyway?"
+                )
             } else {
                 Text("Are you sure you want to cancel this trip?")
             }
@@ -82,7 +84,12 @@ struct TripDetailView: View {
             }
         }
         .sheet(isPresented: $isEditPageShowing) {
-            TripRegistrationForm(trip: trip, isPresented: $isEditPageShowing)
+            NavigationStack {
+                TripRegistrationForm(
+                    trip: trip,
+                    isPresented: $isEditPageShowing
+                )
+            }
         }
     }
 
@@ -107,11 +114,17 @@ struct TripDetailView: View {
                 )
                 DetailRowView(
                     label: "Scheduled Departure",
-                    value: trip.scheduledDepartureTime.formatted(date: .abbreviated, time: .shortened)
+                    value: trip.scheduledDepartureTime.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    )
                 )
                 DetailRowView(
                     label: "Estimated Arrival",
-                    value: trip.estimatedArrivalTime.formatted(date: .abbreviated, time: .shortened)
+                    value: trip.estimatedArrivalTime.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    )
                 )
                 if trip.totalDelayedMinutes > 0 {
                     DetailRowView(
@@ -122,8 +135,10 @@ struct TripDetailView: View {
             }
             .padding(.top, 10)
             .padding(.bottom, 10)
-            
-            StatusCapsuleView(statusBadge: StatusBadge.from(tripStatus: trip.currentStatus))
+
+            StatusCapsuleView(
+                statusBadge: StatusBadge.from(tripStatus: trip.currentStatus)
+            )
         }
         .padding(20)
         .frame(maxWidth: .infinity)
@@ -166,13 +181,22 @@ struct TripDetailView: View {
 
             LazyVStack(spacing: 0) {
                 ForEach(trip.staffs) { staff in
-                    NavigationLink(destination: DetailView(staff: staff)) {
-                        ListRow(
-                            profileImage: staff.avatarImage,
-                            title: staff.name,
-                            subtitle: staff.designation.rawValue,
-                            status: StatusBadge.from(staffStatus: staff.currentStatus)
-                        )
+                    HStack {
+                        NavigationLink(destination: DetailView(staff: staff)) {
+                            ListRow(
+                                profileImage: staff.avatarImage,
+                                title: staff.name,
+                                subtitle: staff.designation.rawValue,
+                                status: StatusBadge.from(
+                                    staffStatus: staff.currentStatus
+                                )
+                            )
+                        }
+
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(Color(.systemGray4))
+                            .padding(.trailing, 16)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 16)
@@ -188,11 +212,11 @@ struct TripDetailView: View {
     private func performCancellation() {
         isCancelationDisabled = true
         trip.cancel()
-        successMessage = "Trip \(trip.flightNumber) has been cancelled successfully."
+        successMessage =
+            "Trip \(trip.flightNumber) has been cancelled successfully."
         showSuccessMessage = true
     }
 }
-
 
 #Preview {
     let mockRoute = Route(name: "New York to London")

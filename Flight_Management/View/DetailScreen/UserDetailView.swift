@@ -41,9 +41,11 @@ struct UserDetailView: View {
             .toolbar(.hidden, for: .bottomBar)
         }
         .sheet(isPresented: $isEditPageShowing) {
-            UserRegistrationForm(
-                isPresented: $isEditPageShowing
-            )
+            NavigationStack {
+                UserRegistrationForm(
+                    isPresented: $isEditPageShowing
+                )
+            }
         }
         .task {
             if session.isLoggedIn == true {

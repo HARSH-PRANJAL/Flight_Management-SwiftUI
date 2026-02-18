@@ -72,7 +72,9 @@ struct StaffDetailView: View {
         }
         
         .sheet(isPresented: $isEditPageShowing) {
-            StaffRegistrationForm(staff: staff, isPresented: $isEditPageShowing)
+            NavigationStack {
+                StaffRegistrationForm(staff: staff, isPresented: $isEditPageShowing)
+            }
         }
         
         .sheet(isPresented: $showReplaceStaffSheet) {

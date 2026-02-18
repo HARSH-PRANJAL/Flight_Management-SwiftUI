@@ -69,7 +69,9 @@ struct RouteDetailView: View {
             }
         }
         .sheet(isPresented: $isEditPageShowing) {
-            RouteRegistrationForm(route: route, isPresented: $isEditPageShowing)
+            NavigationStack {
+                RouteRegistrationForm(route: route, isPresented: $isEditPageShowing)
+            }
         }
     }
 
