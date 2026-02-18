@@ -20,6 +20,7 @@ struct RouteDetailView: View {
             ScrollView {
                 VStack {
                     primaryCard
+                    airportNodesCard
                     tripDetails
 
                     if currentTrip.count != 0 {
@@ -56,6 +57,7 @@ struct RouteDetailView: View {
                 }
                 .padding()
             }
+            .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.hidden)
 
         }
@@ -103,6 +105,59 @@ struct RouteDetailView: View {
                 Text("Total Trips : \(route.trips.count)")
                 Text("Scheduled Trips : \(countScheduleTrips)")
             }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(
+            cardTheme()
+        )
+    }
+
+    var airportNodesCard: some View {
+        VStack(spacing: 0) {
+            Text("Airports :")
+                .font(.title)
+                .fontWeight(.semibold)
+                .padding(.bottom, 10)
+            
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(route.nodes.reversed(), id: \.id) { node in
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(node.airport.code)
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                Text(node.airport.name)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.systemGray))
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text("Arrival")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.systemGray))
+                                Text("\(node.plannedArrivalOffsetMinutes) min")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        
+                        if node.id != route.nodes.last?.id {
+                            Divider()
+                                .padding(.vertical, 4)
+                        }
+                    }
+                }
+            }
+            .frame(maxHeight: 300)
+            .scrollIndicators(.hidden)
+            
+            Text("Total journey time: \(route.totalPlannedDurationMinutes) min")
+                .padding(.bottom, 10)
         }
         .padding(20)
         .frame(maxWidth: .infinity)
