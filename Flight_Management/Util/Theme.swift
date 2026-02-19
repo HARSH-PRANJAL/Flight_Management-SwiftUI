@@ -16,13 +16,16 @@ struct DetailRowView: View {
     var value: String
 
     var body: some View {
-        HStack {
+        HStack(alignment: .top, spacing: 8) {
             Text(label)
                 .foregroundStyle(Color(.systemGray))
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .lineLimit(1)
             Text(value)
                 .fontWeight(.semibold)
+                .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+                .lineLimit(2)
         }
     }
 }
