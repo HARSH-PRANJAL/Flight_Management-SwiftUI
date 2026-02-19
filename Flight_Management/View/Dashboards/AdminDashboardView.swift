@@ -72,7 +72,7 @@ struct AdminDashboardView: View {
                             data: crewStatusCounts,
                             defaultTitle: "Total staff"
                         )
-                        .frame(height: 300)
+                        .frame(height: 500)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(
@@ -126,7 +126,7 @@ extension AdminDashboardView {
     }
 
     private var onTimePercentage: Int {
-        let total = todayTrips.filter { !$0.isCancelled }.count
+        let total = todayTrips.filter { !$0.isCancelled && $0.currentStatus != .scheduled && !$0.isCompleted }.count
         guard total > 0 else { return 100 }
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         return Int((Double(onTime) / Double(total)) * 100)
