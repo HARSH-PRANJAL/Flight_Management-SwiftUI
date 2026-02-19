@@ -2,10 +2,10 @@ import SwiftUI
 
 struct RouteDetailView: View {
     let route: Route
-    
+
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
-    
+
     @State private var isEditPageShowing: Bool = false
 
     var isAdmin: Bool {
@@ -18,49 +18,40 @@ struct RouteDetailView: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack {
+                VStack(spacing: 16) {
                     primaryCard
-                    airportNodesCard
-                    tripDetails
 
-                    if currentTrip.count != 0 {
-                        tripCards(
-                            title: "Current Trip",
-                            count: currentTrip.count,
-                            trips: currentTrip,
-                            imageName: "clock.badge.airplane",
-                            imageColor: Color(.systemCyan)
+                    HStack(spacing: 12) {
+                        CardView(
+                            title: "Total Trips",
+                            value: "\(route.trips.count)",
+                            subtitle: "",
+                            icon: "airplane.up.right",
+                            iconColor: Color(.white),
+                            background: Color(.systemBlue)
                         )
-                    } else {
-                        Text("No active trips yet…")
-                            .font(.largeTitle)
-                            .fontWeight(.light)
-                            .foregroundStyle(Color(.systemGray3))
-                            .padding(.vertical, 20)
+
+                        CardView(
+                            title: "Scheduled",
+                            value: "\(countScheduleTrips)",
+                            subtitle: "",
+                            icon: "calendar",
+                            iconColor: Color(.white),
+                            background: Color(.systemIndigo)
+                        )
                     }
 
-                    if tripHistory.count != 0 {
-                        tripCards(
-                            title: "Trip history",
-                            count: tripHistory.count,
-                            trips: tripHistory,
-                            imageName: "checkmark.circle",
-                            imageColor: Color(.systemGreen)
-                        )
-                    } else {
-                        Text("No trip history yet…")
-                            .font(.largeTitle)
-                            .fontWeight(.light)
-                            .foregroundStyle(Color(.systemGray3))
-                            .padding(.vertical, 20)
+                    airportNodesCard
+
+                    if !currentTrip.isEmpty {
+                        currentTripsSection
                     }
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollIndicators(.hidden)
-
         }
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             if isAdmin {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -72,98 +63,164 @@ struct RouteDetailView: View {
         }
         .sheet(isPresented: $isEditPageShowing) {
             NavigationStack {
-                RouteRegistrationForm(route: route, isPresented: $isEditPageShowing)
+                RouteRegistrationForm(
+                    route: route,
+                    isPresented: $isEditPageShowing
+                )
             }
         }
     }
 
     var primaryCard: some View {
         VStack(spacing: 0) {
-            Text("\(route.name)")
-                .font(.title)
-                .fontWeight(.semibold)
-                .padding(.bottom, 10)
-            Text("Total Airports : \(route.nodes.count)")
-                .font(.title2)
-                .foregroundStyle(Color(.systemGray))
-                .padding(.bottom, 10)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(
-            cardTheme()
-        )
-    }
+            Image(
+                systemName:
+                    "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath"
+            )
+            .font(.system(size: 48))
+            .foregroundStyle(Color(.systemPurple))
+            .padding(.bottom, 16)
 
-    var tripDetails: some View {
-        VStack(spacing: 0) {
-            Text("Trip Details :")
+            Text(route.name)
                 .font(.title)
                 .fontWeight(.semibold)
-                .padding(.bottom, 10)
-            HStack {
-                Text("Total Trips : \(route.trips.count)")
-                Text("Scheduled Trips : \(countScheduleTrips)")
+                .padding(.bottom, 4)
+
+            let origin = route.nodes.first?.airport.code ?? "—"
+            let dest = route.nodes.last?.airport.code ?? "—"
+            Text("\(origin) → \(dest)")
+                .font(.subheadline)
+                .foregroundStyle(Color(.secondaryLabel))
+                .padding(.bottom, 12)
+
+            Divider()
+                .opacity(0.75)
+                .padding(.bottom, 12)
+
+            VStack(alignment: .leading, spacing: 10) {
+                DetailRowView(label: "Airports", value: "\(route.nodes.count)")
+                DetailRowView(
+                    label: "Duration",
+                    value: "\(route.totalPlannedDurationMinutes) min"
+                )
+                DetailRowView(
+                    label: "Total Trips",
+                    value: "\(route.trips.count)"
+                )
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .frame(maxWidth: .infinity)
-        .background(
-            cardTheme()
-        )
+        .background(cardTheme())
     }
 
-    var airportNodesCard: some View {
-        VStack(spacing: 0) {
-            Text("Airports :")
-                .font(.title)
-                .fontWeight(.semibold)
-                .padding(.bottom, 10)
-            
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(route.nodes.reversed(), id: \.id) { node in
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(node.airport.code)
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                Text(node.airport.name)
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.systemGray))
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("Arrival")
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.systemGray))
-                                Text("\(node.plannedArrivalOffsetMinutes) min")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                            }
+    var currentTripsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text("Current Trips")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.primary)
+            } icon: {
+                Image(systemName: "clock.badge.airplane")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.systemCyan))
+            }
+
+            VStack(spacing: 0) {
+                ForEach(currentTrip, id: \.id) { trip in
+                    HStack {
+                        NavigationLink(destination: TripDetailView(trip: trip))
+                        {
+                            ListRow(trip: trip)
                         }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        
-                        if node.id != route.nodes.last?.id {
-                            Divider()
-                                .padding(.vertical, 4)
-                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.smallCaps())
+                            .foregroundStyle(Color(.tertiaryLabel))
+                            .padding(.trailing, 12)
+                    }
+
+                    if trip.id != currentTrip.last?.id {
+                        Divider()
+                            .padding(.leading, 16)
                     }
                 }
             }
-            .frame(maxHeight: 300)
-            .scrollIndicators(.hidden)
-            
-            Text("Total journey time: \(route.totalPlannedDurationMinutes) min")
-                .padding(.bottom, 10)
+            .background(cardTheme())
         }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(
-            cardTheme()
-        )
+        .padding(.bottom, 16)
+    }
+
+    var airportNodesCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text("Route Stops")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.primary)
+            } icon: {
+                Image(systemName: "mappin.circle")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.systemOrange))
+            }
+
+            VStack(spacing: 0) {
+                ForEach(
+                    Array(sequencedRouteNodes.enumerated()),
+                    id: \.element.id
+                ) {
+                    index,
+                    node in
+                    HStack(alignment: .center, spacing: 12) {
+                        Text("\(index+1).")
+                            .font(.callout)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(node.airport.fullName)
+                                .font(.headline)
+                                .foregroundStyle(Color(.label))
+                                .lineLimit(1)
+                                .layoutPriority(1)
+
+                            Text(node.airport.locationLabel)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(.label))
+                                .lineLimit(1)
+                                .layoutPriority(1)
+
+                            Text(
+                                "Arrival: \(node.plannedArrivalOffsetMinutes) min"
+                            )
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .lineLimit(1)
+                            .layoutPriority(1)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    if index < sequencedRouteNodes.count - 1 {
+                        Divider()
+                            .padding(.leading, 16)
+                    }
+                }
+            }
+            .background(cardTheme())
+        }
+        .padding(.bottom, 16)
+    }
+}
+
+// MARK: Util
+extension RouteDetailView {
+
+    var sequencedRouteNodes: [RouteNode] {
+        return route.nodes.sorted(by: { $0.sequence < $1.sequence })
     }
 
     var countScheduleTrips: Int {
@@ -181,7 +238,6 @@ struct RouteDetailView: View {
             $0.isCompleted == true || $0.isCancelled == true
         }.sorted(by: { $0.estimatedArrivalTime > $1.estimatedArrivalTime })
     }
-
 }
 
 #Preview {

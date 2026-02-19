@@ -13,28 +13,15 @@ struct AircraftDetailView: View {
     var isTripManager: Bool {
         session.user?.role == UserRole.tripManager.rawValue
     }
-    
-    var isAircraftAvailable: Bool {
-        aircraft.currentStatus == .available
-    }
 
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground)
                 .ignoresSafeArea()
 
-            DetailView(aircraft: aircraft)
+            AircraftDetailScreen(aircraft: aircraft,isManager: isTripManager, isEditPagePresented: $isEditPageShowing)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .toolbar(.hidden, for: .bottomBar)
-        }
-        .toolbar {
-            if isTripManager && isAircraftAvailable {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { isEditPageShowing = true }) {
-                        Image(systemName: "pencil")
-                    }
-                }
-            }
+                .toolbar(.hidden, for: .tabBar)
         }
         .sheet(isPresented: $isEditPageShowing) {
             NavigationStack {

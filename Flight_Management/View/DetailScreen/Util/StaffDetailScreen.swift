@@ -40,6 +40,7 @@ struct StaffDetailScreen: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        .padding(.horizontal, 16)
                     }
                 }
             }

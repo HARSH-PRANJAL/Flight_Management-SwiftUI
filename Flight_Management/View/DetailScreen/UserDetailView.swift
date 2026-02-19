@@ -38,7 +38,7 @@ struct UserDetailView: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .scrollDisabled(true)
-            .toolbar(.hidden, for: .bottomBar)
+            .toolbar(.hidden, for: .tabBar)
         }
         .sheet(isPresented: $isEditPageShowing) {
             NavigationStack {

@@ -56,6 +56,7 @@ struct StaffDetailView: View {
             ).frame(maxWidth: .infinity, maxHeight: .infinity)
                 .toolbar(.hidden, for: .bottomBar)
         }
+        .toolbar(.hidden, for: .tabBar)
         .sheet(isPresented: $isEditPageShowing) {
             NavigationStack {
                 StaffRegistrationForm(

@@ -10,14 +10,12 @@ struct TextWithCopyView: View {
         HStack(alignment: .center, spacing: 8) {
             Text(text)
                 .font(.body)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
                 .textSelection(.enabled)
-                .multilineTextAlignment(.center)
+                .lineLimit(1)
                 .accessibilityLabel("Detail: \(text)")
-            
             Image(systemName: justCopied ? "checkmark.circle.fill" : "doc.on.doc")
-                .font(.system(size: 18, weight: .medium))
+                .font(.footnote)
+                .fontWeight(.semibold)
                 .foregroundStyle(justCopied ? Color(.systemGreen) : Color(.systemGray2))
                 .frame(maxWidth: 15, maxHeight: 15)
                 .accessibilityLabel("Copy to clipboard")
@@ -27,7 +25,7 @@ struct TextWithCopyView: View {
                     copyToClipboard()
                 }
                 .contentShape(Rectangle())
-                .padding(4)
+                .padding(1)
         }
         .padding(.bottom, 30)
         .overlay(alignment: .top) {

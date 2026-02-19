@@ -11,14 +11,9 @@ struct TripDetailView: View {
     @State private var showCancellationAlert = false
     @State private var showSuccessMessage = false
     @State private var successMessage = ""
-    @State private var isCancelationDisabled = false
 
     var isTripManager: Bool {
         sessionManager.user?.role == UserRole.tripManager.rawValue
-    }
-
-    var canCancelTrip: Bool {
-        !trip.isCancelled && !trip.isCompleted && isTripManager
     }
 
     var tripHasStarted: Bool {
@@ -29,28 +24,13 @@ struct TripDetailView: View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    primaryCard
-                        .padding(.bottom, 10)
-
-                    if canCancelTrip {
-                        cancelButton
-                            .shadow(
-                                color: Color.black.opacity(0.07),
-                                radius: 2,
-                                x: 0,
-                                y: 2
-                            )
-                    }
-
-                    if !trip.staffs.isEmpty {
-                        assignedStaffCard
-                    }
-                }
-                .padding(.horizontal, 15)
-            }
-            .scrollIndicators(.hidden)
+            TripDetailScreen(
+                trip: trip,
+                onCancelTapped: isTripManager
+                    ? { showCancellationAlert = true } : nil
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .toolbar(.hidden, for: .tabBar)
         }
         .alert("Cancel Trip", isPresented: $showCancellationAlert) {
             Button("Cancel Trip", role: .destructive) {
@@ -75,125 +55,11 @@ struct TripDetailView: View {
         }
     }
 
-    var primaryCard: some View {
-        VStack(spacing: 0) {
-            Text(trip.flightNumber)
-                .font(.title)
-                .fontWeight(.semibold)
-                .padding(.bottom, 10)
-            Text(trip.route.name)
-                .font(.title2)
-                .foregroundStyle(Color(.systemGray))
-                .padding(.bottom, 10)
-            VStack(alignment: .leading, spacing: 8) {
-                DetailRowView(
-                    label: "Aircraft",
-                    value: trip.aircraft.type
-                )
-                DetailRowView(
-                    label: "Registration",
-                    value: trip.aircraft.registrationNumber
-                )
-                DetailRowView(
-                    label: "Scheduled Departure",
-                    value: trip.scheduledDepartureTime.formatted(
-                        date: .abbreviated,
-                        time: .shortened
-                    )
-                )
-                DetailRowView(
-                    label: "Estimated Arrival",
-                    value: trip.estimatedArrivalTime.formatted(
-                        date: .abbreviated,
-                        time: .shortened
-                    )
-                )
-                if trip.totalDelayedMinutes > 0 {
-                    DetailRowView(
-                        label: "Total Delay",
-                        value: "\(trip.totalDelayedMinutes) minutes"
-                    )
-                }
-            }
-            .padding(.top, 10)
-            .padding(.bottom, 10)
-
-            StatusCapsuleView(
-                statusBadge: StatusBadge.from(tripStatus: trip.currentStatus)
-            )
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .background(
-            cardTheme()
-        )
-    }
-
-    var cancelButton: some View {
-        Text("Cancel Trip")
-            .font(.title3)
-            .foregroundColor(.red)
-            .contrast(1.5)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(
-                cardTheme()
-            )
-            .onTapGesture {
-                showCancellationAlert = true
-            }
-            .padding(.bottom, 30)
-            .opacity(isCancelationDisabled ? 0.5 : 1.0)
-            .disabled(isCancelationDisabled)
-    }
-
-    var assignedStaffCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Label {
-                Text("Flight Crew")
-                    .font(.headline)
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: "person.2")
-                    .foregroundStyle(Color(.systemBlue))
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 10)
-
-            LazyVStack(spacing: 0) {
-                ForEach(trip.staffs) { staff in
-                    HStack {
-                        NavigationLink(destination: DetailView(staff: staff)) {
-                            ListRow(
-                                profileImage: staff.avatarImage,
-                                title: staff.name,
-                                subtitle: staff.designation.rawValue,
-                                status: StatusBadge.from(
-                                    staffStatus: staff.currentStatus
-                                )
-                            )
-                        }
-
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(Color(.systemGray4))
-                            .padding(.trailing, 16)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 16)
-                    .background(
-                        cardTheme()
-                    )
-                    .padding(.bottom, 10)
-                }
-            }
-        }
-    }
-
     private func performCancellation() {
-        isCancelationDisabled = true
         trip.cancel()
+        do {
+            try modelContext.save()
+        } catch {}
         successMessage =
             "Trip \(trip.flightNumber) has been cancelled successfully."
         showSuccessMessage = true
@@ -210,7 +76,8 @@ struct TripDetailView: View {
                 name: "John F. Kennedy",
                 city: "New York",
                 country: "USA"
-            )
+            ),
+            sequence: 1
         ),
         RouteNode(
             plannedArrivalOffsetMinutes: 480,
@@ -219,7 +86,8 @@ struct TripDetailView: View {
                 name: "London Heathrow",
                 city: "London",
                 country: "UK"
-            )
+            ),
+            sequence: 2
         ),
     ]
 
@@ -248,6 +116,6 @@ struct TripDetailView: View {
         isCancelled: false
     )
 
-    return TripDetailView(trip: mockTrip)
+     return TripDetailView(trip: mockTrip)
         .environment(SessionManager.shared)
 }
