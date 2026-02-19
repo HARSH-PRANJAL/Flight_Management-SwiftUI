@@ -25,6 +25,7 @@ struct StaffListView: View {
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Staff List")
@@ -116,13 +117,10 @@ extension StaffListView {
 // MARK: Fallback and Filter Data
 extension StaffListView {
     var fallbackBackground: some View {
-        VStack(alignment: .center, spacing: 0) {
-            fallbackNoStaffDataImage()
-                .resizable()
-                .opacity(0.25)
-                .frame(maxWidth: 150, maxHeight: 150)
-            Text("No Staff Data Available")
-                .opacity(0.55)
+        ContentUnavailableView {
+            Label("No Staff", systemImage: "person.2")
+        } description: {
+            Text("Add staff members to get started.")
         }
     }
 

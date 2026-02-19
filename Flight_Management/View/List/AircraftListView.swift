@@ -23,6 +23,7 @@ struct AircraftListView: View {
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Aircraft List")
@@ -89,13 +90,10 @@ extension AircraftListView {
 // MARK: Fallback and Filter Data
 extension AircraftListView {
     var fallbackBackground: some View {
-        VStack(alignment: .center, spacing: 0) {
-            Image(systemName: "airplane")
-                .resizable()
-                .opacity(0.15)
-                .frame(maxWidth: 150, maxHeight: 100)
-            Text("No Aircraft Data Available.")
-                .opacity(0.25)
+        ContentUnavailableView {
+            Label("No Aircraft", systemImage: "airplane")
+        } description: {
+            Text("Add aircraft to get started.")
         }
     }
 

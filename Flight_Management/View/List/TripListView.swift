@@ -9,6 +9,7 @@ enum SortOrder: String, CaseIterable {
 struct TripListView: View {
 
     var externalTrips: [Trip] = []
+    var navigationTitle: String = "Trip List"
 
     @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
         [Trip]
@@ -33,14 +34,13 @@ struct TripListView: View {
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
             }
         }
-        .navigationTitle("Trip List")
+        .navigationTitle(navigationTitle)
         .toolbar {
-            if externalTrips.count == 0 {
-                toolbarFilterSortItem
-            }
+            toolbarFilterSortItem
         }
         .searchable(
             text: $searchText,
@@ -127,22 +127,23 @@ extension TripListView {
 // MARK: Fallback and Filter Data
 extension TripListView {
     var fallbackBackground: some View {
-        VStack(alignment: .center, spacing: 0) {
-            Image(systemName: "airplane")
-                .resizable()
-                .opacity(0.15)
-                .frame(maxWidth: 150, maxHeight: 100)
-            Text("No Trip Data Available.")
-                .opacity(0.25)
+        ContentUnavailableView {
+            Label("No Trips", systemImage: "airplane.departure")
+        } description: {
+            Text("Create or assign trips to see them here.")
         }
     }
 
     var displayedTrips: [Trip] {
+        var filtered: [Trip]
+
         if externalTrips.count != 0 {
-            return externalTrips
+            filtered = externalTrips
+        } else {
+            filtered = trips
         }
 
-        var filtered = trips.filter { trip in
+        filtered = filtered.filter { trip in
             if selectedFilter == nil {
                 return true
             } else {

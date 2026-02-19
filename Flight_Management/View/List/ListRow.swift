@@ -5,6 +5,7 @@ struct ListRow: View, Identifiable {
     let profileImage: Image?
     let title: String
     let subtitle: String
+    let metadata: String?
     let statusBadge: StatusBadge?
     let associatedTrip: Trip?
     let showFallbackImage: Bool
@@ -13,6 +14,7 @@ struct ListRow: View, Identifiable {
         profileImage: Image?,
         title: String,
         subtitle: String,
+        metadata: String? = nil,
         status: StatusBadge? = nil,
         associatedTrip: Trip? = nil,
         showFallbackImage: Bool = false
@@ -20,112 +22,119 @@ struct ListRow: View, Identifiable {
         self.profileImage = profileImage
         self.title = title
         self.subtitle = subtitle
+        self.metadata = metadata
         self.statusBadge = status
         self.associatedTrip = associatedTrip
         self.showFallbackImage = showFallbackImage
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                profileImageView
+        HStack(spacing: 12) {
+            profileImageView
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(.label))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(Color(.label))
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.label))
+                    .lineLimit(1)
+
+                if let metadata, !metadata.isEmpty {
+                    Text(metadata)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.secondaryLabel))
                         .lineLimit(1)
-
-                    Text(subtitle)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(.systemGray))
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    statusBadgeView
                 }
             }
-            .contentShape(Rectangle())
+
+            Spacer(minLength: 8)
+
+            if let statusBadge {
+                StatusCapsuleView(statusBadge: statusBadge, onlyIndicator: true)
+            }
         }
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
     private var profileImageView: some View {
         Group {
-            if let profileImage = profileImage {
+            if let profileImage {
                 profileImage
                     .resizable()
                     .scaledToFill()
+            } else if showFallbackImage {
+                fallbackStaffImage()
             } else {
-                if showFallbackImage {
-                    fallbackStaffImage()
-                } else {
-                    EmptyView()
-                }
+                EmptyView()
             }
         }
         .clipShape(Circle())
-        .frame(width: 48, height: 48)
-        .overlay {
-            Circle()
-                .stroke(Color(.systemGray4), lineWidth: 1)
-        }
+        .frame(width: 44, height: 44)
+        .overlay(Circle().stroke(Color(.separator), lineWidth: 0.5))
     }
 
-    @ViewBuilder
-    private var statusBadgeView: some View {
-        if let statusBadge = self.statusBadge {
-            StatusCapsuleView(statusBadge: statusBadge, onlyIndicator: true)
-        } else {
-            EmptyView()
-        }
-    }
 }
 
 // MARK: - Initialisers
 extension ListRow {
     init(staff: Staff) {
+        let meta: String?
+        if let trip = staff.currentTrip {
+            meta = "Current: \(trip.flightNumber)"
+        } else if let next = staff.nextScheduledTrip {
+            meta = "Next: \(next.flightNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
+        } else {
+            meta = String(format: "%.0fh total • \(staff.completedTrips.count) trips", staff.totalTripHours)
+        }
         self.init(
             profileImage: staff.avatarImage,
             title: staff.name,
             subtitle: staff.designation.rawValue,
+            metadata: meta,
             status: .from(staffStatus: staff.currentStatus),
             showFallbackImage: true
         )
     }
 
     init(aircraft: Aircraft) {
+        let meta = "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
         self.init(
             profileImage: nil,
             title: aircraft.registrationNumber,
             subtitle: aircraft.type,
-            status: .from(aircraftStatus: aircraft.currentStatus),
-            associatedTrip: nil
+            metadata: meta,
+            status: .from(aircraftStatus: aircraft.currentStatus)
         )
     }
 
     init(trip: Trip) {
+        let origin = trip.route.nodes.first?.airport.code ?? "_"
+        let dest = trip.route.nodes.last?.airport.code ?? "_"
+        let meta = "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
         self.init(
             profileImage: nil,
             title: trip.flightNumber,
-            subtitle: formatDate(
-                trip.scheduledDepartureTime,
-                format: "dd-MM-yyyy HH:mm"
-            ),
+            subtitle: formatDate(trip.scheduledDepartureTime, format: "dd MMM, HH:mm"),
+            metadata: meta,
             status: .from(tripStatus: trip.currentStatus),
             associatedTrip: trip
         )
     }
 
     init(route: Route) {
+        let origin = route.nodes.first?.airport.code ?? "_"
+        let dest = route.nodes.last?.airport.code ?? "_"
+        let meta = route.nodes.isEmpty ? "\(route.trips.count) trips" : "\(origin) → \(dest) • \(route.totalPlannedDurationMinutes)min • \(route.trips.count) trips"
         self.init(
             profileImage: nil,
             title: route.name,
-            subtitle:
-                "Airports: \(route.nodes.count)   Total trips: \(route.trips.count)",
+            subtitle: "\(route.nodes.count) airports",
+            metadata: meta,
             status: nil
         )
     }

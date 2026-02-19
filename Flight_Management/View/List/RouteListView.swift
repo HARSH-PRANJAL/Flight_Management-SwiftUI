@@ -22,6 +22,7 @@ struct RouteListView: View {
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Route List")
@@ -76,13 +77,10 @@ extension RouteListView {
 // MARK: Fallback and Filter Data
 extension RouteListView {
     var fallbackBackground: some View {
-        VStack(alignment: .center, spacing: 0) {
-            Image(systemName: "person.3")
-                .resizable()
-                .opacity(0.15)
-                .frame(maxWidth: 150, maxHeight: 100)
-            Text("No Staff Data Available.")
-                .opacity(0.25)
+        ContentUnavailableView {
+            Label("No Routes", systemImage: "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath")
+        } description: {
+            Text("Add routes to get started.")
         }
     }
 
