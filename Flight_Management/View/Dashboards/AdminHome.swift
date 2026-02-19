@@ -8,64 +8,62 @@ struct AdminHome: View {
     @State var isAddRoutePresented: Bool = false
 
     var body: some View {
-        ZStack {
-            TabView {
-                Tab("Home", systemImage: "house") {
-                    NavigationStack {
-                        AdminDashboardView()
-                            .toolbar {
-                                profileHandlerToolbarItem(session: session)
-                            }
-                    }
+        TabView {
+            Tab("Home", systemImage: "house") {
+                NavigationStack {
+                    AdminDashboardView()
+                        .toolbar {
+                            profileHandlerToolbarItem(session: session)
+                        }
                 }
+            }
 
-                Tab("Staff", systemImage: "person.3") {
-                    NavigationStack {
-                        StaffListView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button {
-                                        isAddStaffPresented.toggle()
-                                    } label: {
-                                        Image(systemName: "plus")
-                                    }
+            Tab("Staff", systemImage: "person.3") {
+                NavigationStack {
+                    StaffListView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    isAddStaffPresented.toggle()
+                                } label: {
+                                    Image(systemName: "plus")
                                 }
                             }
-                    }
+                        }
                 }
+            }
 
-                Tab("Route", systemImage: "location") {
-                    NavigationStack {
-                        RouteListView()
-                            .toolbar {
-                                ToolbarItem(placement: .topBarLeading) {
-                                    Button {
-                                        isAddRoutePresented.toggle()
-                                    } label: {
-                                        Image(systemName: "plus")
-                                    }
+            Tab("Route", systemImage: "location") {
+                NavigationStack {
+                    RouteListView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    isAddRoutePresented.toggle()
+                                } label: {
+                                    Image(systemName: "plus")
                                 }
                             }
-                    }
+                        }
                 }
             }
-            .tabBarMinimizeBehavior(.onScrollDown)
-            .sheet(isPresented: $isAddStaffPresented) {
-                NavigationStack {
-                    StaffRegistrationForm()
-                        .navigationTitle("Add Staff")
-                        .navigationBarTitleDisplayMode(.inline)
-                }
-            }
-            .sheet(isPresented: $isAddRoutePresented) {
-                NavigationStack {
-                    RouteRegistrationForm()
-                        .navigationTitle("Create Route")
-                        .navigationBarTitleDisplayMode(.inline)
-                }
-            }
-            
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .sheet(isPresented: $isAddStaffPresented) {
+            NavigationStack {
+                StaffRegistrationForm()
+                    .navigationTitle("Add Staff")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        .sheet(isPresented: $isAddRoutePresented) {
+            NavigationStack {
+                RouteRegistrationForm()
+                    .navigationTitle("Create Route")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+
     }
 }
 
