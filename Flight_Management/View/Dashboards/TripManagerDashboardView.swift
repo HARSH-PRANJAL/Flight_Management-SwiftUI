@@ -56,7 +56,7 @@ extension TripManagerDashboardView {
 
     var tripDetailCards: some View {
         HStack(spacing: 12) {
-            DashboardCardView(
+            CardView(
                 title: "On-Time Performance",
                 value: "\(onTimePercentage)%",
                 subtitle: "Flights today",
@@ -65,7 +65,7 @@ extension TripManagerDashboardView {
                 background: Color(.systemBackground)
             )
 
-            DashboardCardView(
+            CardView(
                 title: "Delayed Flights",
                 value: "\(delayedCount)",
                 subtitle: "Today",

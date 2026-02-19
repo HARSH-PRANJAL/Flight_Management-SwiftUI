@@ -15,7 +15,7 @@ struct AdminDashboardView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     HStack(spacing: 12) {
-                        DashboardCardView(
+                        CardView(
                             title: "On-Time Performance",
                             value: "\(onTimePercentage)%",
                             subtitle: "Flights today",
@@ -24,7 +24,7 @@ struct AdminDashboardView: View {
                             background: Color(.systemBackground)
                         )
 
-                        DashboardCardView(
+                        CardView(
                             title: "Delayed Flights",
                             value: "\(delayedCount)",
                             subtitle: "Today",
