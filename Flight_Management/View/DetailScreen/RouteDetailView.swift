@@ -51,7 +51,6 @@ struct RouteDetailView: View {
                 .padding(.bottom, 16)
             }
         }
-        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             if isAdmin {
                 ToolbarItem(placement: .topBarTrailing) {
