@@ -18,35 +18,37 @@ struct TripListView: View {
     @State private var selectedSort: TripSort = .departure
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
+    @State private var selectedTrip: Trip?
 
     var body: some View {
-        VStack(spacing: 0) {
+        NavigationSplitView {
             Group {
                 if displayedTrips.isEmpty {
                     fallbackBackground
                 } else {
-                    List {
-                        ForEach(displayedTrips, id: \.id) { trip in
-                            NavigationLink(
-                                destination: TripDetailView(trip: trip)
-                            ) {
-                                ListRow(trip: trip)
-                            }
-                        }
+                    List(displayedTrips, id: \.id, selection: $selectedTrip) { trip in
+                        ListRow(trip: trip)
                     }
                     .listStyle(.insetGrouped)
                 }
             }
+            .navigationTitle(navigationTitle)
+            .toolbar {
+                toolbarFilterSortItem
+            }
+            .searchable(
+                text: $searchText,
+                prompt: "Search by trip number"
+            )
+            .searchToolbarBehavior(.minimize)
+        } detail: {
+            if let trip = selectedTrip {
+                TripDetailView(trip: trip)
+            } else {
+                Text("Select a trip")
+                    .foregroundColor(.secondary)
+            }
         }
-        .navigationTitle(navigationTitle)
-        .toolbar {
-            toolbarFilterSortItem
-        }
-        .searchable(
-            text: $searchText,
-            prompt: "Search by trip number"
-        )
-        .searchToolbarBehavior(.minimize)
     }
 }
 
