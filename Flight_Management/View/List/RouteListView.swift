@@ -60,8 +60,12 @@ extension RouteListView {
                                 Text(sort.rawValue)
                                 Spacer()
                                 if selectedSort == sort {
-                                    Image(systemName: selectedSortOrder == .ascending ? "arrow.up" : "arrow.down")
-                                        .foregroundStyle(Color(.systemBlue))
+                                    Image(
+                                        systemName: selectedSortOrder
+                                            == .ascending
+                                            ? "arrow.up" : "arrow.down"
+                                    )
+                                    .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -78,7 +82,11 @@ extension RouteListView {
 extension RouteListView {
     var fallbackBackground: some View {
         ContentUnavailableView {
-            Label("No Routes", systemImage: "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath")
+            Label(
+                "No Routes",
+                systemImage:
+                    "point.topright.arrow.triangle.backward.to.point.bottomleft.scurvepath"
+            )
         } description: {
             Text("Add routes to get started.")
         }
@@ -86,34 +94,41 @@ extension RouteListView {
 
     var displayedRoutes: [Route] {
         var filtered = routes
-        
+
         if !searchText.isEmpty {
-            let cleanSearchText = searchText
+            let cleanSearchText =
+                searchText
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased()
-            
+
             if !cleanSearchText.isEmpty {
                 filtered = routes.filter { route in
                     let nameMatch = route.name
                         .lowercased()
                         .contains(cleanSearchText)
-                    
+
                     let airportMatch = route.nodes.contains { node in
-                        node.airport.code.lowercased().contains(cleanSearchText) ||
-                        node.airport.name.lowercased().contains(cleanSearchText) ||
-                        node.airport.city.lowercased().contains(cleanSearchText)
+                        node.airport.code.lowercased().contains(cleanSearchText)
+                            || node.airport.name.lowercased().contains(
+                                cleanSearchText
+                            )
+                            || node.airport.city.lowercased().contains(
+                                cleanSearchText
+                            )
                     }
-                    
+
                     return nameMatch || airportMatch
                 }
             }
         }
-        
+
         return filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
-            
+
             if selectedSort == .name {
-                let comparison = lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
+                let comparison =
+                    lhs.name.localizedStandardCompare(rhs.name)
+                    == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison = lhs.trips.count <= rhs.trips.count
