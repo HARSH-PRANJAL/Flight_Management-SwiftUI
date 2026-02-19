@@ -21,6 +21,9 @@ struct StaffRegistrationForm: View {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
             StaffRegistrationContent(viewModel: viewModel, isPresented: isPresented)
         }
+        .onAppear {
+            viewModel.originalSnapshot = viewModel.currentSnapshot()
+        }
     }
 }
 

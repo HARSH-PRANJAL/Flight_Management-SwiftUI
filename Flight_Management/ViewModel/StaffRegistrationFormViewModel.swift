@@ -14,6 +14,7 @@ final class StaffRegistrationFormViewModel {
     var photoData: Data?
     var profilePreview: Image?
     var dob: Date?
+    let years: [String]
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
@@ -21,7 +22,24 @@ final class StaffRegistrationFormViewModel {
     var isEditMode: Bool = false
     var staffToEdit: Staff?
 
-    let years: [String]
+    struct Snapshot: Equatable {
+        let name: String
+        let email: String
+        let gender: Gender?
+        let role: StaffRole?
+        let day: String
+        let month: String
+        let year: String
+        let photoData: Data?
+        let dob: Date?
+    }
+
+    var originalSnapshot: Snapshot?
+
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return false }
+        return currentSnapshot() != original
+    }
 
     init() {
         let currentYear = Calendar.current.component(.year, from: Date())
@@ -41,6 +59,20 @@ final class StaffRegistrationFormViewModel {
         self.loadStaffData(staff)
     }
     
+    func currentSnapshot() -> Snapshot {
+        return Snapshot(
+            name: name,
+            email: email,
+            gender: gender,
+            role: role,
+            day: day,
+            month: month,
+            year: year,
+            photoData: photoData,
+            dob: dob,
+        )
+    }
+    
     private func loadStaffData(_ staff: Staff) {
         self.name = staff.name
         self.email = staff.email
@@ -52,12 +84,7 @@ final class StaffRegistrationFormViewModel {
         self.year = String(components.year ?? 0)
         self.month = String(components.month ?? 0)
         self.day = String(components.day ?? 0)
-        
-        if let imageData = staff.profileImage,
-           let uiImage = UIImage(data: imageData) {
-            self.profilePreview = Image(uiImage: uiImage)
-        }
-        
+        self.profilePreview =  staff.avatarImage
         self.dob = staff.dob
     }
 
@@ -72,20 +99,6 @@ final class StaffRegistrationFormViewModel {
         component.month = Int(month)
         component.year = Int(year)
         return component
-    }
-
-    func resetForm() {
-        name = ""
-        role = nil
-        email = ""
-        gender = nil
-        day = ""
-        month = ""
-        year = ""
-        photoData = nil
-        profilePreview = nil
-        dob = nil
-        fieldErrors = [:]
     }
     
     func processPhoto(_ item: PhotosPickerItem) async {
@@ -111,7 +124,7 @@ extension StaffRegistrationFormViewModel {
         }
 
         guard trimmedName.wholeMatch(of: pattern) != nil else {
-            fieldErrors[.name] = "Provide correct name. eg. John23 Doe"
+            fieldErrors[.name] = "Provide correct name. eg. John Doe"
             return false
         }
 

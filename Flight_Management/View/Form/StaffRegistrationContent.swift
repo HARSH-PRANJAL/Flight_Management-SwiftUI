@@ -11,6 +11,7 @@ struct StaffRegistrationContent: View {
 
     @FocusState private var focusedField: FormFocus?
     @State private var showConfirmCloseAlert = false
+    @State private var currentDetent: PresentationDetent = .large
 
     var isPresented: Binding<Bool>?
 
@@ -39,10 +40,27 @@ struct StaffRegistrationContent: View {
                 disclaimerText
             }
         }
+        .presentationDetents([.large, .height(650)], selection: $currentDetent)
+        .interactiveDismissDisabled(viewModel.isDirty)
+        .onChange(of: currentDetent) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            if newValue == .height(650) {
+                if viewModel.isDirty {
+                    showConfirmCloseAlert = true
+                    withAnimation(
+                        .spring(response: 0.38, dampingFraction: 0.85)
+                    ) {
+                        currentDetent = .large
+                    }
+                } else {
+                    isPresented?.wrappedValue = false
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button(role: .close) {
-                    if hasChanges {
+                    if viewModel.isDirty {
                         showConfirmCloseAlert = true
                     } else {
                         if let binding = isPresented {
@@ -66,21 +84,19 @@ struct StaffRegistrationContent: View {
             }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
         }
-        .interactiveDismissDisabled(hasChanges)
     }
-    
+
     private var hasChanges: Bool {
         if viewModel.isEditMode {
-            return !viewModel.email.isEmpty ||
-                   viewModel.photoData != nil
+            return !viewModel.email.isEmpty || viewModel.photoData != nil
         } else {
-            return !viewModel.name.isEmpty ||
-                   !viewModel.email.isEmpty ||
-                    viewModel.role != nil ||
-                   viewModel.gender != nil ||
-                   viewModel.photoData != nil
+            return !viewModel.name.isEmpty || !viewModel.email.isEmpty
+                || viewModel.role != nil || viewModel.gender != nil
+                || viewModel.photoData != nil
         }
     }
 
