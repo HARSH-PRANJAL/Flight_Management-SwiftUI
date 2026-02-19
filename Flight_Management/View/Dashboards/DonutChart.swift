@@ -32,6 +32,9 @@ struct DonutChartView: View {
                 legendView
             }
             .padding(.horizontal)
+            .onDisappear {
+                selectedCategory = nil
+            }
         }
     }
 
@@ -52,7 +55,7 @@ struct DonutChartView: View {
                     : 0.35
             )
         }
-        .frame(minWidth: 200, maxWidth: 500, minHeight: 200, maxHeight: 500)
+        .frame(minWidth: 250, maxWidth: 500, minHeight: 250, maxHeight: 500)
         .chartBackground { proxy in
             GeometryReader { geo in
                 if let plotFrame = proxy.plotFrame {
@@ -108,54 +111,69 @@ struct DonutChartView: View {
     private var legendView: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(data, id: \.category) { item in
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(item.color)
-                        .overlay(
-                            Circle().stroke(.gray.opacity(0.3), lineWidth: 0.5)
-                        )
-                        .frame(
-                            minWidth: 24,
-                            maxWidth: 24,
-                            minHeight: 16,
-                            maxHeight: 24
-                        )
-
-                    Text(item.category)
-                        .font(
-                            .system(.body, design: .rounded, weight: .semibold)
-                        )
-                        .foregroundStyle(.primary)
-
-                    Spacer()
-
-                    Text("\(item.count) • \(percentage(for: item.count))%")
-                        .font(.system(.body, design: .rounded, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(
-                            Color(.systemGray6).opacity(
-                                selectedCategory == item.category ? 0.6 : 0
+                if item.count > 0 {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(item.color)
+                            .overlay(
+                                Circle().stroke(
+                                    .gray.opacity(0.3),
+                                    lineWidth: 0.5
+                                )
                             )
-                        )
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(.spring(response: 0.4)) {
-                        selectedCategory =
-                            (selectedCategory == item.category)
-                            ? nil : item.category
+                            .frame(
+                                minWidth: 13,
+                                maxWidth: 24,
+                                minHeight: 13,
+                                maxHeight: 24
+                            )
+
+                        Text(item.category)
+                            .font(
+                                .system(
+                                    .body,
+                                    design: .rounded,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(.primary)
+
+                        Spacer()
+
+                        Text("\(item.count) • \(percentage(for: item.count))%")
+                            .font(
+                                .system(
+                                    .body,
+                                    design: .rounded,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(.secondary)
                     }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(
+                                Color(.systemGray6).opacity(
+                                    selectedCategory == item.category ? 0.6 : 0
+                                )
+                            )
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.4)) {
+                            selectedCategory =
+                                (selectedCategory == item.category)
+                                ? nil : item.category
+                        }
+                    }
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel(
+                        "\(item.category): \(item.count) items, \(percentage(for: item.count)) percent"
+                    )
+                    .accessibilityHint("Tap to highlight or show details")
                 }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityLabel(
-                    "\(item.category): \(item.count) items, \(percentage(for: item.count)) percent"
-                )
-                .accessibilityHint("Tap to highlight or show details")
             }
         }
     }
@@ -168,13 +186,12 @@ struct DonutChartView: View {
 }
 
 // MARK: - Preview
-
 #Preview {
     let sampleData = [
         (category: "Available", count: 42, color: Color.green),
-        (category: "On Duty", count: 28, color: Color.blue),
+        (category: "On Duty", count: 0, color: Color.blue),
         (category: "Unavailable", count: 15, color: Color.red.opacity(0.85)),
-        (category: "Leave", count: 7, color: Color.orange),
+        (category: "Leave", count: 0, color: Color.orange),
     ]
 
     DonutChartView(
