@@ -49,7 +49,7 @@ struct AdminDashboardView: View {
                             data: tripsSummary,
                             defaultTitle: "Total trips"
                         )
-                        .frame(height: 300)
+                        .frame(maxHeight: 500)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
@@ -136,7 +136,7 @@ extension AdminDashboardView {
         todayTrips.filter { $0.currentStatus == .delayed }.count
     }
 
-    private var tripsSummary: [(String, Int)] {
+    private var tripsSummary: [(String, Int, Color)] {
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         let delayed = todayTrips.filter { $0.currentStatus == .delayed }.count
         let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }
@@ -144,22 +144,22 @@ extension AdminDashboardView {
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
         return [
-            (category: "On-Time", count: onTime),
-            (category: "Delayed", count: delayed),
-            (category: "Cancelled", count: cancelled),
-            (category: "Scheduled", count: scheduled),
+            (category: "On-Time", count: onTime, color: Color.tripStatusColor(for: .onTime)),
+            (category: "Delayed", count: delayed, color: Color.tripStatusColor(for: .delayed)),
+            (category: "Cancelled", count: cancelled, color: Color.tripStatusColor(for: .cancelled)),
+            (category: "Scheduled", count: scheduled, color: Color.tripStatusColor(for: .scheduled)),
         ]
     }
 
-    private var crewStatusCounts: [(String, Int)] {
+    private var crewStatusCounts: [(String, Int, Color)] {
         let available = staffs.filter { $0.currentStatus == .available }.count
         let onDuty = staffs.filter { $0.currentStatus == .onDuty }.count
         let unavailable = staffs.filter { $0.currentStatus == .unavailable }
             .count
         return [
-            (category: "Available", count: available),
-            (category: "On Duty", count: onDuty),
-            (category: "Unavailable", count: unavailable),
+            (category: "Available", count: available, color: Color.staffStatusColor(for: .available)),
+            (category: "On Duty", count: onDuty, color: Color.staffStatusColor(for: .onDuty)),
+            (category: "Unavailable", count: unavailable, color: Color.staffStatusColor(for: .unavailable)),
         ]
     }
 

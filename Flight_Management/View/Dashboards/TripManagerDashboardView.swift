@@ -33,7 +33,7 @@ struct TripManagerDashboardView: View {
                             data: tripsSummary,
                             defaultTitle: "Total trips"
                         )
-                        .frame(height: 300)
+                        .frame(height: 500)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 16)
                         .background(
@@ -172,7 +172,7 @@ extension TripManagerDashboardView {
         todayTrips.filter { $0.currentStatus == .delayed }.count
     }
 
-    private var tripsSummary: [(String, Int)] {
+    private var tripsSummary: [(String, Int, Color)] {
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         let delayed = todayTrips.filter { $0.currentStatus == .delayed }.count
         let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }
@@ -180,10 +180,22 @@ extension TripManagerDashboardView {
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
         return [
-            (category: "On-Time", count: onTime),
-            (category: "Delayed", count: delayed),
-            (category: "Cancelled", count: cancelled),
-            (category: "Scheduled", count: scheduled),
+            (
+                category: "On-Time", count: onTime,
+                color: Color.tripStatusColor(for: .onTime)
+            ),
+            (
+                category: "Delayed", count: delayed,
+                color: Color.tripStatusColor(for: .delayed)
+            ),
+            (
+                category: "Cancelled", count: cancelled,
+                color: Color.tripStatusColor(for: .cancelled)
+            ),
+            (
+                category: "Scheduled", count: scheduled,
+                color: Color.tripStatusColor(for: .scheduled)
+            ),
         ]
     }
 
