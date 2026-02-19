@@ -9,19 +9,20 @@ struct AircraftListView: View {
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
     @State private var showAircraftRegistration: Bool = false
+    @State private var selectedAircraft: Aircraft?
 
     var body: some View {
-        VStack {
+        NavigationSplitView {
             Group {
                 if displayedAircrafts.isEmpty {
                     fallbackBackground
                 } else {
-                    List {
-                        ForEach(displayedAircrafts, id: \.id) { aircraft in
-                            NavigationLink(destination: AircraftDetailView(aircraft: aircraft)) {
-                                ListRow(aircraft: aircraft)
-                            }
-                        }
+                    List(
+                        displayedAircrafts,
+                        id: \.id,
+                        selection: $selectedAircraft
+                    ) { aircraft in
+                        ListRow(aircraft: aircraft)
                     }
                     .listStyle(.insetGrouped)
                 }
@@ -44,8 +45,17 @@ struct AircraftListView: View {
             .searchToolbarBehavior(.minimize)
             .sheet(isPresented: $showAircraftRegistration) {
                 NavigationStack {
-                    AircraftRegistrationContent(isPresented: $showAircraftRegistration)
+                    AircraftRegistrationContent(
+                        isPresented: $showAircraftRegistration
+                    )
                 }
+            }
+        } detail: {
+            if let aircraft = selectedAircraft {
+                AircraftDetailView(aircraft: aircraft)
+            } else {
+                Text("Select an aircraft")
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -62,7 +72,9 @@ extension AircraftListView {
                         Button {
                             if selectedSort == sort {
                                 // Toggle sort order if same option clicked
-                                selectedSortOrder = selectedSortOrder == .ascending ? .descending : .ascending
+                                selectedSortOrder =
+                                    selectedSortOrder == .ascending
+                                    ? .descending : .ascending
                             } else {
                                 // Select new sort option
                                 selectedSort = sort
@@ -73,8 +85,12 @@ extension AircraftListView {
                                 Text(sort.rawValue)
                                 Spacer()
                                 if selectedSort == sort {
-                                    Image(systemName: selectedSortOrder == .ascending ? "arrow.up" : "arrow.down")
-                                        .foregroundStyle(Color(.systemBlue))
+                                    Image(
+                                        systemName: selectedSortOrder
+                                            == .ascending
+                                            ? "arrow.up" : "arrow.down"
+                                    )
+                                    .foregroundStyle(Color(.systemBlue))
                                 }
                             }
                         }
@@ -111,9 +127,11 @@ extension AircraftListView {
 
         return filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
-            
+
             if selectedSort == .registration {
-                let comparison = lhs.registrationNumber.lowercased() < rhs.registrationNumber.lowercased()
+                let comparison =
+                    lhs.registrationNumber.lowercased()
+                    < rhs.registrationNumber.lowercased()
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison = lhs.seatingCapacity < rhs.seatingCapacity
