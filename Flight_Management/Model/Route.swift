@@ -14,7 +14,10 @@ class Route {
     var name: String
 
     var totalPlannedDurationMinutes: Int {
-        nodes.last?.plannedArrivalOffsetMinutes ?? 0
+        // Total duration is the arrival offset of the last node
+        // which includes all journey times and turn-around times
+        guard let lastNode = nodes.last else { return 0 }
+        return lastNode.plannedArrivalOffsetMinutes
     }
 
     init(name: String) {
@@ -29,19 +32,23 @@ class Route {
         journeyTimeMinutes: Int,
         turnAroundTimeMinutes: Int = 30
     ) {
-        var previousOffset: Int
-        if nodes.count == 0 {
-            previousOffset = 0
+        let sequence = nodes.count + 1
+        let arrivalOffset: Int
+        
+        if nodes.isEmpty {
+            // First node always has 0 arrival offset (departure point)
+            // journeyTimeMinutes is ignored for first node
+            arrivalOffset = 0
         } else {
-            previousOffset = nodes.last!.plannedArrivalOffsetMinutes
+            // For subsequent nodes: previous offset + journey time + turn around time
+            let previousOffset = nodes.last!.plannedArrivalOffsetMinutes
+            arrivalOffset = previousOffset + journeyTimeMinutes + turnAroundTimeMinutes
         }
-
-        // arrival offset is calculated from the source node
-        let arrivalOffset =
-            previousOffset + journeyTimeMinutes + turnAroundTimeMinutes
+        
         let newNode = RouteNode(
             plannedArrivalOffsetMinutes: arrivalOffset,
-            airport: airport
+            airport: airport,
+            sequence: sequence
         )
         nodes.append(newNode)
     }
@@ -52,14 +59,17 @@ class RouteNode {
     @Attribute(.unique) var id: UUID
     var airport: Airport
     var plannedArrivalOffsetMinutes: Int
+    var sequence: Int
 
     init(
         plannedArrivalOffsetMinutes: Int,
-        airport: Airport
+        airport: Airport,
+        sequence: Int
     ) {
         self.id = UUID()
         self.plannedArrivalOffsetMinutes = plannedArrivalOffsetMinutes
         self.airport = airport
+        self.sequence = sequence
     }
 }
 

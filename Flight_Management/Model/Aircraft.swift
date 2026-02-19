@@ -43,7 +43,7 @@ class Aircraft {
                 + $1.estimatedArrivalTime.timeIntervalSince(
                     $1.scheduledDepartureTime
                 )
-        }
+        } / 3600.0
     }
 
     var currentStatus: AircraftStatus {

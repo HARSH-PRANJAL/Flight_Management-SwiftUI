@@ -100,7 +100,7 @@ class Trip {
         route: Route,
         scheduledDepartureTime: Date,
         flightNumber: String,
-        isCancelled: Bool
+        isCancelled: Bool = false
     ) {
         self.id = UUID()
         self.staffs = staff
@@ -109,6 +109,7 @@ class Trip {
         self.route = route
         self.scheduledDepartureTime = scheduledDepartureTime
         self.flightNumber = flightNumber
+        self.isCancelled = isCancelled
     }
 
 }

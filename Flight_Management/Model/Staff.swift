@@ -21,7 +21,7 @@ class Staff {
     var currentTrip: Trip? = nil
     var isMarkedUnavailable: Bool = false
 
-    var totaltripHours: Double {
+    var totalTripHours: Double {
         return trips.filter({
             $0.isCompleted == true || $0.isCancelled == true
         }).reduce(0.0) {
@@ -29,7 +29,7 @@ class Staff {
                 + $1.estimatedArrivalTime.timeIntervalSince(
                     $1.scheduledDepartureTime
                 )
-        }
+        } / 3600.0
     }
 
     var completedTrips: [Trip] {
@@ -109,7 +109,6 @@ class Staff {
     }
 
     func markUnavailable() {
-
         for trip in self.scheduledTrips {
             trip.cancel()
         }
@@ -123,7 +122,9 @@ class Staff {
             self.trips.append(self.currentTrip!)
         }
 
-        self.lastCompletedTrip = self.currentTrip
+        if currentTrip != nil {
+            self.lastCompletedTrip = self.currentTrip
+        }
         self.currentTrip = nil
         self.isMarkedUnavailable = true
     }
