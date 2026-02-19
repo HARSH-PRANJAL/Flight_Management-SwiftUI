@@ -16,8 +16,8 @@ class Route {
     var totalPlannedDurationMinutes: Int {
         // Total duration is the arrival offset of the last node
         // which includes all journey times and turn-around times
-        guard let lastNode = nodes.last else { return 0 }
-        return lastNode.plannedArrivalOffsetMinutes
+        if nodes.count == 0 { return 0 }
+        return nodes.max{ $0.sequence < $1.sequence }?.plannedArrivalOffsetMinutes ?? 0
     }
 
     init(name: String) {
