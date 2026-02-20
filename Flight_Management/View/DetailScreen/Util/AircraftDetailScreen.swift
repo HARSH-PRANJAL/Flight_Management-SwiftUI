@@ -6,13 +6,8 @@ struct AircraftDetailScreen: View {
     var isManager: Bool = false
     var isAircraftAvailable: Bool { aircraft.currentStatus == .available }
 
-    @State private var selectedTab: Tab = .detail
+    @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPagePresented: Bool
-
-    enum Tab: String, CaseIterable {
-        case detail = "Detail"
-        case tripHistory = "Trip Detail"
-    }
 
     var hasTripHistory: Bool {
         !aircraft.completedTrips.isEmpty
@@ -37,13 +32,7 @@ struct AircraftDetailScreen: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if hasTripHistory {
-                        Picker("View Mode", selection: $selectedTab) {
-                            ForEach(Tab.allCases, id: \.self) { tab in
-                                Text(tab.rawValue).tag(tab)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 16)
+                        detailScreenPicker(selectedTab: $selectedTab)
                     }
                 }
 
@@ -253,3 +242,4 @@ struct AircraftDetailScreen: View {
         )
     }
 }
+

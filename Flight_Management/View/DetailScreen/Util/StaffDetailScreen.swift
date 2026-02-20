@@ -7,7 +7,7 @@ struct StaffDetailScreen: View {
 
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
-    @State private var selectedTab: Tab = .detail
+    @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPageShowing: Bool
 
     enum Tab: String, CaseIterable {
@@ -26,7 +26,7 @@ struct StaffDetailScreen: View {
                     switch selectedTab {
                     case .detail:
                         detailView
-                    case .tripDetail:
+                    case .tripHistory:
                         tripHistoryContent
                     }
                 }
@@ -34,13 +34,7 @@ struct StaffDetailScreen: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if !staff.completedTrips.isEmpty {
-                        Picker("View Mode", selection: $selectedTab) {
-                            ForEach(Tab.allCases, id: \.self) { tab in
-                                Text(tab.rawValue).tag(tab)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 16)
+                        detailScreenPicker(selectedTab: $selectedTab)
                     }
                 }
             }
