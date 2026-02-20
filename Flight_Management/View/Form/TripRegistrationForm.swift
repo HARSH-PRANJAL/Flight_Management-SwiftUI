@@ -16,6 +16,9 @@ struct TripRegistrationForm: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
             TripRegistrationContent(viewModel: viewModel, isPresented: isPresented)
         }
+        .onAppear {
+            viewModel.originalSnapshot = viewModel.currentSnapshot()
+        }
     }
 }
 

@@ -15,7 +15,33 @@ final class TripRegistrationFormViewModel {
     var fieldErrors: [String: String] = [:]
     var submissionState: SubmissionState = .none
     
-    init() {}
+    var originalSnapshot: Snapshot?
+    struct Snapshot: Equatable {
+        let flightNumber: String
+        let scheduledDeparture: Date
+        let selectedRoute: Route?
+        let selectedAircraft: Aircraft?
+        let selectedPilot: Staff?
+        let selectedCoPilot: Staff?
+        let selectedCrewMember: Staff?
+    }
+    
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return false }
+        return currentSnapshot() != original
+    }
+    
+    func currentSnapshot() -> Snapshot {
+        Snapshot(
+            flightNumber: flightNumber,
+            scheduledDeparture: scheduledDeparture,
+            selectedRoute: selectedRoute,
+            selectedAircraft: selectedAircraft,
+            selectedPilot: selectedPilot,
+            selectedCoPilot: selectedCoPilot,
+            selectedCrewMember: selectedCrewMember
+        )
+    }
 
     func validate() -> Bool {
         fieldErrors.removeAll()
@@ -36,11 +62,6 @@ final class TripRegistrationFormViewModel {
         if selectedPilot == nil || selectedCoPilot == nil || selectedCrewMember == nil {
             fieldErrors["staff"] = "Pilot, Co-Pilot, and Crew Member are required"
             valid = false
-        }
-
-        if let aircraft = selectedAircraft {
-            // map selected staff IDs to roles will be checked by caller (form has access to staff list)
-            // here we only ensure counts will be checked in submit
         }
 
         return valid
