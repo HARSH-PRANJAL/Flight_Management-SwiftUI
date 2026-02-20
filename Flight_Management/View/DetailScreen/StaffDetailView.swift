@@ -54,7 +54,6 @@ struct StaffDetailView: View {
                 onActionButtonTapped: isAdmin ? { handleAdminAction() } : nil,
                 isEditPageShowing: $isEditPageShowing
             ).frame(maxWidth: .infinity, maxHeight: .infinity)
-                .toolbar(.hidden, for: .bottomBar)
         }
         .toolbar(.hidden, for: .tabBar)
         .sheet(isPresented: $isEditPageShowing) {

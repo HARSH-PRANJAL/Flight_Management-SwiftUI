@@ -188,7 +188,7 @@ struct StaffDetailScreen: View {
             }
             .foregroundStyle(
                 staff.isMarkedUnavailable
-                    ? Color(.systemGreen) : Color(.systemOrange)
+                    ? Color(.systemGreen) : Color(.systemRed)
             )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
@@ -198,7 +198,7 @@ struct StaffDetailScreen: View {
                     .stroke(
                         staff.isMarkedUnavailable
                             ? Color(.systemGreen).opacity(0.4)
-                            : Color(.systemOrange).opacity(0.4),
+                            : Color(.systemRed).opacity(0.4),
                         lineWidth: 1.5
                     )
             )
