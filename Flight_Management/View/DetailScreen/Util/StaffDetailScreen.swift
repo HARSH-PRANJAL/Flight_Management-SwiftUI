@@ -100,7 +100,7 @@ struct StaffDetailScreen: View {
     var flightSectionsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let trip = staff.currentTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Current Flight",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
@@ -108,7 +108,7 @@ struct StaffDetailScreen: View {
                 )
             }
             if let trip = staff.nextScheduledTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Next Flight",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
@@ -116,7 +116,7 @@ struct StaffDetailScreen: View {
                 )
             }
             if let trip = staff.lastCompletedTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Last Flight",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
@@ -126,40 +126,6 @@ struct StaffDetailScreen: View {
         }
         .padding(.bottom, 16)
     }
-
-    func flightSection(
-        title: String,
-        icon: String,
-        iconColor: Color,
-        trip: Trip
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: icon)
-                    .font(.subheadline)
-                    .foregroundStyle(iconColor)
-            }
-
-            HStack {
-                NavigationLink(destination: TripDetailView(trip: trip)) {
-                    ListRow(trip: trip)
-                }
-                .buttonStyle(.plain)
-                .padding(12)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.smallCaps())
-                    .foregroundStyle(Color(.tertiaryLabel))
-                    .padding(.trailing, 12)
-            }
-            .background(cardTheme())
-        }
-    }
-
     var tripHistoryContent: some View {
         TripListView(externalTrips: staff.trips, navigationTitle: "")
     }

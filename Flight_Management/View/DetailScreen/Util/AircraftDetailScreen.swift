@@ -77,7 +77,7 @@ struct AircraftDetailScreen: View {
 
                     CardView(
                         title: "Flight Hours",
-                        value: String(format: "%.1f", aircraft.totaltripHours),
+                        value: String(format: "%.1f", aircraft.totalTripHour),
                         subtitle: "",
                         icon: "clock",
                         iconColor: Color(.white),
@@ -115,7 +115,7 @@ struct AircraftDetailScreen: View {
     var flightSectionsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let trip = aircraft.currentTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Current Trip",
                     icon: "airplane.departure",
                     iconColor: Color(.systemCyan),
@@ -123,7 +123,7 @@ struct AircraftDetailScreen: View {
                 )
             }
             if let trip = aircraft.nextScheduledTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Next Trip",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
@@ -131,7 +131,7 @@ struct AircraftDetailScreen: View {
                 )
             }
             if let trip = aircraft.lastCompletedTrip {
-                flightSection(
+                TripDetailRow(
                     title: "Last Trip",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
@@ -140,39 +140,6 @@ struct AircraftDetailScreen: View {
             }
         }
         .padding(.bottom, 16)
-    }
-
-    func flightSection(
-        title: String,
-        icon: String,
-        iconColor: Color,
-        trip: Trip
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: icon)
-                    .font(.subheadline)
-                    .foregroundStyle(iconColor)
-            }
-
-            HStack {
-                NavigationLink(destination: TripDetailView(trip: trip)) {
-                    ListRow(trip: trip)
-                }
-                .buttonStyle(.plain)
-                .padding(12)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.smallCaps())
-                    .foregroundStyle(Color(.tertiaryLabel))
-                    .padding(.trailing, 12)
-            }
-            .background(cardTheme())
-        }
     }
 
     var tripHistoryContent: some View {
