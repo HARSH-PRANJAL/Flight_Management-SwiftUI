@@ -32,7 +32,7 @@ struct RouteDetailView: View {
                         )
 
                         CardView(
-                            title: "Scheduled",
+                            title: "Scheduled Trips",
                             value: "\(countScheduleTrips)",
                             subtitle: "",
                             icon: "calendar",
@@ -51,6 +51,7 @@ struct RouteDetailView: View {
                 .padding(.bottom, 16)
             }
         }
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             if isAdmin {
                 ToolbarItem(placement: .topBarTrailing) {
