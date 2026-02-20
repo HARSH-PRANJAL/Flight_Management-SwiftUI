@@ -36,7 +36,6 @@ struct LoggedInUser: Codable {
     let id: String
     let name: String
     let role: String
-    let profileImage: Data?
 }
 
 @Observable
@@ -76,8 +75,7 @@ final class SessionManager {
         user = LoggedInUser(
             id: matched.id.uuidString,
             name: matched.name,
-            role: matched.role.rawValue,
-            profileImage: matched.profileImage
+            role: matched.role.rawValue
         )
     }
 

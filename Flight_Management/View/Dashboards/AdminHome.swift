@@ -3,6 +3,7 @@ import SwiftUI
 struct AdminHome: View {
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.modelContext) var modelContext
 
     @State var isAddStaffPresented: Bool = false
     @State var isAddRoutePresented: Bool = false
@@ -13,7 +14,10 @@ struct AdminHome: View {
                 NavigationStack {
                     AdminDashboardView()
                         .toolbar {
-                            profileHandlerToolbarItem(session: session)
+                            profileHandlerToolbarItem(
+                                session: session,
+                                modelContext: modelContext
+                            )
                         }
                 }
             }
@@ -59,8 +63,6 @@ struct AdminHome: View {
         .sheet(isPresented: $isAddRoutePresented) {
             NavigationStack {
                 RouteRegistrationForm()
-                    .navigationTitle("Create Route")
-                    .navigationBarTitleDisplayMode(.inline)
             }
         }
 

@@ -1,16 +1,45 @@
+import SwiftData
 import SwiftUI
 
-func profileHandlerToolbarItem(session: SessionManager) -> some ToolbarContent {
+func profileHandlerToolbarItem(
+    session: SessionManager,
+    modelContext: ModelContext
+) -> some ToolbarContent {
+    return ToolbarItem(placement: .topBarTrailing) {
+        Menu {
+            NavigationLink(
+                "Profile",
+                destination: {
+                    UserDetailView()
+                }
+            )
+            Section {
+                Button("Logout", role: .destructive) {
+                    session.logout()
+                }
+                .buttonSizing(.flexible)
+                .buttonStyle(.plain)
+            }
+        } label: {
+            ToolbarLabel()
+                .frame(width: 32, height: 32)
+                .clipShape(Circle())
+        }
+    }
+}
 
-    var toolbarLabel: some View {
+struct ToolbarLabel: View {
+    @Environment(SessionManager.self) var session
+    @Environment(\.modelContext) var modelContext
+
+    @State var user: User?
+    var body: some View {
         Group {
-            if let user = session.user,
-                let imageData = user.profileImage,
+            if let imageData = user?.profileImage,
                 let uiImage = UIImage(
                     data: imageData
                 )
             {
-
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
@@ -22,27 +51,14 @@ func profileHandlerToolbarItem(session: SessionManager) -> some ToolbarContent {
                     .foregroundStyle(.gray)
             }
         }
-    }
-
-    return ToolbarItem(placement: .topBarTrailing) {
-        Menu {
-            NavigationLink(
-                "Profile",
-                destination: {
-                    UserDetailView()
+        .onAppear {
+            Task {
+                if session.isLoggedIn {
+                    user = await session.getUserFromDB(
+                        modelContext: modelContext
+                    )
                 }
-            )
-            Section{
-                Button("Logout", role: .destructive) {
-                    session.logout()
-                }
-                .buttonSizing(.flexible)
-                .buttonStyle(.plain)
             }
-        } label: {
-            toolbarLabel
-                .frame(width: 32, height: 32)
-                .clipShape(Circle())
         }
     }
 }

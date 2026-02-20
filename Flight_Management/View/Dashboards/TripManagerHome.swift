@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TripManagerHome: View {
     @Environment(SessionManager.self) var session
+    @Environment(\.modelContext) var modelContext
     
     @State private var isTripRegistrationPresented: Bool = false
     
@@ -12,7 +13,7 @@ struct TripManagerHome: View {
                     TripManagerDashboardView()
                         .navigationTitle("Manager")
                         .toolbar {
-                            profileHandlerToolbarItem(session: session)
+                            profileHandlerToolbarItem(session: session, modelContext: modelContext)
                         }
                 }
             }
