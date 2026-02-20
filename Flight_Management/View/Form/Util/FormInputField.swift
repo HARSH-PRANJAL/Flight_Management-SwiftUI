@@ -25,7 +25,7 @@ struct FormInputField: View {
                 .padding()
                 .background {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
+                        .fill(Color(.tertiarySystemGroupedBackground))
                         .stroke(borderColor, lineWidth: 1)
                 }
                 .shadow(

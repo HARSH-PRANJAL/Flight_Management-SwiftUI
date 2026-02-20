@@ -53,11 +53,11 @@ where T.RawValue == String {
         .padding()
         .background {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.systemGray6))
-                    .strokeBorder(borderColor, lineWidth: 1)
+                .fill(Color(.tertiarySystemGroupedBackground))
+                .strokeBorder(borderColor, lineWidth: 1)
         }
     }
-    
+
     var borderColor: Color {
         hasError ? Color(.systemRed) : Color(.systemGray2)
     }

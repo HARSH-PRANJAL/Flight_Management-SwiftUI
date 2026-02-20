@@ -75,7 +75,7 @@ private struct FormDateComponentPicker: View {
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
+                    .fill(Color(.tertiarySystemGroupedBackground))
                     .strokeBorder(
                         hasError ? Color(.systemRed) : Color(.systemGray2),
                         lineWidth: 1
