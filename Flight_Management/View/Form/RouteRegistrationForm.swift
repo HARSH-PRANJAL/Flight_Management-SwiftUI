@@ -18,6 +18,9 @@ struct RouteRegistrationForm: View {
 
     var body: some View {
         RouteRegistrationContent(viewModel: viewModel, isPresented: isPresented)
+            .onAppear {
+                viewModel.originalSnapshot = viewModel.currentSnapshot()
+            }
     }
 }
 

@@ -1,12 +1,19 @@
 import SwiftUI
 import SwiftData
 
-struct RouteNodeData: Identifiable {
+struct RouteNodeData: Identifiable, Equatable {
     let id: UUID = UUID()
     let airport: Airport
     var journeyTimeMinutes: String = ""
     
     var turnAroundTime: Int = 30
+    
+    static func == (lhs: RouteNodeData, rhs: RouteNodeData) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.airport.id == rhs.airport.id &&
+        lhs.journeyTimeMinutes == rhs.journeyTimeMinutes &&
+        lhs.turnAroundTime == rhs.turnAroundTime
+    }
 }
 
 @Observable
@@ -19,6 +26,24 @@ final class RouteRegistrationFormViewModel {
     
     var isEditMode: Bool = false
     var routeToEdit: Route?
+    
+    var originalSnapshot: Snapshot?
+    struct Snapshot: Equatable {
+        let routeName: String
+        let selectedNodes: [RouteNodeData]
+    }
+    
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return false }
+        return currentSnapshot() != original
+    }
+    
+    func currentSnapshot() -> Snapshot {
+        return Snapshot(
+            routeName: routeName,
+            selectedNodes: selectedNodes
+        )
+    }
     
     init() {}
     
