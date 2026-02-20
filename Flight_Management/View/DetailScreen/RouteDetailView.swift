@@ -182,7 +182,7 @@ struct RouteDetailView: View {
                             Text(node.airport.fullName)
                                 .font(.headline)
                                 .foregroundStyle(Color(.label))
-                                .lineLimit(1)
+                                .multilineTextAlignment(.leading)
                                 .layoutPriority(1)
 
                             Text(node.airport.locationLabel)
@@ -231,12 +231,6 @@ extension RouteDetailView {
         return route.trips.filter {
             $0.currentStatus == .onTime || $0.currentStatus == .delayed
         }.sorted(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
-    }
-
-    var tripHistory: [Trip] {
-        return route.trips.filter {
-            $0.isCompleted == true || $0.isCancelled == true
-        }.sorted(by: { $0.estimatedArrivalTime > $1.estimatedArrivalTime })
     }
 }
 
