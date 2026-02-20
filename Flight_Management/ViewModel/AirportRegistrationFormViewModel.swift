@@ -10,6 +10,28 @@ final class AirportRegistrationFormViewModel {
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
+    
+    var originalSnapshot: Snapshot?
+    struct Snapshot: Equatable {
+        let code: String
+        let name: String
+        let city: String
+        let country: String
+    }
+    
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return false }
+        return currentSnapshot() != original
+    }
+    
+    func currentSnapshot() -> Snapshot {
+        return Snapshot(
+            code: code,
+            name: name,
+            city: city,
+            country: country
+        )
+    }
 
     func resetForm() {
         code = ""

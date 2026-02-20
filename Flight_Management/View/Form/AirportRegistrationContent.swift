@@ -5,6 +5,7 @@ struct AirportRegistrationContent: View {
     @State var viewModel: AirportRegistrationFormViewModel =
         AirportRegistrationFormViewModel()
     @State private var showConfirmCloseAlert = false
+    @State private var currentDetent: PresentationDetent = .large
 
     @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
@@ -25,17 +26,37 @@ struct AirportRegistrationContent: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 20)
 
-                registerButton
+                Spacer()
                 disclaimerText
             }
             .navigationTitle("Add Airport")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .interactiveDismissDisabled(hasChanges)
+        .presentationDetents([.large, .height(650)], selection: $currentDetent)
+        .presentationDragIndicator(.hidden)
+        .interactiveDismissDisabled(viewModel.isDirty)
+        .onChange(of: currentDetent) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            if newValue == .height(650) {
+                if viewModel.isDirty {
+                    showConfirmCloseAlert = true
+                    withAnimation(
+                        .spring(response: 0.38, dampingFraction: 0.85)
+                    ) {
+                        currentDetent = .large
+                    }
+                } else {
+                    isPresented = false
+                }
+            }
+        }
+        .onAppear {
+            viewModel.originalSnapshot = viewModel.currentSnapshot()
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button(role: .close) {
-                    if hasChanges {
+                    if viewModel.isDirty {
                         showConfirmCloseAlert = true
                     } else {
                         isPresented = false
@@ -43,6 +64,19 @@ struct AirportRegistrationContent: View {
                 } label: {
                     Image(systemName: "xmark")
                 }
+            }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button(role: .confirm) {
+                    handleRegistration()
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+                .disabled(!viewModel.isDirty)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(
+                    viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                )
             }
         }
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
@@ -143,20 +177,6 @@ struct AirportRegistrationContent: View {
         }
     }
 
-    private var registerButton: some View {
-        Button(action: handleRegistration) {
-            Text("Register Airport")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
-    }
-
     private var disclaimerText: some View {
         Text(
             "Airport will be added to the system and available for route configuration."
@@ -169,9 +189,9 @@ struct AirportRegistrationContent: View {
         .padding(.bottom, 30)
     }
 
-    private var hasChanges: Bool {
-        return !viewModel.code.isEmpty || !viewModel.name.isEmpty
-            || !viewModel.city.isEmpty || !viewModel.country.isEmpty
+    private var isFormValid: Bool {
+        !viewModel.code.isEmpty && !viewModel.name.isEmpty
+            && !viewModel.city.isEmpty && !viewModel.country.isEmpty
     }
 
     private func handleRegistration() {
