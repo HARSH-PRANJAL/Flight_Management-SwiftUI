@@ -35,12 +35,13 @@ struct StaffRegistrationContent: View {
                 }
                 .padding(.horizontal, 16)
 
-                registerButton
-
-                disclaimerText
+                if !viewModel.isEditMode {
+                    disclaimerText
+                }
             }
         }
         .presentationDetents([.large, .height(650)], selection: $currentDetent)
+        .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled(viewModel.isDirty)
         .onChange(of: currentDetent) { oldValue, newValue in
             guard newValue != oldValue else { return }
@@ -73,6 +74,19 @@ struct StaffRegistrationContent: View {
                     Image(systemName: "xmark")
                 }
             }
+            
+            ToolbarItem(placement: .confirmationAction) {
+                Button(role: .confirm) {
+                    handleRegistration()
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+                .disabled(!viewModel.isDirty)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(
+                    viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                )
+            }
         }
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
             Button("Discard", role: .destructive) {
@@ -87,16 +101,6 @@ struct StaffRegistrationContent: View {
             Text(
                 "You have unsaved changes. Are you sure you want to discard them?"
             )
-        }
-    }
-
-    private var hasChanges: Bool {
-        if viewModel.isEditMode {
-            return !viewModel.email.isEmpty || viewModel.photoData != nil
-        } else {
-            return !viewModel.name.isEmpty || !viewModel.email.isEmpty
-                || viewModel.role != nil || viewModel.gender != nil
-                || viewModel.photoData != nil
         }
     }
 
@@ -204,21 +208,6 @@ struct StaffRegistrationContent: View {
         }
     }
 
-    private var registerButton: some View {
-        Button(action: handleRegistration) {
-            Text(viewModel.isEditMode ? "Update Profile" : "Register")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
-    }
-
     private var disclaimerText: some View {
         Text(
             "Your information will be used for staff identification and internal records only."
@@ -228,6 +217,16 @@ struct StaffRegistrationContent: View {
         .multilineTextAlignment(.center)
         .padding(.horizontal, 32)
         .padding(.top, 16)
+    }
+    
+    private var isFormValid: Bool {
+        !viewModel.name.isEmpty &&
+        !viewModel.email.isEmpty &&
+        viewModel.gender != nil &&
+        viewModel.role != nil &&
+        !viewModel.day.isEmpty &&
+        !viewModel.month.isEmpty &&
+        !viewModel.year.isEmpty
     }
 
     private func handleRegistration() {

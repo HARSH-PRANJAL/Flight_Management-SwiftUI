@@ -31,6 +31,8 @@ final class StaffRegistrationFormViewModel {
         let month: String
         let year: String
         let photoData: Data?
+        let selectedPhoto: PhotosPickerItem?
+        let profilePreview: Image?
         let dob: Date?
     }
 
@@ -69,6 +71,8 @@ final class StaffRegistrationFormViewModel {
             month: month,
             year: year,
             photoData: photoData,
+            selectedPhoto: selectedPhoto,
+            profilePreview: profilePreview,
             dob: dob,
         )
     }
