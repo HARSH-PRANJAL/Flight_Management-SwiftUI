@@ -10,6 +10,28 @@ final class AircraftRegistrationFormViewModel {
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
+    
+    var originalSnapshot: Snapshot?
+    struct Snapshot: Equatable {
+        let registrationNumber: String
+        let type: String
+        let seatingCapacity: String
+        let minimumStaffRequired: [StaffRole: String]
+    }
+    
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return false }
+        return currentSnapshot() != original
+    }
+    
+    func currentSnapshot() -> Snapshot {
+        return Snapshot(
+            registrationNumber: registrationNumber,
+            type: type,
+            seatingCapacity: seatingCapacity,
+            minimumStaffRequired: minimumStaffRequired
+        )
+    }
 
     init() {
         for role in StaffRole.allCases {

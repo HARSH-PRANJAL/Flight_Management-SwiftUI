@@ -5,6 +5,7 @@ struct AircraftRegistrationContent: View {
     var aircraft: Aircraft? = nil
     @State var viewModel: AircraftRegistrationFormViewModel
     @State private var showConfirmCloseAlert = false
+    @State private var currentDetent: PresentationDetent = .large
 
     @Binding var isPresented: Bool
     @Environment(\.modelContext) var context
@@ -35,16 +36,39 @@ struct AircraftRegistrationContent: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 20)
 
-                registerButton
-                disclaimerText
+                Spacer()
+                if aircraft == nil {
+                    disclaimerText
+                }
             }
             .navigationTitle(aircraft != nil ? "Update Aircraft" : "Add Aircraft")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .onAppear {
+            viewModel.originalSnapshot = viewModel.currentSnapshot()
+        }
+        .presentationDetents([.large, .height(650)], selection: $currentDetent)
+        .presentationDragIndicator(.hidden)
+        .interactiveDismissDisabled(viewModel.isDirty)
+        .onChange(of: currentDetent) { oldValue, newValue in
+            guard newValue != oldValue else { return }
+            if newValue == .height(650) {
+                if viewModel.isDirty {
+                    showConfirmCloseAlert = true
+                    withAnimation(
+                        .spring(response: 0.38, dampingFraction: 0.85)
+                    ) {
+                        currentDetent = .large
+                    }
+                } else {
+                    isPresented = false
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button(role: .close) {
-                    if hasChanges {
+                    if viewModel.isDirty {
                         showConfirmCloseAlert = true
                     } else {
                         isPresented = false
@@ -52,6 +76,19 @@ struct AircraftRegistrationContent: View {
                 } label: {
                     Image(systemName: "xmark")
                 }
+            }
+            
+            ToolbarItem(placement: .confirmationAction) {
+                Button(role: .confirm) {
+                    handleRegistration()
+                } label: {
+                    Image(systemName: "checkmark")
+                }
+                .disabled(!viewModel.isDirty)
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(
+                    viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                )
             }
         }
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
@@ -64,13 +101,12 @@ struct AircraftRegistrationContent: View {
                 "You have unsaved changes. Are you sure you want to discard them?"
             )
         }
-        .interactiveDismissDisabled(hasChanges)
     }
 }
 
 // MARK: UI
 extension AircraftRegistrationContent {
-
+    
     private var registrationNumberFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -89,11 +125,11 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.registrationNumber) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .registrationNumber)
             }
-
+            
             FormErrorMessage(error: viewModel.fieldErrors[.registrationNumber])
         }
     }
-
+    
     private var typeFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -110,11 +146,11 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.type) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .type)
             }
-
+            
             FormErrorMessage(error: viewModel.fieldErrors[.type])
         }
     }
-
+    
     private var seatingCapacityFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -132,23 +168,23 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.seatingCapacity) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .seatingCapacity)
             }
-
+            
             FormErrorMessage(error: viewModel.fieldErrors[.seatingCapacity])
         }
     }
-
+    
     private var minimumStaffSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Minimum Staff Required")
                 .formFieldLabel()
-
+            
             ForEach(StaffRole.allCases, id: \.self) { role in
                 HStack {
                     Text(role.rawValue)
                         .font(.system(size: 16))
                         .foregroundColor(Color(.label))
                         .frame(maxWidth: .infinity, alignment: .leading)
-
+                    
                     TextField(
                         "0",
                         text: Binding(
@@ -175,27 +211,13 @@ extension AircraftRegistrationContent {
                     }
                 }
             }
-
+            
             if let error = viewModel.fieldErrors[.minimumStaffRequired] {
                 FormErrorMessage(error: error)
             }
         }
     }
-
-    private var registerButton: some View {
-        Button(action: handleRegistration) {
-            Text(aircraft != nil ? "Update Aircraft" : "Register Aircraft")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
-    }
-
+    
     private var disclaimerText: some View {
         Text(
             "Aircraft will be added to the system and available for trip assignment."
@@ -207,16 +229,16 @@ extension AircraftRegistrationContent {
         .padding(.top, 16)
         .padding(.bottom, 30)
     }
+    
+    private var isFormValid: Bool {
+        !viewModel.registrationNumber.isEmpty &&
+        !viewModel.type.isEmpty &&
+        !viewModel.seatingCapacity.isEmpty
+    }
 }
 
 // MARK: Util
 extension AircraftRegistrationContent {
-    private var hasChanges: Bool {
-        return !viewModel.registrationNumber.isEmpty || !viewModel.type.isEmpty
-            || !viewModel.seatingCapacity.isEmpty
-            || !viewModel.minimumStaffRequired.values.allSatisfy { $0.isEmpty }
-    }
-
     private func handleRegistration() {
         if let aircraft = aircraft {
             // Update mode
