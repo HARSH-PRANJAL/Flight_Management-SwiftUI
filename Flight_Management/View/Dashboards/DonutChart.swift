@@ -122,10 +122,8 @@ struct DonutChartView: View {
                                 )
                             )
                             .frame(
-                                minWidth: 13,
-                                maxWidth: 24,
-                                minHeight: 13,
-                                maxHeight: 24
+                                width: 13,
+                                height: 13
                             )
 
                         Text(item.category)
