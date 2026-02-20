@@ -20,7 +20,22 @@ final class UserRegistrationFormViewModel {
     var isEditMode: Bool = false
     var userToEdit: User?
 
-    init() {}
+    var originalSnapshot: Snapshot?
+    struct Snapshot: Equatable {
+        let name: String
+        let email: String
+        let password: String
+        let confirmPassword: String
+        let selectedRole: UserRole?
+        let profilePreview: Image?
+        let selectedPhoto: PhotosPickerItem?
+        let photoData: Data?
+    }
+    
+    var isDirty: Bool {
+        guard let original = originalSnapshot else { return true }
+        return original != currentSnapshot()
+    }
 
     func loadUserData(_ user: User) async {
         self.name = user.name
@@ -34,17 +49,6 @@ final class UserRegistrationFormViewModel {
         }
     }
 
-    func resetForm() {
-        name = ""
-        email = ""
-        password = ""
-        confirmPassword = ""
-        selectedRole = nil
-        photoData = nil
-        profilePreview = nil
-        fieldErrors = [:]
-    }
-
     func processPhoto(_ item: PhotosPickerItem) async {
         do {
             guard let data = try await item.loadTransferable(type: Data.self)
@@ -53,6 +57,19 @@ final class UserRegistrationFormViewModel {
         } catch {
             print("Photo loading failed: \(error.localizedDescription)")
         }
+    }
+
+    func currentSnapshot() -> Snapshot {
+        return Snapshot(
+            name: name,
+            email: email,
+            password: password,
+            confirmPassword: confirmPassword,
+            selectedRole: selectedRole,
+            profilePreview: profilePreview,
+            selectedPhoto: selectedPhoto,
+            photoData: photoData
+        )
     }
 }
 

@@ -12,6 +12,7 @@ struct UserRegistrationForm: View {
     @State private var viewModel = UserRegistrationFormViewModel()
     @State var user: User? = nil
     @State private var showConfirmCloseAlert = false
+    @State private var currentDetent: PresentationDetent = .large
 
     @FocusState private var focusState: FormFocus?
 
@@ -37,7 +38,6 @@ struct UserRegistrationForm: View {
                         roleFieldSection
                     }
 
-                    registerButton
                 }
                 .navigationTitle(
                     viewModel.isEditMode ? "Update Profile" : "Add User"
@@ -45,8 +45,35 @@ struct UserRegistrationForm: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .padding()
                 Spacer()
+                if !viewModel.isEditMode {
+                    disclaimerText
+                }
             }
             .scrollIndicators(.hidden)
+            .onAppear {
+                viewModel.originalSnapshot = viewModel.currentSnapshot()
+            }
+            .presentationDetents(
+                [.large, .height(650)],
+                selection: $currentDetent
+            )
+            .presentationDragIndicator(.hidden)
+            .interactiveDismissDisabled(viewModel.isDirty)
+            .onChange(of: currentDetent) { oldValue, newValue in
+                guard newValue != oldValue else { return }
+                if newValue == .height(650) {
+                    if viewModel.isDirty {
+                        showConfirmCloseAlert = true
+                        withAnimation(
+                            .spring(response: 0.38, dampingFraction: 0.85)
+                        ) {
+                            currentDetent = .large
+                        }
+                    } else {
+                        isPresented = false
+                    }
+                }
+            }
             .task {
                 if session.isLoggedIn {
                     user = await session.getUserFromDB(modelContext: context)
@@ -60,7 +87,7 @@ struct UserRegistrationForm: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close) {
-                        if hasChanges {
+                        if viewModel.isDirty {
                             showConfirmCloseAlert = true
                         } else {
                             isPresented = false
@@ -68,6 +95,25 @@ struct UserRegistrationForm: View {
                     } label: {
                         Image(systemName: "xmark")
                     }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        if viewModel.validateAll() {
+                            if viewModel.isEditMode {
+                                handleUpdateUser()
+                            } else {
+                                handleRegister()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(!viewModel.isDirty)
+                    .foregroundStyle(
+                        viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                    )
+                    .symbolRenderingMode(.palette)
                 }
             }
         }
@@ -77,23 +123,9 @@ struct UserRegistrationForm: View {
             }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
-        }
-        .interactiveDismissDisabled(hasChanges)
-    }
-    
-    private var hasChanges: Bool {
-        if viewModel.isEditMode {
-            return !viewModel.email.isEmpty ||
-                   !viewModel.password.isEmpty ||
-                   viewModel.photoData != nil
-        } else {
-            return !viewModel.name.isEmpty ||
-                   !viewModel.email.isEmpty ||
-                   !viewModel.password.isEmpty ||
-                   !viewModel.confirmPassword.isEmpty ||
-                   viewModel.selectedRole != nil ||
-                   viewModel.photoData != nil
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
         }
     }
 }
@@ -249,6 +281,17 @@ extension UserRegistrationForm {
             return hasValidName && hasValidEmail && hasValidPassword
                 && hasValidRole
         }
+    }
+
+    private var disclaimerText: some View {
+        Text(
+            "Your profile information will be used for authentication and system access only."
+        )
+        .font(.system(size: 13))
+        .foregroundColor(Color(.systemGray))
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 32)
+        .padding(.top, 16)
     }
 }
 
