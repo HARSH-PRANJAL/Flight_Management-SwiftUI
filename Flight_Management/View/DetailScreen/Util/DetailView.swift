@@ -69,7 +69,7 @@ struct DetailView: View {
         }
         .animation(.linear(duration: 0.5), value: selectedTab)
         .fullScreenCover(isPresented: $showImagePreview) {
-            ImagePreviewModal(image: profileImage, title: titleText)
+            ImagePreviewer(image: profileImage, title: titleText)
         }
     }
 

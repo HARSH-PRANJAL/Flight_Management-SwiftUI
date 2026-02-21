@@ -42,7 +42,7 @@ struct StaffDetailScreen: View {
         .animation(.linear(duration: 0.5), value: selectedTab)
         .fullScreenCover(isPresented: $showImagePreview) {
             if let image = staff.avatarImage {
-                ImagePreviewModal(
+                ImagePreviewer(
                     image: image,
                     title: "Profile Photo",
                     circular: true

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ImagePreviewModal: View {
+struct ImagePreviewer: View {
     @Environment(\.dismiss) var dismiss
 
     var image: Image?
@@ -22,7 +22,6 @@ struct ImagePreviewModal: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundStyle(.white)
                     }
                 }
                 .padding(20)
@@ -64,7 +63,7 @@ struct ImagePreviewModal: View {
 }
 
 #Preview {
-    ImagePreviewModal(
+    ImagePreviewer(
         image: Image(systemName: "person.crop.circle.fill"),
         title: "Profile Photo"
     )
