@@ -1,6 +1,7 @@
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 
 @Observable
 final class UserRegistrationFormViewModel {
@@ -13,6 +14,7 @@ final class UserRegistrationFormViewModel {
     var selectedPhoto: PhotosPickerItem?
     var photoData: Data?
     var profilePreview: Image?
+    var profileBgColor: ColorData = ColorData(Color.gray)
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
@@ -31,7 +33,7 @@ final class UserRegistrationFormViewModel {
         let selectedPhoto: PhotosPickerItem?
         let photoData: Data?
     }
-    
+
     var isDirty: Bool {
         guard let original = originalSnapshot else { return true }
         return original != currentSnapshot()
@@ -41,6 +43,7 @@ final class UserRegistrationFormViewModel {
         self.name = user.name
         self.email = user.email
         self.selectedRole = user.role
+        self.profileBgColor = user.profileBgColor
 
         if let imageData = user.profileImage,
             let uiImage = UIImage(data: imageData)
@@ -54,6 +57,16 @@ final class UserRegistrationFormViewModel {
             guard let data = try await item.loadTransferable(type: Data.self)
             else { return }
             profilePreview = handleImageData(data, photo: &(photoData))
+            if let photoData = photoData,
+               let uiImage = UIImage(data: photoData),
+               let dominantColor = await dominantBackgroundColor(from: uiImage)
+            {
+                profileBgColor = ColorData(uiColor: dominantColor)
+                print("✅ [UserRegistrationFormViewModel] profileBgColor set: R=\(profileBgColor.red) G=\(profileBgColor.green) B=\(profileBgColor.blue)")
+            } else {
+                profileBgColor = ColorData(Color.gray)
+                print("⚠️ [UserRegistrationFormViewModel] Using default gray - extraction failed or no image")
+            }
         } catch {
             print("Photo loading failed: \(error.localizedDescription)")
         }

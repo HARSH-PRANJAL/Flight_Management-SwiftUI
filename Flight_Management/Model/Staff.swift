@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @Model
 class Staff {
@@ -13,6 +13,7 @@ class Staff {
     var gender: Gender
     var email: String
     var profileImage: Data?
+    var profileBgColor: ColorData
     var designation: StaffRole
     var dob: Date
 
@@ -72,6 +73,7 @@ class Staff {
         gender: Gender,
         email: String,
         profileImage: Data? = nil,
+        profileBgColor: ColorData = ColorData(Color.gray),
         dob: Date
     ) {
         self.id = UUID()
@@ -80,6 +82,7 @@ class Staff {
         self.gender = gender
         self.email = email
         self.profileImage = profileImage
+        self.profileBgColor = profileBgColor
         self.trips = []
         self.dob = dob
     }

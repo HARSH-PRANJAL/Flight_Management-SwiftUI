@@ -45,7 +45,8 @@ struct StaffDetailScreen: View {
                 ImagePreviewer(
                     image: image,
                     title: "Profile Photo",
-                    circular: true
+                    circular: true,
+                    profileBgColor: staff.profileBgColor
                 )
             } else {
                 EmptyView()

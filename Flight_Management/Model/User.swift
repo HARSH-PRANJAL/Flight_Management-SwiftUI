@@ -12,6 +12,7 @@ class User {
     var password: String
     var role: UserRole
     var profileImage: Data?
+    var profileBgColor: ColorData
     @Attribute(.unique)
     var email: String
 
@@ -20,7 +21,8 @@ class User {
         email: String,
         password: String,
         role: UserRole,
-        profileImage: Data? = nil
+        profileImage: Data? = nil,
+        profileBgColor: ColorData = ColorData(Color.gray)
     ) {
         self.id = UUID()
         self.name = name
@@ -28,6 +30,7 @@ class User {
         self.password = password
         self.role = role
         self.profileImage = profileImage
+        self.profileBgColor = profileBgColor
     }
 }
 

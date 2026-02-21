@@ -30,6 +30,7 @@ struct UserDetailView: View {
                 detailText: user?.email,
                 statusBadge: nil,
                 listData: [],
+                profileBgColor: user?.profileBgColor,
                 onActionButtonTapped: {
                     isEditPageShowing.toggle()
                 },

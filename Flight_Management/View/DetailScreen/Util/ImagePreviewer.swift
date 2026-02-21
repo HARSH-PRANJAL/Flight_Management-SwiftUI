@@ -6,11 +6,20 @@ struct ImagePreviewer: View {
     var image: Image?
     var title: String = ""
     var circular: Bool = false
+    var profileBgColor: ColorData? = nil
+
+    private var contentBackground: Color {
+        if let profileBgColor {
+            profileBgColor.swiftUIColor.opacity(0.25)
+        } else {
+            Color(.systemGroupedBackground)
+        }
+    }
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.9)
-                .ignoresSafeArea()
+            contentBackground
+                .ignoresSafeArea(.all)
 
             VStack {
                 HStack {
@@ -36,7 +45,7 @@ struct ImagePreviewer: View {
                                 .scaledToFill()
                                 .frame(width: 320, height: 320)
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 2))
+                                .overlay(Circle().stroke(Color.gray.opacity(0.25), lineWidth: 2))
                         } else {
                             image
                                 .resizable()
@@ -57,7 +66,14 @@ struct ImagePreviewer: View {
                 
                 Spacer()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(contentBackground)
+        }
+        .onAppear {
+            if let c = profileBgColor {
+                print("✅ [ImagePreviewer] Received profileBgColor: R=\(c.red) G=\(c.green) B=\(c.blue)")
+            } else {
+                print("⚠️ [ImagePreviewer] No profileBgColor - using default background")
+            }
         }
     }
 }

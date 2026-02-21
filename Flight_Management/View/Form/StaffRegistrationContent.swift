@@ -259,13 +259,10 @@ struct StaffRegistrationContent: View {
             guard let staffToEdit = viewModel.staffToEdit else { return }
 
             staffToEdit.name = viewModel.name
-            staffToEdit.email = viewModel.email
-            if let role = viewModel.role {
-                staffToEdit.designation = role
-            }
             if let photoData = viewModel.photoData {
                 staffToEdit.profileImage = photoData
             }
+            staffToEdit.profileBgColor = viewModel.profileBgColor
 
             do {
                 try context.save()
@@ -290,6 +287,7 @@ struct StaffRegistrationContent: View {
                 gender: viewModel.gender!,
                 email: viewModel.email,
                 profileImage: viewModel.photoData,
+                profileBgColor: viewModel.profileBgColor,
                 dob: Calendar.current.date(
                     from: viewModel.dateOfBirthComponents
                 )!

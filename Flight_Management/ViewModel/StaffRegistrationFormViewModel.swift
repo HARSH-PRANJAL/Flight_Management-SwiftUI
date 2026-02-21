@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UIKit
 
 @Observable
 final class StaffRegistrationFormViewModel {
@@ -13,12 +14,13 @@ final class StaffRegistrationFormViewModel {
     var selectedPhoto: PhotosPickerItem?
     var photoData: Data?
     var profilePreview: Image?
+    var profileBgColor: ColorData = ColorData(Color.gray)
     var dob: Date?
     let years: [String]
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
-    
+
     var isEditMode: Bool = false
     var staffToEdit: Staff?
 
@@ -49,18 +51,18 @@ final class StaffRegistrationFormViewModel {
             (currentYear - 66)...(currentYear - 16)
         ).reversed().map { "\($0)" }
     }
-    
+
     init(staff: Staff) {
         let currentYear = Calendar.current.component(.year, from: Date())
         self.years = Array(
             (currentYear - 66)...(currentYear - 16)
         ).reversed().map { "\($0)" }
-        
+
         self.isEditMode = true
         self.staffToEdit = staff
         self.loadStaffData(staff)
     }
-    
+
     func currentSnapshot() -> Snapshot {
         return Snapshot(
             name: name,
@@ -76,19 +78,24 @@ final class StaffRegistrationFormViewModel {
             dob: dob,
         )
     }
-    
+
     private func loadStaffData(_ staff: Staff) {
         self.name = staff.name
         self.email = staff.email
         self.gender = staff.gender
         self.role = staff.designation
-        
+
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month, .day], from: staff.dob)
+        let components = calendar.dateComponents(
+            [.year, .month, .day],
+            from: staff.dob
+        )
         self.year = String(components.year ?? 0)
-        self.month = Month.from(number: components.month ?? 0)?.rawValue ?? "January"
+        self.month =
+            Month.from(number: components.month ?? 0)?.rawValue ?? "January"
         self.day = String(components.day ?? 0)
-        self.profilePreview =  staff.avatarImage
+        self.profilePreview = staff.avatarImage
+        self.profileBgColor = staff.profileBgColor
         self.dob = staff.dob
     }
 
@@ -104,12 +111,22 @@ final class StaffRegistrationFormViewModel {
         component.year = Int(year)
         return component
     }
-    
+
     func processPhoto(_ item: PhotosPickerItem) async {
         do {
             guard let data = try await item.loadTransferable(type: Data.self)
             else { return }
             profilePreview = handleImageData(data, photo: &(photoData))
+            if let photoData = photoData,
+               let uiImage = UIImage(data: photoData),
+               let dominantColor = await dominantBackgroundColor(from: uiImage)
+            {
+                profileBgColor = ColorData(uiColor: dominantColor)
+                print("✅ [StaffRegistrationFormViewModel] profileBgColor set: R=\(profileBgColor.red) G=\(profileBgColor.green) B=\(profileBgColor.blue)")
+            } else {
+                profileBgColor = ColorData(Color.gray)
+                print("⚠️ [StaffRegistrationFormViewModel] Using default gray - extraction failed or no image")
+            }
         } catch {
             print("Photo loading failed: \(error.localizedDescription)")
         }

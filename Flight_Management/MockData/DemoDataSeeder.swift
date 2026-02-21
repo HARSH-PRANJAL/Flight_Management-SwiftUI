@@ -1,5 +1,6 @@
 import Foundation
 import PhotosUI
+import SwiftUI
 import SwiftData
 
 @Observable
@@ -90,7 +91,7 @@ final class DemoDataSeeder {
         // Create fresh data if nothing exists
         let airports = createIndianAirports()
         let aircrafts = createAircrafts()
-        let staff = createStaff()
+        let staff = await createStaff()
         let routes = createRoutes(with: airports)
         let trips = createTrips(
             routes: routes,
@@ -263,7 +264,7 @@ final class DemoDataSeeder {
         ]
     }
 
-    private func createStaff() -> [Staff] {
+    private func createStaff() async -> [Staff] {
         let pilots = [
             "Arvind Sharma", "Vikram Malhotra", "Rohit Kapoor", "Sanjay Desai",
             "Neha Kapoor", "Priyanka Menon", "Ajay Rathore", "Karanveer Singh",
@@ -302,6 +303,16 @@ final class DemoDataSeeder {
                 name.lowercased()
                 .replacingOccurrences(of: " ", with: ".")
                 + emailDomain[Int.random(in: 0..<emailDomain.count)]
+            let imageData = imageData(fromAssetName: randomAvatarName)
+            let profileBgColor: ColorData
+            if let imgData = imageData, let img = UIImage(data: imgData),
+               let dominantColor = await dominantBackgroundColor(from: img)
+            {
+                profileBgColor = ColorData(uiColor: dominantColor)
+            } else {
+                profileBgColor = ColorData(Color.gray)
+                print("⚠️ [DemoDataSeeder] Staff '\(name)': using default gray - extraction failed")
+            }
             staff.append(
                 Staff(
                     name: name,
@@ -310,7 +321,8 @@ final class DemoDataSeeder {
                         || name.contains("Meera") || name.contains("Anjali")
                         ? .female : .male,
                     email: email,
-                    profileImage: imageData(fromAssetName: randomAvatarName),
+                    profileImage: imageData,
+                    profileBgColor: profileBgColor,
                     dob: makeDemoDOB(
                         year: Int.random(in: 1975...1992),
                         month: Int.random(in: 1...12),
@@ -327,6 +339,15 @@ final class DemoDataSeeder {
                 name.lowercased()
                 .replacingOccurrences(of: " ", with: ".")
                 + emailDomain[Int.random(in: 0..<emailDomain.count)]
+            let imgData = imageData(fromAssetName: randomAvatarName)
+            let profileBgColor: ColorData
+            if let data = imgData, let img = UIImage(data: data),
+               let dominantColor = await dominantBackgroundColor(from: img)
+            {
+                profileBgColor = ColorData(uiColor: dominantColor)
+            } else {
+                profileBgColor = ColorData(Color.gray)
+            }
             staff.append(
                 Staff(
                     name: name,
@@ -335,7 +356,8 @@ final class DemoDataSeeder {
                         || name.contains("Kavya") || name.contains("Nisha")
                         || name.contains("Ayesha") ? .female : .male,
                     email: email,
-                    profileImage: imageData(fromAssetName: randomAvatarName),
+                    profileImage: imgData,
+                    profileBgColor: profileBgColor,
                     dob: makeDemoDOB(
                         year: Int.random(in: 1988...2000),
                         month: Int.random(in: 1...12),
@@ -351,6 +373,15 @@ final class DemoDataSeeder {
             let email =
                 name.lowercased().replacingOccurrences(of: " ", with: ".")
                 + emailDomain[Int.random(in: 0..<emailDomain.count)]
+            let imgData = imageData(fromAssetName: randomAvatarName)
+            let profileBgColor: ColorData
+            if let data = imgData, let img = UIImage(data: data),
+               let dominantColor = await dominantBackgroundColor(from: img)
+            {
+                profileBgColor = ColorData(uiColor: dominantColor)
+            } else {
+                profileBgColor = ColorData(Color.gray)
+            }
             staff.append(
                 Staff(
                     name: name,
@@ -360,7 +391,8 @@ final class DemoDataSeeder {
                         || name.contains("Shreya") || name.contains("Tanya")
                         || name.contains("Riya") ? .female : .male,
                     email: email,
-                    profileImage: imageData(fromAssetName: randomAvatarName),
+                    profileImage: imgData,
+                    profileBgColor: profileBgColor,
                     dob: makeDemoDOB(
                         year: Int.random(in: 1990...2002),
                         month: Int.random(in: 1...12),

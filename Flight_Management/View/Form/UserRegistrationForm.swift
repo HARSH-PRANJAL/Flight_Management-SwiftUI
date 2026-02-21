@@ -315,7 +315,8 @@ extension UserRegistrationForm {
             email: trimmedEmail,
             password: viewModel.password,
             role: viewModel.selectedRole!,
-            profileImage: viewModel.photoData
+            profileImage: viewModel.photoData,
+            profileBgColor: viewModel.profileBgColor
         )
         context.insert(newUser)
 
@@ -352,6 +353,7 @@ extension UserRegistrationForm {
         if let newPhotoData = viewModel.photoData {
             targetUser.profileImage = newPhotoData
         }
+        targetUser.profileBgColor = viewModel.profileBgColor
 
         do {
             try context.save()
