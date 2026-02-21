@@ -86,7 +86,7 @@ final class StaffRegistrationFormViewModel {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day], from: staff.dob)
         self.year = String(components.year ?? 0)
-        self.month = String(components.month ?? 0)
+        self.month = Month.from(number: components.month ?? 0)?.rawValue ?? "January"
         self.day = String(components.day ?? 0)
         self.profilePreview =  staff.avatarImage
         self.dob = staff.dob

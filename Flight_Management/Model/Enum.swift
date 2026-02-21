@@ -62,18 +62,18 @@ enum Month: String, Codable, CaseIterable {
             return 31
         }
     }
-    
+
     static func numberOfDays(inMonth month: String) -> Int {
-        
+
         for monthString in Month.allCases {
             if monthString.rawValue.lowercased() == month.lowercased() {
                 return monthString.numberOfDays
             }
         }
-        
+
         return 31
     }
-    
+
     var monthNumber: Int {
         switch self {
         case .jan: return 1
@@ -88,6 +88,24 @@ enum Month: String, Codable, CaseIterable {
         case .oct: return 10
         case .nov: return 11
         case .dec: return 12
+        }
+    }
+
+    static func from(number: Int) -> Month? {
+        switch number {
+        case 1: return .jan
+        case 2: return .feb
+        case 3: return .march
+        case 4: return .april
+        case 5: return .may
+        case 6: return .june
+        case 7: return .jul
+        case 8: return .aug
+        case 9: return .sep
+        case 10: return .oct
+        case 11: return .nov
+        case 12: return .dec
+        default: return nil
         }
     }
 }
@@ -133,4 +151,3 @@ enum NotificationType: Equatable {
     case error(message: String)
     case none
 }
-
