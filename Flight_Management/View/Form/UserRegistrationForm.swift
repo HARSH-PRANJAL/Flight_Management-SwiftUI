@@ -50,9 +50,6 @@ struct UserRegistrationForm: View {
                 }
             }
             .scrollIndicators(.hidden)
-            .onAppear {
-                viewModel.originalSnapshot = viewModel.currentSnapshot()
-            }
             .presentationDetents(
                 [.large, .height(650)],
                 selection: $currentDetent
@@ -83,6 +80,7 @@ struct UserRegistrationForm: View {
                         await viewModel.loadUserData(user)
                     }
                 }
+                viewModel.originalSnapshot = viewModel.currentSnapshot()
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -146,7 +144,6 @@ extension UserRegistrationForm {
                 text: $viewModel.name,
                 focusedField: $focusState
             )
-            .disabled(viewModel.isEditMode)
             .onChange(of: viewModel.name) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .name)
             }
