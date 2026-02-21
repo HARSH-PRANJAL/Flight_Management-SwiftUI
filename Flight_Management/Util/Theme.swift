@@ -25,7 +25,7 @@ struct DetailRowView: View {
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .lineLimit(2)
+                .lineLimit(3)
         }
     }
 }
