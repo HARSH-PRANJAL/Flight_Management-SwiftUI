@@ -152,10 +152,9 @@ struct StaffDetailScreen: View {
             )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(cardTheme())
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(
+                    .strokeBorder(
                         staff.isMarkedUnavailable
                             ? Color(.systemGreen).opacity(0.4)
                             : Color(.systemRed).opacity(0.4),
@@ -163,7 +162,10 @@ struct StaffDetailScreen: View {
                     )
             )
         }
-        .buttonStyle(.plain)
+        .background(
+            staff.isMarkedUnavailable
+            ? Color(.systemGreen).opacity(0.05) : Color(.systemRed).opacity(0.05)
+        )
         .contentShape(Rectangle())
     }
 

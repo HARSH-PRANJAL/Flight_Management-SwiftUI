@@ -21,7 +21,9 @@ struct RouteRegistrationContent: View {
             VStack(spacing: 0) {
                 VStack(spacing: 20) {
                     routeNameFieldSection
-                    airportsSection
+                    if !viewModel.isEditMode {
+                        airportsSection
+                    }
                     routeSummarySection
                 }
                 .padding(.horizontal, 16)
@@ -32,7 +34,9 @@ struct RouteRegistrationContent: View {
                     disclaimerText
                 }
             }
-            .navigationTitle(viewModel.isEditMode ? "Update Route" :"Add Route")
+            .navigationTitle(
+                viewModel.isEditMode ? "Update Route" : "Add Route"
+            )
             .navigationBarTitleDisplayMode(.inline)
             .onTapGesture {
                 timeFieldFocus = nil
@@ -365,7 +369,12 @@ extension RouteRegistrationContent {
 }
 
 #Preview {
-    let airport = Airport(code: "TST", name: "Test Airport", city: "XYZ", country: "India")
+    let airport = Airport(
+        code: "TST",
+        name: "Test Airport",
+        city: "XYZ",
+        country: "India"
+    )
     NavigationStack {
         RouteRegistrationContent(viewModel: RouteRegistrationFormViewModel())
             .modelContainer(for: [Route.self, Airport.self], inMemory: true)

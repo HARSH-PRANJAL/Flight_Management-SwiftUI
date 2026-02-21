@@ -12,50 +12,43 @@ struct AircraftListView: View {
     @State private var selectedAircraft: Aircraft?
 
     var body: some View {
-        NavigationSplitView {
-            Group {
-                if displayedAircrafts.isEmpty {
-                    fallbackBackground
-                } else {
-                    List(
-                        displayedAircrafts,
-                        id: \.id,
-                        selection: $selectedAircraft
-                    ) { aircraft in
-                        ListRow(aircraft: aircraft)
-                    }
-                    .listStyle(.insetGrouped)
-                }
-            }
-            .navigationTitle("Aircraft List")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showAircraftRegistration.toggle()
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-                toolbarFilterSortItem
-            }
-            .searchable(
-                text: $searchText,
-                prompt: "Search by registration or type"
-            )
-            .searchToolbarBehavior(.minimize)
-            .sheet(isPresented: $showAircraftRegistration) {
-                NavigationStack {
-                    AircraftRegistrationContent(
-                        isPresented: $showAircraftRegistration
-                    )
-                }
-            }
-        } detail: {
-            if let aircraft = selectedAircraft {
-                AircraftDetailView(aircraft: aircraft)
+        Group {
+            if displayedAircrafts.isEmpty {
+                fallbackBackground
             } else {
-                Text("Select an aircraft")
-                    .foregroundColor(.secondary)
+                List {
+                    ForEach(displayedAircrafts, id: \.id) { aircraft in
+                        NavigationLink(
+                            destination: AircraftDetailView(aircraft: aircraft)
+                        ) {
+                            ListRow(aircraft: aircraft)
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped)
+            }
+        }
+        .navigationTitle("Aircraft List")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showAircraftRegistration.toggle()
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+            toolbarFilterSortItem
+        }
+        .searchable(
+            text: $searchText,
+            prompt: "Search by registration or type"
+        )
+        .searchToolbarBehavior(.minimize)
+        .sheet(isPresented: $showAircraftRegistration) {
+            NavigationStack {
+                AircraftRegistrationContent(
+                    isPresented: $showAircraftRegistration
+                )
             }
         }
     }

@@ -53,7 +53,7 @@ struct AirportSearchDropdown: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
+                    .fill(Color(.tertiarySystemFill))
                     .stroke(Color(.systemGray3), lineWidth: 1)
             )
             .shadow(

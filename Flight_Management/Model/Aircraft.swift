@@ -35,7 +35,7 @@ class Aircraft {
         })
     }
 
-    var totaltripHours: Double {
+    var totalTripHour: Double {
         return trips.filter({
             $0.isCompleted == true || $0.isCancelled == true
         }).reduce(0.0) {

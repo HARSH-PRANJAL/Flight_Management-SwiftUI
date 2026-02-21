@@ -1,4 +1,5 @@
 import Foundation
+import PhotosUI
 import SwiftData
 
 @Observable
@@ -49,31 +50,31 @@ final class DemoDataSeeder {
                 for airport in airports {
                     context.delete(airport)
                 }
-                
+
                 let descriptor2 = FetchDescriptor<Aircraft>()
                 let aircrafts = try context.fetch(descriptor2)
-                
+
                 for aircraft in aircrafts {
                     context.delete(aircraft)
                 }
-                
+
                 let descriptor3 = FetchDescriptor<Staff>()
                 let staffs = try context.fetch(descriptor3)
-                
+
                 for staff in staffs {
                     context.delete(staff)
                 }
-                
+
                 let descriptor4 = FetchDescriptor<Trip>()
                 let trips = try context.fetch(descriptor4)
-                
+
                 for trip in trips {
                     context.delete(trip)
                 }
-                
+
                 let descriptor5 = FetchDescriptor<Route>()
                 let routes = try context.fetch(descriptor5)
-                
+
                 for route in routes {
                     context.delete(route)
                 }
@@ -135,6 +136,15 @@ final class DemoDataSeeder {
         { [weak self] _ in
             self?.simulateFlightProgression(in: context)
         }
+    }
+
+    private func imageData(fromAssetName name: String) -> Data? {
+        guard let image = UIImage(named: name) else {
+            print("⚠️ Missing asset: \(name)")
+            return nil
+        }
+
+        return image.jpegData(compressionQuality: 0.78)
     }
 
     func stopAutoUpdates() {
@@ -281,9 +291,13 @@ final class DemoDataSeeder {
         ]
 
         var staff: [Staff] = []
+        // Put this in your DemoDataSeeder.swift or a MockData.swift file
+
+        let avatarAssets = (3...18).map { "images-\($0)" }
 
         // Pilots
         for name in pilots {
+            let randomAvatarName = avatarAssets[Int.random(in: 0..<avatarAssets.count)]
             let email =
                 name.lowercased()
                 .replacingOccurrences(of: " ", with: ".")
@@ -296,6 +310,7 @@ final class DemoDataSeeder {
                         || name.contains("Meera") || name.contains("Anjali")
                         ? .female : .male,
                     email: email,
+                    profileImage: imageData(fromAssetName: randomAvatarName),
                     dob: makeDemoDOB(
                         year: Int.random(in: 1975...1992),
                         month: Int.random(in: 1...12),
@@ -307,6 +322,7 @@ final class DemoDataSeeder {
 
         // Co-pilots
         for name in coPilots {
+            let randomAvatarName = avatarAssets.randomElement() ?? "default"
             let email =
                 name.lowercased()
                 .replacingOccurrences(of: " ", with: ".")
@@ -319,6 +335,7 @@ final class DemoDataSeeder {
                         || name.contains("Kavya") || name.contains("Nisha")
                         || name.contains("Ayesha") ? .female : .male,
                     email: email,
+                    profileImage: imageData(fromAssetName: randomAvatarName),
                     dob: makeDemoDOB(
                         year: Int.random(in: 1988...2000),
                         month: Int.random(in: 1...12),
@@ -330,6 +347,7 @@ final class DemoDataSeeder {
 
         // Cabin Crew
         for name in cabinCrew {
+            let randomAvatarName = avatarAssets.randomElement() ?? "default"
             let email =
                 name.lowercased().replacingOccurrences(of: " ", with: ".")
                 + emailDomain[Int.random(in: 0..<emailDomain.count)]
@@ -342,6 +360,7 @@ final class DemoDataSeeder {
                         || name.contains("Shreya") || name.contains("Tanya")
                         || name.contains("Riya") ? .female : .male,
                     email: email,
+                    profileImage: imageData(fromAssetName: randomAvatarName),
                     dob: makeDemoDOB(
                         year: Int.random(in: 1990...2002),
                         month: Int.random(in: 1...12),
@@ -382,11 +401,19 @@ final class DemoDataSeeder {
             for (index, airport) in selectedAirports.enumerated() {
                 if index == 0 {
                     // First node: 0 journey time (departure point)
-                    route.addNode(airport: airport, journeyTimeMinutes: 0, turnAroundTimeMinutes: 0)
+                    route.addNode(
+                        airport: airport,
+                        journeyTimeMinutes: 0,
+                        turnAroundTimeMinutes: 0
+                    )
                 } else {
                     // Subsequent nodes: journey time 3-10 minutes, turnaround 30 minutes
                     let journeyTime = Int.random(in: 3...10)
-                    route.addNode(airport: airport, journeyTimeMinutes: journeyTime, turnAroundTimeMinutes: 30)
+                    route.addNode(
+                        airport: airport,
+                        journeyTimeMinutes: journeyTime,
+                        turnAroundTimeMinutes: 30
+                    )
                 }
             }
 
@@ -412,7 +439,7 @@ final class DemoDataSeeder {
         for (routeIndex, route) in routes.enumerated() {
             // Select 2 random trips per route to have delays
             let delayedTripIndices = Set((0..<5).shuffled().prefix(2))
-            
+
             for tripIndex in 0..<5 {
                 let aircraft = aircrafts[Int.random(in: 0..<aircrafts.count)]
 
@@ -549,20 +576,29 @@ final class DemoDataSeeder {
                     // Check if this is not the last airport
                     if trip.currentAirportSequence < trip.route.nodes.count {
                         // Schedule departure after turnaround time (30 minutes)
-                        let departureTime = currentTime.addingTimeInterval(30 * 60)
-                        trip.scheduleCurrentAirportDeparture(departureTime: departureTime)
+                        let departureTime = currentTime.addingTimeInterval(
+                            30 * 60
+                        )
+                        trip.scheduleCurrentAirportDeparture(
+                            departureTime: departureTime
+                        )
                     }
                 }
             } else if lastNode.actualDepartureTime == nil {
                 // Check if we need to schedule departure
                 // Departure should happen after arrival + turnaround time
                 if let arrivalTime = lastNode.actualArrivalTime {
-                    let plannedDepartureTime = arrivalTime.addingTimeInterval(30 * 60)
-                    
+                    let plannedDepartureTime = arrivalTime.addingTimeInterval(
+                        30 * 60
+                    )
+
                     if currentTime >= plannedDepartureTime {
                         // Check if this is not the last airport
-                        if trip.currentAirportSequence < trip.route.nodes.count {
-                            trip.scheduleCurrentAirportDeparture(departureTime: currentTime)
+                        if trip.currentAirportSequence < trip.route.nodes.count
+                        {
+                            trip.scheduleCurrentAirportDeparture(
+                                departureTime: currentTime
+                            )
                         }
                     }
                 }

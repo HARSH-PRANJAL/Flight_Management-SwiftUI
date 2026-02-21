@@ -21,34 +21,34 @@ struct TripListView: View {
     @State private var selectedTrip: Trip?
 
     var body: some View {
-        NavigationSplitView {
-            Group {
-                if displayedTrips.isEmpty {
-                    fallbackBackground
-                } else {
-                    List(displayedTrips, id: \.id, selection: $selectedTrip) { trip in
-                        ListRow(trip: trip)
+        VStack(spacing: 0) {
+                Group {
+                    if displayedTrips.isEmpty {
+                        fallbackBackground
+                    } else {
+                        List {
+                            ForEach(displayedTrips, id: \.id) { trip in
+                                NavigationLink(
+                                    destination: TripDetailView(trip: trip)
+                                ) {
+                                    ListRow(trip: trip)
+                                }
+                            }
+                        }
+                        .listStyle(.insetGrouped)
                     }
-                    .listStyle(.insetGrouped)
                 }
+                .navigationTitle(navigationTitle)
+                .toolbar {
+                    toolbarFilterSortItem
+                }
+                .searchable(
+                    text: $searchText,
+                    placement: .automatic,
+                    prompt: "Search by trip number"
+                )
+                .searchToolbarBehavior(.minimize)
             }
-            .navigationTitle(navigationTitle)
-            .toolbar {
-                toolbarFilterSortItem
-            }
-            .searchable(
-                text: $searchText,
-                prompt: "Search by trip number"
-            )
-            .searchToolbarBehavior(.minimize)
-        } detail: {
-            if let trip = selectedTrip {
-                TripDetailView(trip: trip)
-            } else {
-                Text("Select a trip")
-                    .foregroundColor(.secondary)
-            }
-        }
     }
 }
 
@@ -132,7 +132,7 @@ extension TripListView {
         ContentUnavailableView {
             Label("No Trips", systemImage: "airplane.departure")
         } description: {
-            Text("Create or assign trips to see them here.")
+            Text("Add or assign trips to see them here.")
         }
     }
 

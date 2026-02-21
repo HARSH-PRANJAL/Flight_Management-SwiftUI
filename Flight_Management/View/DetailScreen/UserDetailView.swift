@@ -62,8 +62,7 @@ struct UserDetailView: View {
     SessionManager.shared.user = LoggedInUser(
         id: "123",
         name: "Hp",
-        role: "Admin",
-        profileImage: sampleData
+        role: "Admin"
     )
     return UserDetailView()
         .environment(SessionManager.shared)

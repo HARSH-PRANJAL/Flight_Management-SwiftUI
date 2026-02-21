@@ -116,6 +116,6 @@ struct TripDetailView: View {
         isCancelled: false
     )
 
-     return TripDetailView(trip: mockTrip)
+    return TripDetailView(trip: mockTrip)
         .environment(SessionManager.shared)
 }
