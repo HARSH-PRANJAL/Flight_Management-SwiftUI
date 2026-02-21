@@ -198,6 +198,7 @@ struct DetailView: View {
             if profileImage != nil {
                 profileImage!
                     .resizable()
+                    .aspectRatio(contentMode: .fill)
                     .onTapGesture {
                         showImagePreview = true
                     }

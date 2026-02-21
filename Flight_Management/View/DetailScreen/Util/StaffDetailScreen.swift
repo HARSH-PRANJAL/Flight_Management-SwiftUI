@@ -254,6 +254,7 @@ struct StaffDetailScreen: View {
             if let profileImage = staff.avatarImage {
                 profileImage
                     .resizable()
+                    .aspectRatio(contentMode: .fill)
                     .onTapGesture {
                         showImagePreview = true
                     }
