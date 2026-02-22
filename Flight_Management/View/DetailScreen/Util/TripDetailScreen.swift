@@ -20,14 +20,40 @@ struct TripDetailScreen: View {
     }
 
     var detailView: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        List {
+            Section {
                 primaryCard
+            }
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+            .listRowBackground(cardTheme())
+            .listRowSeparator(.hidden)
 
-                if canCancelTrip {
-                    cancelButton
+            if canCancelTrip {
+                Section {
+                    Button {
+                        onCancelTapped?()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "xmark.circle")
+                                .font(.body.weight(.semibold))
+                            Text("Cancel Trip")
+                                .font(.body.weight(.semibold))
+                        }
+                        .foregroundStyle(Color(.systemRed))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color(.systemRed).opacity(0.4), lineWidth: 1.5)
+                        )
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowBackground(Color(.systemRed).opacity(0.05))
+                    .listRowSeparator(.hidden)
                 }
+            }
 
+            Section {
                 HStack(spacing: 12) {
                     CardView(
                         title: "Duration",
@@ -37,7 +63,6 @@ struct TripDetailScreen: View {
                         iconColor: Color(.white),
                         background: Color(.systemBlue)
                     )
-
                     CardView(
                         title: "Crew",
                         value: "\(trip.staffs.count)",
@@ -47,14 +72,18 @@ struct TripDetailScreen: View {
                         background: Color(.systemIndigo)
                     )
                 }
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
-                if trip.totalDelayedMinutes > 0 {
+            if trip.totalDelayedMinutes > 0 {
+                Section {
                     CardView(
                         title: "Delay",
                         value: String(
                             format: "%.1f",
-                            Double(trip.route.totalPlannedDurationMinutes)
-                                / 60.0
+                            Double(trip.route.totalPlannedDurationMinutes) / 60.0
                         ).appending("hr"),
                         subtitle: "total",
                         icon: "exclamationmark.triangle",
@@ -62,14 +91,36 @@ struct TripDetailScreen: View {
                         background: Color(.systemOrange)
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
 
-                if !trip.staffs.isEmpty {
-                    assignedStaffList
+            Section {
+                NavigationLink(destination: AircraftDetailView(aircraft: trip.aircraft)) {
+                    ListRow(aircraft: trip.aircraft)
+                }
+            } header: {
+                Label("Assigned Aircraft", systemImage: "airplane")
+                    .foregroundStyle(Color(.systemBlue))
+            }
+
+            if !trip.staffs.isEmpty {
+                Section {
+                    ForEach(trip.staffs, id: \.id) { staff in
+                        NavigationLink(destination: StaffDetailView(staff: staff)) {
+                            ListRow(staff: staff)
+                        }
+                    }
+                } header: {
+                    Label("Flight Crew", systemImage: "person.2")
+                        .foregroundStyle(Color(.systemIndigo))
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
     }
 
     var primaryCard: some View {
@@ -130,25 +181,6 @@ struct TripDetailScreen: View {
         .background(cardTheme())
     }
 
-    var cancelButton: some View {
-        ActionButton(
-            style: .destructive,
-            iconName: "xmark.circle",
-            title: "Cancel Trip",
-            action: { onCancelTapped?() }
-        )
-    }
-
-    var assignedStaffList: some View {
-        NavigationListSection(
-            title: "Flight Crew",
-            icon: "person.2",
-            iconColor: Color(.systemBlue),
-            items: trip.staffs,
-            rowContent: { ListRow(staff: $0) },
-            destination: { StaffDetailView(staff: $0) }
-        )
-    }
 }
 
 //#Preview {

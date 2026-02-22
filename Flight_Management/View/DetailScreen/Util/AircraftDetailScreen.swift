@@ -61,10 +61,15 @@ struct AircraftDetailScreen: View {
     }
 
     var detailView: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        List {
+            Section {
                 primaryCard
+            }
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+            .listRowBackground(cardTheme())
+            .listRowSeparator(.hidden)
 
+            Section {
                 HStack(spacing: 12) {
                     CardView(
                         title: "Total Trips",
@@ -74,7 +79,6 @@ struct AircraftDetailScreen: View {
                         iconColor: Color(.white),
                         background: Color(.systemBlue)
                     )
-
                     CardView(
                         title: "Flight Hours",
                         value: String(format: "%.1f", aircraft.totalTripHour),
@@ -84,7 +88,12 @@ struct AircraftDetailScreen: View {
                         background: Color(.systemRed)
                     )
                 }
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
+            Section {
                 HStack(spacing: 12) {
                     CardView(
                         title: "Seating",
@@ -94,7 +103,6 @@ struct AircraftDetailScreen: View {
                         iconColor: Color(.white),
                         background: Color(.systemGreen)
                     )
-
                     CardView(
                         title: "Scheduled",
                         value: "\(aircraft.scheduledTrips.count)",
@@ -104,42 +112,47 @@ struct AircraftDetailScreen: View {
                         background: Color(.systemIndigo)
                     )
                 }
-
-                flightSectionsCard
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-        }
-    }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
-    var flightSectionsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
             if let trip = aircraft.currentTrip {
-                TripDetailRow(
-                    title: "Current Trip",
-                    icon: "airplane.departure",
-                    iconColor: Color(.systemCyan),
-                    trip: trip
-                )
+                Section {
+                    NavigationLink(destination: TripDetailView(trip: trip)) {
+                        ListRow(trip: trip)
+                    }
+                } header: {
+                    Label("Current Trip", systemImage: "airplane.departure")
+                        .foregroundStyle(Color(.systemCyan))
+                }
             }
+
             if let trip = aircraft.nextScheduledTrip {
-                TripDetailRow(
-                    title: "Next Trip",
-                    icon: "calendar.badge.clock",
-                    iconColor: Color(.systemIndigo),
-                    trip: trip
-                )
+                Section {
+                    NavigationLink(destination: TripDetailView(trip: trip)) {
+                        ListRow(trip: trip)
+                    }
+                } header: {
+                    Label("Next Trip", systemImage: "calendar.badge.clock")
+                        .foregroundStyle(Color(.systemIndigo))
+                }
             }
+
             if let trip = aircraft.lastCompletedTrip {
-                TripDetailRow(
-                    title: "Last Trip",
-                    icon: "checkmark.circle",
-                    iconColor: Color(.systemGreen),
-                    trip: trip
-                )
+                Section {
+                    NavigationLink(destination: TripDetailView(trip: trip)) {
+                        ListRow(trip: trip)
+                    }
+                } header: {
+                    Label("Last Trip", systemImage: "checkmark.circle")
+                        .foregroundStyle(Color(.systemGreen))
+                }
             }
         }
-        .padding(.bottom, 16)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
     }
 
     var tripHistoryContent: some View {
