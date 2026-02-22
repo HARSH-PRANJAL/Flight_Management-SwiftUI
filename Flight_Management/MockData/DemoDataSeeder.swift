@@ -604,16 +604,10 @@ final class DemoDataSeeder {
 
                 if currentTime >= plannedArrivalTime {
                     trip.scheduleCurrentAirportArrival(arrivalTime: currentTime)
-
-                    // Check if this is not the last airport
-                    if trip.currentAirportSequence < trip.route.nodes.count {
-                        // Schedule departure after turnaround time (30 minutes)
-                        let departureTime = currentTime.addingTimeInterval(
-                            30 * 60
-                        )
-                        trip.scheduleCurrentAirportDeparture(
-                            departureTime: departureTime
-                        )
+                    // If not last airport, advance to next leg (demo fast-forwards turnaround)
+                    if !trip.isCompleted && trip.currentAirportSequence < trip.route.nodes.count {
+                        let departureTime = currentTime.addingTimeInterval(30 * 60)
+                        trip.scheduleCurrentAirportDeparture(departureTime: departureTime)
                     }
                 }
             } else if lastNode.actualDepartureTime == nil {

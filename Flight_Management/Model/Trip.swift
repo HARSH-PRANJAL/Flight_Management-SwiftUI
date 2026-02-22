@@ -83,11 +83,9 @@ class Trip {
         )
     }
 
-    // route node for the current airport
+    // route node for the current airport (1-based sequence)
     var plannedRouteNode: RouteNode {
-        // 0 based indexing
-        if currentAirportSequence >= route.nodes.count {
-            isCompleted = true
+        guard currentAirportSequence <= route.nodes.count, !route.nodes.isEmpty else {
             return route.nodes.last!
         }
         return route.nodes[currentAirportSequence - 1]
@@ -187,37 +185,28 @@ extension Trip {
 
 // MARK: Cancel Trip
 extension Trip {
-    // cancel trip midway or before starting
+    /// Cancel trip (before start or midway). Updates staff and aircraft last/current/next trip state.
     func cancel() {
-        if isCancelled || isCompleted {
-            return
-        }
-
-        isCompleted = false
+        guard !isCancelled, !isCompleted else { return }
 
         let hasStarted = !nodeStatuses.isEmpty
 
-        // this trip is the current trip of aircraft
-        if aircraft.currentTrip?.id == self.id {
+        // Update aircraft: clear current, set last if started, recompute next
+        if aircraft.currentTrip?.id == id {
             aircraft.currentTrip = nil
         }
-
-        // if trip has started then this is the last completed trip for the aircraft
         if hasStarted {
             aircraft.lastCompletedTrip = self
         }
         aircraft.updateNextScheduledTrip(after: self)
 
+        // Update staff: clear current, set last if started, recompute next
         for staff in staffs {
-            // this trip is the current trip of staff
-            if staff.currentTrip?.id == self.id {
+            if staff.currentTrip?.id == id {
                 staff.currentTrip = nil
             }
-
-            // if trip has started then this is the last completed trip for the staff
             if hasStarted {
                 staff.lastCompletedTrip = self
-                staff.currentTrip = nil
             }
             staff.updateNextScheduledTrip(after: self)
         }
