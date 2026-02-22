@@ -66,56 +66,56 @@ struct TripDetailView: View {
     }
 }
 
-#Preview {
-    let mockRoute = Route(name: "New York to London")
-    mockRoute.nodes = [
-        RouteNode(
-            plannedArrivalOffsetMinutes: 120,
-            airport: Airport(
-                code: "JFK",
-                name: "John F. Kennedy",
-                city: "New York",
-                country: "USA"
-            ),
-            sequence: 1
-        ),
-        RouteNode(
-            plannedArrivalOffsetMinutes: 480,
-            airport: Airport(
-                code: "LHR",
-                name: "London Heathrow",
-                city: "London",
-                country: "UK"
-            ),
-            sequence: 2
-        ),
-    ]
-
-    let mockAircraft = Aircraft(
-        registrationNumber: "N12345",
-        type: "Boeing 737",
-        seatingCapacity: 180,
-        minimumStaffRequired: [.pilot: 2, .coPilot: 1, .cabinCrew: 5]
-    )
-
-    let mockStaff = Staff(
-        name: "John Doe",
-        designation: .pilot,
-        gender: .male,
-        email: "john@example.com",
-        dob: Date()
-    )
-
-    let mockTrip = Trip(
-        staff: [mockStaff],
-        aircraft: mockAircraft,
-        nodeStatuses: [],
-        route: mockRoute,
-        scheduledDepartureTime: Date().addingTimeInterval(3600),
-        flightNumber: "AA-100",
-        isCancelled: false
-    )
-
-    return TripDetailView(trip: mockTrip)
-        .environment(SessionManager.shared)
-}
+//#Preview {
+//    let mockRoute = Route(name: "New York to London")
+//    mockRoute.nodes = [
+//        RouteNode(
+//            plannedArrivalOffsetMinutes: 120,
+//            airport: Airport(
+//                code: "JFK",
+//                name: "John F. Kennedy",
+//                city: "New York",
+//                country: "USA"
+//            ),
+//            sequence: 1
+//        ),
+//        RouteNode(
+//            plannedArrivalOffsetMinutes: 480,
+//            airport: Airport(
+//                code: "LHR",
+//                name: "London Heathrow",
+//                city: "London",
+//                country: "UK"
+//            ),
+//            sequence: 2
+//        ),
+//    ]
+//
+//    let mockAircraft = Aircraft(
+//        registrationNumber: "N12345",
+//        type: "Boeing 737",
+//        seatingCapacity: 180,
+//        minimumStaffRequired: [.pilot: 2, .coPilot: 1, .cabinCrew: 5]
+//    )
+//
+//    let mockStaff = Staff(
+//        name: "John Doe",
+//        designation: .pilot,
+//        gender: .male,
+//        email: "john@example.com",
+//        dob: Date()
+//    )
+//
+//    let mockTrip = Trip(
+//        staff: [mockStaff],
+//        aircraft: mockAircraft,
+//        nodeStatuses: [],
+//        route: mockRoute,
+//        scheduledDepartureTime: Date().addingTimeInterval(3600),
+//        flightNumber: "AA-100",
+//        isCancelled: false
+//    )
+//
+//     TripDetailView(trip: mockTrip)
+//        .environment(SessionManager.shared)
+//}
