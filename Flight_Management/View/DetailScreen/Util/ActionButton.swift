@@ -1,56 +1,64 @@
 import SwiftUI
 
-struct ActionButton: View {
-    @State var isUnavailable: Bool
-    var iconName1: String
-    var iconName2: String
-    var title1: String
-    var title2: String
-    let onActionButtonTapped: () -> Void
+/// Toggle-style action button (e.g. Mark Available/Unavailable) or destructive action (e.g. Cancel Trip).
+enum ActionButtonStyle {
+    case toggle(isPositiveState: Bool)  // positive = green, negative = red
+    case destructive                    // red only
+}
 
-    var title: String {
-        isUnavailable ? title1 : title2
-    }
-    var iconName: String {
-        isUnavailable ? iconName1 : iconName2
-    }
-    var bgColor: Color {
-        isUnavailable
-            ? Color(.systemGreen).opacity(0.02)
-            : Color(.systemRed).opacity(0.02)
-    }
-    var borderColor: Color {
-        isUnavailable
-            ? Color(.systemGreen).opacity(0.4) : Color(.systemRed).opacity(0.4)
-    }
-    var fgColor: Color {
-        isUnavailable ? Color(.systemGreen) : Color(.systemRed)
-    }
+struct ActionButton: View {
+    var style: ActionButtonStyle = .toggle(isPositiveState: false)
+    var iconName: String
+    var title: String
+    let action: () -> Void
 
     var body: some View {
         Button {
-            onActionButtonTapped()
+            action()
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: iconName)
                     .font(.body.weight(.semibold))
-
                 Text(title)
                     .font(.body.weight(.semibold))
             }
-            .foregroundStyle(fgColor)
+            .foregroundStyle(foregroundColor)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(cardTheme())
+            .background(backgroundColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(borderColor, lineWidth: 1.5)
+                    .strokeBorder(borderColor, lineWidth: 1.5)
             )
         }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(bgColor)
-        )
+        .buttonStyle(.plain)
         .contentShape(Rectangle())
+    }
+
+    private var foregroundColor: Color {
+        switch style {
+        case .toggle(let isPositive):
+            return isPositive ? Color(.systemGreen) : Color(.systemRed)
+        case .destructive:
+            return Color(.systemRed)
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch style {
+        case .toggle(let isPositive):
+            return isPositive ? Color(.systemGreen).opacity(0.05) : Color(.systemRed).opacity(0.05)
+        case .destructive:
+            return cardTheme() as? Color ?? Color.clear
+        }
+    }
+
+    private var borderColor: Color {
+        switch style {
+        case .toggle(let isPositive):
+            return isPositive ? Color(.systemGreen).opacity(0.4) : Color(.systemRed).opacity(0.4)
+        case .destructive:
+            return Color(.systemRed).opacity(0.4)
+        }
     }
 }
