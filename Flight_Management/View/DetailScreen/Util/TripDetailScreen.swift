@@ -131,66 +131,23 @@ struct TripDetailScreen: View {
     }
 
     var cancelButton: some View {
-        Button {
-            onCancelTapped?()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "xmark.circle")
-                    .font(.body.weight(.semibold))
-                Text("Cancel Trip")
-                    .font(.body.weight(.semibold))
-            }
-            .foregroundStyle(Color(.systemRed))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(cardTheme())
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemRed).opacity(0.4), lineWidth: 1.5)
-            )
-        }
-        .buttonStyle(.plain)
-        .contentShape(Rectangle())
+        ActionButton(
+            style: .destructive,
+            iconName: "xmark.circle",
+            title: "Cancel Trip",
+            action: { onCancelTapped?() }
+        )
     }
 
     var assignedStaffList: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label {
-                Text("Flight Crew")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: "person.2")
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.systemBlue))
-            }
-
-            VStack(spacing: 0) {
-                ForEach(trip.staffs, id: \.id) { staff in
-                    HStack {
-                        NavigationLink(
-                            destination: StaffDetailView(staff: staff)
-                        ) {
-                            ListRow(staff: staff)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.subheadline.smallCaps())
-                            .foregroundStyle(Color(.tertiaryLabel))
-                            .padding(.trailing, 12)
-                    }
-                    if staff.id != trip.staffs.last?.id {
-                        Divider()
-                            .padding(.leading, 16)
-                    }
-                }
-            }
-            .background(cardTheme())
-        }
-        .padding(.bottom, 16)
+        NavigationListSection(
+            title: "Flight Crew",
+            icon: "person.2",
+            iconColor: Color(.systemBlue),
+            items: trip.staffs,
+            rowContent: { ListRow(staff: $0) },
+            destination: { StaffDetailView(staff: $0) }
+        )
     }
 }
 
