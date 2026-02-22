@@ -439,8 +439,8 @@ final class DemoDataSeeder {
                         turnAroundTimeMinutes: 0
                     )
                 } else {
-                    // Subsequent nodes: journey time 3-10 minutes, turnaround 30 minutes
-                    let journeyTime = Int.random(in: 3...10)
+                    // Subsequent nodes: journey time 2-5 minutes, turnaround 30 minutes
+                    let journeyTime = Int.random(in: 2...5)
                     route.addNode(
                         airport: airport,
                         journeyTimeMinutes: journeyTime,
@@ -469,8 +469,8 @@ final class DemoDataSeeder {
         let crew = staff.filter { $0.designation == .cabinCrew }
 
         for (routeIndex, route) in routes.enumerated() {
-            // Select 2 random trips per route to have delays
-            let delayedTripIndices = Set((0..<5).shuffled().prefix(2))
+            // 1 trip per route is delayed
+            let delayedTripIndex = Int.random(in: 0..<5)
 
             for tripIndex in 0..<5 {
                 let aircraft = aircrafts[Int.random(in: 0..<aircrafts.count)]
@@ -530,8 +530,8 @@ final class DemoDataSeeder {
                     isCancelled: false
                 )
 
-                // Mark 2 random trips per route to have delays (5-10 minutes)
-                if delayedTripIndices.contains(tripIndex) {
+                // Mark 1 trip per route as delayed (5-10 minutes)
+                if tripIndex == delayedTripIndex {
                     delayedTripIDs.insert(trip.id)
                 }
 
@@ -550,12 +550,11 @@ final class DemoDataSeeder {
         let currentTime = Date()
 
         do {
-            // Fetch all trips
             let descriptor = FetchDescriptor<Trip>()
             let allTrips = try context.fetch(descriptor)
+            let previouslyCompletedIds = Set(allTrips.filter(\.isCompleted).map(\.id))
 
             for trip in allTrips {
-                // Check if trip should start
                 if !trip.isCancelled && !trip.isCompleted
                     && trip.nodeStatuses.isEmpty
                 {
@@ -564,7 +563,6 @@ final class DemoDataSeeder {
                     }
                 }
 
-                // Progress ongoing trips
                 if !trip.isCancelled && !trip.isCompleted
                     && !trip.nodeStatuses.isEmpty
                 {
@@ -572,9 +570,81 @@ final class DemoDataSeeder {
                 }
             }
 
+            // Schedule one new trip on the same route for each trip that just completed
+            let newlyCompleted = allTrips.filter {
+                $0.isCompleted && !previouslyCompletedIds.contains($0.id)
+            }
+            for completedTrip in newlyCompleted {
+                scheduleOneNewTrip(
+                    on: completedTrip.route,
+                    after: completedTrip.estimatedArrivalTime,
+                    in: context
+                )
+            }
+
             try context.save()
         } catch {
             print("Error during flight simulation: \(error)")
+        }
+    }
+
+    /// Schedules one new trip on the given route if an available aircraft and staff can be found.
+    private func scheduleOneNewTrip(
+        on route: Route,
+        after arrivalTime: Date,
+        in context: ModelContext
+    ) {
+        do {
+            let aircrafts = try context.fetch(FetchDescriptor<Aircraft>())
+            let staffList = try context.fetch(FetchDescriptor<Staff>())
+            let routeDurationMinutes = route.totalPlannedDurationMinutes
+            let from = arrivalTime.addingTimeInterval(30 * 60) // turnaround
+            let to = from.addingTimeInterval(TimeInterval((routeDurationMinutes + 60) * 60))
+
+            var availableByRole: [StaffRole: [Staff]] = [.pilot: [], .coPilot: [], .cabinCrew: []]
+            for staff in staffList {
+                if staff.isAvailable(from: from, to: to) {
+                    availableByRole[staff.designation, default: []].append(staff)
+                }
+            }
+            let availableCounts: [StaffRole: Int] = [
+                .pilot: availableByRole[.pilot, default: []].count,
+                .coPilot: availableByRole[.coPilot, default: []].count,
+                .cabinCrew: availableByRole[.cabinCrew, default: []].count,
+            ]
+
+            guard let aircraft = aircrafts.first(where: {
+                $0.isAvailable(from: from, to: to, availableStaff: availableCounts)
+            }) else { return }
+
+            let pilotsRequired = aircraft.minimumStaffRequired[.pilot] ?? 0
+            let coPilotsRequired = aircraft.minimumStaffRequired[.coPilot] ?? 0
+            let crewRequired = aircraft.minimumStaffRequired[.cabinCrew] ?? 0
+
+            let pilots = Array(availableByRole[.pilot, default: []].shuffled().prefix(pilotsRequired))
+            let coPilots = Array(availableByRole[.coPilot, default: []].shuffled().prefix(coPilotsRequired))
+            let crew = Array(availableByRole[.cabinCrew, default: []].shuffled().prefix(crewRequired))
+
+            let assignedStaff = Array(pilots) + Array(coPilots) + Array(crew)
+            let requiredTotal = pilotsRequired + coPilotsRequired + crewRequired
+            guard assignedStaff.count >= requiredTotal else { return }
+
+            let trip = Trip(
+                staff: assignedStaff,
+                aircraft: aircraft,
+                nodeStatuses: [],
+                route: route,
+                scheduledDepartureTime: from,
+                flightNumber: "FL-\(seedCount)-\(UUID().uuidString.prefix(6))",
+                isCancelled: false
+            )
+            context.insert(trip)
+            for s in assignedStaff {
+                s.trips.append(trip)
+            }
+            aircraft.trips.append(trip)
+        } catch {
+            print("Error scheduling new trip: \(error)")
         }
     }
 
