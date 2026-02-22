@@ -10,7 +10,7 @@ struct AircraftDetailScreen: View {
     @Binding var isEditPagePresented: Bool
 
     var hasTripHistory: Bool {
-        !aircraft.completedTrips.isEmpty
+        !aircraft.trips.isEmpty
     }
 
     var body: some View {
