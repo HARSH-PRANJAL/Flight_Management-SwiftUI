@@ -116,43 +116,14 @@ struct RouteDetailView: View {
     }
 
     var currentTripsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label {
-                Text("Current Trips")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.primary)
-            } icon: {
-                Image(systemName: "clock.badge.airplane")
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.systemCyan))
-            }
-
-            VStack(spacing: 0) {
-                ForEach(currentTrip, id: \.id) { trip in
-                    HStack {
-                        NavigationLink(destination: TripDetailView(trip: trip))
-                        {
-                            ListRow(trip: trip)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.subheadline.smallCaps())
-                            .foregroundStyle(Color(.tertiaryLabel))
-                            .padding(.trailing, 12)
-                    }
-
-                    if trip.id != currentTrip.last?.id {
-                        Divider()
-                            .padding(.leading, 16)
-                    }
-                }
-            }
-            .background(cardTheme())
-        }
-        .padding(.bottom, 16)
+        NavigationListSection(
+            title: "Current Trips",
+            icon: "clock.badge.airplane",
+            iconColor: Color(.systemCyan),
+            items: currentTrip,
+            rowContent: { ListRow(trip: $0) },
+            destination: { TripDetailView(trip: $0) }
+        )
     }
 
     var airportNodesCard: some View {
