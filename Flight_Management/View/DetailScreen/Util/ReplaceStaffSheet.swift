@@ -104,26 +104,26 @@ struct ReplaceStaffSheet: View {
     }
 }
 
-#Preview {
-    let staff1 = Staff(
-        name: "John Doe",
-        designation: .pilot,
-        gender: .male,
-        email: "john@example.com",
-        dob: Date()
-    )
-    let staff2 = Staff(
-        name: "Jane Smith",
-        designation: .pilot,
-        gender: .female,
-        email: "jane@example.com",
-        dob: Date()
-    )
-
-    return ReplaceStaffSheet(
-        currentStaff: staff1,
-        availableStaffList: [staff2],
-        onReplacement: { _ in }
-    )
-    .modelContainer(for: Staff.self, inMemory: true)
-}
+//#Preview {
+//    let staff1 = Staff(
+//        name: "John Doe",
+//        designation: .pilot,
+//        gender: .male,
+//        email: "john@example.com",
+//        dob: Date()
+//    )
+//    let staff2 = Staff(
+//        name: "Jane Smith",
+//        designation: .pilot,
+//        gender: .female,
+//        email: "jane@example.com",
+//        dob: Date()
+//    )
+//
+//    return ReplaceStaffSheet(
+//        currentStaff: staff1,
+//        availableStaffList: [staff2],
+//        onReplacement: { _ in }
+//    )
+//    .modelContainer(for: Staff.self, inMemory: true)
+//}
