@@ -86,17 +86,17 @@ class Aircraft {
             .min(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
     }
 
-    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int])
-        -> Bool
-    {
+    /// True if the aircraft has no overlapping trip in the window and enough staff (by role) are available.
+    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int]) -> Bool {
         for (role, number) in availableStaff {
             if minimumStaffRequired[role, default: 0] > number {
                 return false
             }
         }
-
-        return !scheduledTrips.contains(where: {
-            $0.estimatedArrivalTime > from && $0.scheduledDepartureTime < to
+        return !trips.contains(where: {
+            !$0.isCancelled && !$0.isCompleted
+                && $0.estimatedArrivalTime > from
+                && $0.scheduledDepartureTime < to
         })
     }
 

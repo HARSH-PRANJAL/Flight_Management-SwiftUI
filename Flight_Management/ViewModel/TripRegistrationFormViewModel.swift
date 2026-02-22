@@ -8,42 +8,67 @@ final class TripRegistrationFormViewModel {
     var scheduledDeparture: Date = Date()
     var selectedRoute: Route?
     var selectedAircraft: Aircraft?
-    var selectedPilot: Staff?
-    var selectedCoPilot: Staff?
-    var selectedCrewMember: Staff?
+    var selectedPilots: [Staff] = []
+    var selectedCoPilots: [Staff] = []
+    var selectedCrewMembers: [Staff] = []
 
     var fieldErrors: [String: String] = [:]
     var submissionState: SubmissionState = .none
-    
+
     var originalSnapshot: Snapshot?
     struct Snapshot: Equatable {
         let flightNumber: String
         let scheduledDeparture: Date
         let selectedRoute: Route?
         let selectedAircraft: Aircraft?
-        let selectedPilot: Staff?
-        let selectedCoPilot: Staff?
-        let selectedCrewMember: Staff?
+        let selectedPilotIds: Set<UUID>
+        let selectedCoPilotIds: Set<UUID>
+        let selectedCrewMemberIds: Set<UUID>
     }
-    
+
     var isDirty: Bool {
         guard let original = originalSnapshot else { return false }
         return currentSnapshot() != original
     }
-    
+
     func currentSnapshot() -> Snapshot {
         Snapshot(
             flightNumber: flightNumber,
             scheduledDeparture: scheduledDeparture,
             selectedRoute: selectedRoute,
             selectedAircraft: selectedAircraft,
-            selectedPilot: selectedPilot,
-            selectedCoPilot: selectedCoPilot,
-            selectedCrewMember: selectedCrewMember
+            selectedPilotIds: Set(selectedPilots.map(\.id)),
+            selectedCoPilotIds: Set(selectedCoPilots.map(\.id)),
+            selectedCrewMemberIds: Set(selectedCrewMembers.map(\.id))
         )
     }
 
-    func validate() -> Bool {
+    func addStaff(_ staff: Staff, role: StaffRole) {
+        switch role {
+        case .pilot where !selectedPilots.contains(where: { $0.id == staff.id }):
+            selectedPilots.append(staff)
+        case .coPilot where !selectedCoPilots.contains(where: { $0.id == staff.id }):
+            selectedCoPilots.append(staff)
+        case .cabinCrew where !selectedCrewMembers.contains(where: { $0.id == staff.id }):
+            selectedCrewMembers.append(staff)
+        default:
+            break
+        }
+    }
+
+    func removeStaff(_ staff: Staff, role: StaffRole) {
+        switch role {
+        case .pilot: selectedPilots.removeAll { $0.id == staff.id }
+        case .coPilot: selectedCoPilots.removeAll { $0.id == staff.id }
+        case .cabinCrew: selectedCrewMembers.removeAll { $0.id == staff.id }
+        }
+    }
+
+    var allSelectedStaff: [Staff] {
+        selectedPilots + selectedCoPilots + selectedCrewMembers
+    }
+
+    func validate(minRequired: [StaffRole: Int]) -> Bool {
         fieldErrors.removeAll()
         var valid = true
 
@@ -59,11 +84,18 @@ final class TripRegistrationFormViewModel {
             fieldErrors["aircraft"] = "Aircraft is required"
             valid = false
         }
-        if selectedPilot == nil || selectedCoPilot == nil || selectedCrewMember == nil {
-            fieldErrors["staff"] = "Pilot, Co-Pilot, and Crew Member are required"
-            valid = false
+        let counts: [StaffRole: Int] = [
+            .pilot: selectedPilots.count,
+            .coPilot: selectedCoPilots.count,
+            .cabinCrew: selectedCrewMembers.count,
+        ]
+        for (role, minReq) in minRequired where minReq > 0 {
+            let assigned = counts[role] ?? 0
+            if assigned < minReq {
+                fieldErrors["staff"] = "Aircraft requires at least \(minReq) \(role.rawValue); \(assigned) assigned"
+                valid = false
+            }
         }
-
         return valid
     }
 }

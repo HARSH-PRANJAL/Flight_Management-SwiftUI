@@ -87,9 +87,12 @@ class Staff {
         self.dob = dob
     }
 
+    /// True if the staff has no overlapping trip (scheduled or in progress) in the window.
     func isAvailable(from: Date, to: Date) -> Bool {
-        return !scheduledTrips.contains(where: {
-            $0.estimatedArrivalTime > from && $0.scheduledDepartureTime < to
+        return !trips.contains(where: {
+            !$0.isCancelled && !$0.isCompleted
+                && $0.estimatedArrivalTime > from
+                && $0.scheduledDepartureTime < to
         })
     }
 
