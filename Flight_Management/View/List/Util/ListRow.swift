@@ -77,7 +77,6 @@ struct ListRow: View, Identifiable {
         .frame(width: 44, height: 44)
         .overlay(Circle().stroke(Color(.separator), lineWidth: 0.5))
     }
-
 }
 
 // MARK: - Initialisers
@@ -148,11 +147,8 @@ extension ListRow {
         email: "john@example.com",
         dob: Date()
     )
-
-    ListRow(
-        staff: staff
-    )
-    .padding()
+    ListRow(staff: staff)
+        .padding()
 }
 
 #Preview("Aircraft List Row") {
@@ -162,25 +158,6 @@ extension ListRow {
         seatingCapacity: 180,
         minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
     )
-
-    ListRow(
-        aircraft: aircraft
-    )
-    .padding()
-}
-
-#Preview("Available Staff") {
-    let staff = Staff(
-        name: "Jane Smith",
-        designation: .coPilot,
-        gender: .female,
-        email: "jane@example.com",
-        dob: Date()
-    )
-
-    VStack(spacing: 1) {
-        ListRow(staff: staff).id(UUID())
-        ListRow(staff: staff).id(UUID())
-        ListRow(staff: staff).id(UUID())
-    }
+    ListRow(aircraft: aircraft)
+        .padding()
 }
