@@ -1,6 +1,11 @@
 import SwiftUI
 import UIKit
 
+func imageData(fromAssetName name: String) -> Data? {
+    guard let image = UIImage(named: name) else { return nil }
+    return image.jpegData(compressionQuality: 0.75)
+}
+
 @MainActor
 func handleImageData(_ data: Data, photo: inout Data?) -> Image? {
     if let image = UIImage(data: data),
