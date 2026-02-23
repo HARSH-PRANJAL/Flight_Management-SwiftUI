@@ -3,7 +3,9 @@ import SwiftUI
 
 struct StaffListView: View {
 
-    @Query var staffs: [Staff]
+    @Environment(\.modelContext) private var context
+
+    @State private var viewModel = StaffListViewModel()
 
     @State private var selectedFilter: StaffAvailabilityStatus? = nil
     @State private var selectedSort: StaffSort = .name
@@ -23,6 +25,17 @@ struct StaffListView: View {
                             ) {
                                 ListRow(staff: staff)
                             }
+                            .onAppear {
+                                if staff.id == displayedStaffs.last?.id {
+                                    Task {
+                                        await viewModel.loadMore(
+                                            context: context,
+                                            filter: selectedFilter,
+                                            searchText: searchText
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -34,9 +47,34 @@ struct StaffListView: View {
             }
             .searchable(
                 text: $searchText,
-                prompt: "Enter name, role, or current flight number"
+                prompt: "Enter name, or current flight number"
             )
             .searchToolbarBehavior(.minimize)
+            .task {
+                await viewModel.loadInitial(
+                    context: context,
+                    filter: selectedFilter,
+                    searchText: searchText
+                )
+            }
+            .onChange(of: selectedFilter) { _, newFilter in
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: newFilter,
+                        searchText: searchText
+                    )
+                }
+            }
+            .onChange(of: searchText) { _, newSearch in
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: newSearch
+                    )
+                }
+            }
         }
     }
 }
@@ -125,44 +163,7 @@ extension StaffListView {
     }
 
     var displayedStaffs: [Staff] {
-        var filtered = staffs.filter { staff in
-            if selectedFilter == nil {
-                return true
-            } else {
-                return staff.currentStatus == selectedFilter
-            }
-
-        }
-
-        filtered = filtered.filter { staff in
-            if searchText.isEmpty { return true }
-            
-            let cleanSearchText = searchText
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
-            
-            if cleanSearchText.isEmpty { return true }
-
-            let nameMatch = staff.name
-                .lowercased()
-                .replacingOccurrences(of: " ", with: "")
-                .contains(cleanSearchText.replacingOccurrences(of: " ", with: ""))
-
-            let roleMatch = staff.designation.rawValue
-                .lowercased()
-                .replacingOccurrences(of: " ", with: "")
-                .contains(cleanSearchText.replacingOccurrences(of: " ", with: ""))
-
-            let flightMatch =
-                staff.currentTrip?
-                .flightNumber
-                .lowercased()
-                .contains(cleanSearchText) ?? false
-
-            return nameMatch || roleMatch || flightMatch
-        }
-
-        let sorted = filtered.sorted { lhs, rhs in
+        let sorted = viewModel.items.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .name {
