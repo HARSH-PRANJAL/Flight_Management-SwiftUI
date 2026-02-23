@@ -1,5 +1,5 @@
-import SwiftData
 import Foundation
+import SwiftData
 
 @Model
 class Aircraft {
@@ -86,8 +86,10 @@ class Aircraft {
             .min(by: { $0.scheduledDepartureTime < $1.scheduledDepartureTime })
     }
 
-    /// True if the aircraft has no overlapping trip in the window and enough staff (by role) are available.
-    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int]) -> Bool {
+    // True if the aircraft has no overlapping trip in the window and enough staff (by role) are available.
+    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int])
+        -> Bool
+    {
         for (role, number) in availableStaff {
             if minimumStaffRequired[role, default: 0] > number {
                 return false

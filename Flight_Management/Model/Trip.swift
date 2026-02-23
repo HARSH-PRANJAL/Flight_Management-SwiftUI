@@ -85,7 +85,8 @@ class Trip {
 
     // route node for the current airport (1-based sequence)
     var plannedRouteNode: RouteNode {
-        guard currentAirportSequence <= route.nodes.count, !route.nodes.isEmpty else {
+        guard currentAirportSequence <= route.nodes.count, !route.nodes.isEmpty
+        else {
             return route.nodes.last!
         }
         return route.nodes[currentAirportSequence - 1]
@@ -214,6 +215,7 @@ extension Trip {
         isCancelled = true
     }
 }
+
 @Model
 class TripNodeStatus {
     @Attribute(.unique)
@@ -235,26 +237,47 @@ class TripNodeStatus {
 
     // total delay from the source of the trip
     func totalDelayMinutes(tripStartTime: Date) -> Int {
-        if actualArrivalTime == nil && actualDepartureTime == nil {
+        let calendar = Calendar.current
+
+        guard actualArrivalTime != nil || actualDepartureTime != nil else {
             return 0
         }
+
+        // actualArrivalTime will be nit for only source node
         if actualArrivalTime == nil {
             // trip is started from source
-            return Calendar.current.dateComponents(
-                [.minute],
-                from: actualDepartureTime!,
-                to: tripStartTime
-            ).minute!
+            guard let departure = actualDepartureTime,
+                let minutes = calendar.dateComponents(
+                    [.minute],
+                    from: departure,
+                    to: tripStartTime
+                ).minute
+            else {
+                return 0
+            }
+
+            return minutes
         } else {
-            let scheduledArrivalTimeMinutes = tripStartTime.addingTimeInterval(
+            guard let arrival = actualArrivalTime else {
+                return 0
+            }
+
+            let scheduledArrivalTime = tripStartTime.addingTimeInterval(
                 TimeInterval(routeNode.plannedArrivalOffsetMinutes)
             )
 
-            return Calendar.current.dateComponents(
-                [.minute],
-                from: actualArrivalTime!,
-                to: scheduledArrivalTimeMinutes
-            ).minute!
+            guard
+                let minutes = calendar.dateComponents(
+                    [.minute],
+                    from: arrival,
+                    to: scheduledArrivalTime
+                ).minute
+            else {
+                return 0
+            }
+
+            return minutes
         }
     }
+
 }

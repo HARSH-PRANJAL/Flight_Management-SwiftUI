@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct FlightManagementApp: App {
@@ -10,10 +10,8 @@ struct FlightManagementApp: App {
             container = try ModelContainer(
                 for:
                     Route.self,
-                RouteNode.self,
                 Airport.self,
                 Trip.self,
-                TripNodeStatus.self,
                 Aircraft.self,
                 Staff.self,
                 User.self

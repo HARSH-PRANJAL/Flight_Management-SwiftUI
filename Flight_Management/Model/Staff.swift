@@ -87,7 +87,7 @@ class Staff {
         self.dob = dob
     }
 
-    /// True if the staff has no overlapping trip (scheduled or in progress) in the window.
+    // True if the staff has no overlapping trip (scheduled or in progress) in the window.
     func isAvailable(from: Date, to: Date) -> Bool {
         return !trips.contains(where: {
             !$0.isCancelled && !$0.isCompleted
@@ -119,17 +119,8 @@ class Staff {
             trip.cancel()
         }
 
-        let tripInserted =
-            self.trips.filter {
-                $0.id == self.currentTrip?.id
-            }.count == 0
-
-        if tripInserted && currentTrip != nil {
-            self.trips.append(self.currentTrip!)
-        }
-
-        if currentTrip != nil {
-            self.lastCompletedTrip = self.currentTrip
+        if let _ = currentTrip {
+            self.lastCompletedTrip = self.currentTrip!
         }
         self.currentTrip = nil
         self.isMarkedUnavailable = true
