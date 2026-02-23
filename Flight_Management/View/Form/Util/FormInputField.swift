@@ -28,12 +28,6 @@ struct FormInputField: View {
                         .fill(Color(.tertiarySystemGroupedBackground))
                         .stroke(borderColor, lineWidth: 1)
                 }
-                .shadow(
-                    color: focusedField == focus ? Color(.systemBlue).opacity(0.14) : Color.black.opacity(0.07),
-                    radius: 2,
-                    x: 0,
-                    y: 2
-                )
                 .focused($focusedField, equals: focus)
                 .animation(.easeIn, value: borderColor)
                 .onChange(of: text) { _, newValue in
