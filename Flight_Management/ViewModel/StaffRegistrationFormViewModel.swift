@@ -8,15 +8,12 @@ final class StaffRegistrationFormViewModel {
     var email: String = ""
     var gender: Gender?
     var role: StaffRole?
-    var day: String = ""
-    var month: String = ""
-    var year: String = ""
     var selectedPhoto: PhotosPickerItem?
     var photoData: Data?
     var profilePreview: Image?
     var profileBgColor: ColorData = ColorData(Color.gray)
-    var dob: Date?
-    let years: [String]
+    var dob: Date = Date()
+    var years: [String] = []
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
@@ -29,13 +26,10 @@ final class StaffRegistrationFormViewModel {
         let email: String
         let gender: Gender?
         let role: StaffRole?
-        let day: String
-        let month: String
-        let year: String
         let photoData: Data?
         let selectedPhoto: PhotosPickerItem?
         let profilePreview: Image?
-        let dob: Date?
+        let dob: Date
     }
 
     var originalSnapshot: Snapshot?
@@ -45,19 +39,9 @@ final class StaffRegistrationFormViewModel {
         return currentSnapshot() != original
     }
 
-    init() {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        self.years = Array(
-            (currentYear - 66)...(currentYear - 16)
-        ).reversed().map { "\($0)" }
-    }
+    init() {}
 
     init(staff: Staff) {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        self.years = Array(
-            (currentYear - 66)...(currentYear - 16)
-        ).reversed().map { "\($0)" }
-
         self.isEditMode = true
         self.staffToEdit = staff
         self.loadStaffData(staff)
@@ -69,13 +53,10 @@ final class StaffRegistrationFormViewModel {
             email: email,
             gender: gender,
             role: role,
-            day: day,
-            month: month,
-            year: year,
             photoData: photoData,
             selectedPhoto: selectedPhoto,
             profilePreview: profilePreview,
-            dob: dob,
+            dob: dob
         )
     }
 
@@ -84,32 +65,9 @@ final class StaffRegistrationFormViewModel {
         self.email = staff.email
         self.gender = staff.gender
         self.role = staff.designation
-
-        let calendar = Calendar.current
-        let components = calendar.dateComponents(
-            [.year, .month, .day],
-            from: staff.dob
-        )
-        self.year = String(components.year ?? 0)
-        self.month =
-            Month.from(number: components.month ?? 0)?.rawValue ?? "January"
-        self.day = String(components.day ?? 0)
         self.profilePreview = staff.avatarImage
         self.profileBgColor = staff.profileBgColor
         self.dob = staff.dob
-    }
-
-    var daysInMonth: [String] {
-        let numberOfDays = Month.numberOfDays(inMonth: month)
-        return Array(1...numberOfDays).map(\.description)
-    }
-
-    var dateOfBirthComponents: DateComponents {
-        var component = DateComponents()
-        component.day = Int(day)
-        component.month = Int(month)
-        component.year = Int(year)
-        return component
     }
 
     func processPhoto(_ item: PhotosPickerItem) async {
@@ -118,14 +76,18 @@ final class StaffRegistrationFormViewModel {
             else { return }
             profilePreview = handleImageData(data, photo: &(photoData))
             if let photoData = photoData,
-               let uiImage = UIImage(data: photoData),
-               let dominantColor = await dominantBackgroundColor(from: uiImage)
+                let uiImage = UIImage(data: photoData),
+                let dominantColor = await dominantBackgroundColor(from: uiImage)
             {
                 profileBgColor = ColorData(uiColor: dominantColor)
-                print("✅ [StaffRegistrationFormViewModel] profileBgColor set: R=\(profileBgColor.red) G=\(profileBgColor.green) B=\(profileBgColor.blue)")
+                print(
+                    "✅ [StaffRegistrationFormViewModel] profileBgColor set: R=\(profileBgColor.red) G=\(profileBgColor.green) B=\(profileBgColor.blue)"
+                )
             } else {
                 profileBgColor = ColorData(Color.gray)
-                print("⚠️ [StaffRegistrationFormViewModel] Using default gray - extraction failed or no image")
+                print(
+                    "⚠️ [StaffRegistrationFormViewModel] Using default gray - extraction failed or no image"
+                )
             }
         } catch {
             print("Photo loading failed: \(error.localizedDescription)")
@@ -177,23 +139,18 @@ extension StaffRegistrationFormViewModel {
     }
 
     func validateDateOfBirth() -> Bool {
-        if day.isEmpty || month.isEmpty || year.isEmpty {
-            fieldErrors[.date] = "Date of birth is required"
+        if Calendar.current.isDateInToday(dob) {
+            fieldErrors[.date] = "Dob can not be empty."
             return false
         }
-
-        guard let birthDate = Calendar.current.date(from: dateOfBirthComponents)
-        else {
-            fieldErrors[.date] = "Date of birth is required"
-            return false
-        }
-
+        
         let calendar = Calendar.current
         let today = Date()
+
         guard
             let age = calendar.dateComponents(
                 [.year],
-                from: birthDate,
+                from: dob,
                 to: today
             ).year
         else {
@@ -201,14 +158,18 @@ extension StaffRegistrationFormViewModel {
             return false
         }
 
-        let maxAge = getMaxAgeForRole(role)
-        if age > maxAge {
-            fieldErrors[.date] =
-                "Maximum age for \(getAgeRoleDescription(role)) is \(maxAge) years"
+        if age < 16 {
+            fieldErrors[.date] = "Staff must be at least 16 years old"
             return false
         }
 
-        dob = birthDate
+        let maxAge = getMaxAgeForRole(role)
+        if age > maxAge {
+            fieldErrors[.date] =
+                "Maximum age for \(role?.rawValue ?? "staff") is \(maxAge) years"
+            return false
+        }
+
         return true
     }
 
@@ -228,25 +189,33 @@ extension StaffRegistrationFormViewModel {
         return true
     }
 
+    var minBirthDate: Date {
+        Calendar.current.date(byAdding: .year, value: -16, to: Date())
+            ?? Date.distantPast
+    }
+
+    var maxBirthDate: Date {
+        if role == nil {
+            return Calendar.current.date(byAdding: .year, value: -70, to: Date())
+                ?? Date.distantPast
+        }
+        let maxAge = getMaxAgeForRole(role)
+        return Calendar.current.date(
+            byAdding: .year,
+            value: -maxAge,
+            to: Date()
+        )
+            ?? Date.distantPast
+    }
+
     private func getMaxAgeForRole(_ role: StaffRole?) -> Int {
         switch role {
         case .pilot, .coPilot:
             return 65
         case .cabinCrew:
             return 60
-        case .none:
-            return Int.max
-        }
-    }
-
-    private func getAgeRoleDescription(_ role: StaffRole?) -> String {
-        switch role {
-        case .pilot, .coPilot:
-            return "pilots"
-        case .cabinCrew:
-            return "cabin crew"
-        case .none:
-            return "staff"
+        default:
+            return 120
         }
     }
 }

@@ -1,99 +1,107 @@
+import Foundation
 import SwiftUI
 
 struct FormDateField: View {
-    @State var viewModel: StaffRegistrationFormViewModel
-    let hasError: Bool
+    @Binding var selectedDate: Date
+    @State private var showDatePicker = false
 
-    @FocusState.Binding var focusedField: FormFocus?
+    let hasError: Bool
+    let minBirthDate: Date
+    let maxBirthDate: Date
+
+    var allowedDateRange: ClosedRange<Date> {
+        maxBirthDate...minBirthDate
+    }
+
+    private var borderColor: Color {
+        if hasError {
+            return Color(.systemRed)
+        }
+        return Color(.systemGray2)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Date of Birth")
                 .formFieldLabel()
 
-            HStack(spacing: 8) {
-                FormDateComponentPicker(
-                    options: viewModel.daysInMonth,
-                    selection: $viewModel.day,
-                    placeholder: "Day",
-                    hasError: hasError
-                )
-
-                FormDateComponentPicker(
-                    options: Array(Month.allCases).map(\.rawValue),
-                    selection: $viewModel.month,
-                    placeholder: "Month",
-                    hasError: hasError
-                )
-
-                FormDateComponentPicker(
-                    options: viewModel.years,
-                    selection: $viewModel.year,
-                    placeholder: "Year",
-                    hasError: hasError
-                )
-            }
-        }
-    }
-}
-
-private struct FormDateComponentPicker: View {
-    let options: [String]
-    let selection: Binding<String>
-    let placeholder: String
-    let hasError: Bool
-
-    var body: some View {
-        Menu {
-            ForEach(options, id: \.self) { option in
-                Button {
-                    selection.wrappedValue = option
-                } label: {
-                    Text(option)
-                        .lineLimit(1)
-                }
-            }
-        } label: {
             HStack {
-                Text(
-                    selection.wrappedValue.isEmpty
-                        ? placeholder : selection.wrappedValue
-                )
-                .font(.system(size: 17))
-                .lineLimit(1)
-                .foregroundColor(
-                    selection.wrappedValue.isEmpty
-                        ? Color(.systemGray3)
-                        : Color(.label)
-                )
+                Text(formatDate(selectedDate, format: "d MMM yyyy"))
+                    .foregroundStyle(
+                        Calendar.current.isDateInToday(selectedDate)
+                            ? Color(.systemGray3) : Color(.label)
+                    )
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(.systemGray3))
+                Image(systemName: "calendar")
+                    .foregroundStyle(.secondary)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
             .background {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color(.tertiarySystemGroupedBackground))
                     .strokeBorder(
-                        hasError ? Color(.systemRed) : Color(.systemGray2),
+                        borderColor,
                         lineWidth: 1
                     )
             }
-            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                showDatePicker = true
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Date of Birth")
+            .accessibilityValue(formatDate(selectedDate, format: "d MMMM yyyy"))
+            .accessibilityHint("Tap to change date")
+            .accessibilityAddTraits(.isButton)
+        }
+        .sheet(isPresented: $showDatePicker) {
+            NavigationStack {
+                VStack(spacing: 0) {
+                    DatePicker(
+                        "Select date of birth",
+                        selection: $selectedDate,
+                        in: allowedDateRange,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding(.horizontal)
+                    .padding(.vertical, 24)
+
+                    Spacer()
+                }
+                .navigationTitle("Date of Birth")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            showDatePicker = false
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                        .foregroundStyle(
+                            selectedDate != Date()
+                                ? Color(.systemBlue) : Color(.systemGray3)
+                        )
+                    }
+                }
+            }
+            .presentationDetents([.height(300), .medium])
+            .presentationDragIndicator(.visible)
         }
     }
 }
 
 #Preview {
-    @Previewable @State var viewModel = StaffRegistrationFormViewModel()
     @FocusState var focusedField: FormFocus?
 
-    return FormDateField(
-        viewModel: viewModel,
+    FormDateField(
+        selectedDate: .constant(Date()),
         hasError: false,
-        focusedField: $focusedField
+        minBirthDate: Date(),
+        maxBirthDate: Date()
     )
 }

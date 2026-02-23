@@ -190,19 +190,11 @@ struct StaffRegistrationContent: View {
     private var dateOfBirthFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormDateField(
-                viewModel: viewModel,
+                selectedDate: $viewModel.dob,
                 hasError: viewModel.fieldErrors[.date] != nil,
-                focusedField: $focusedField
+                minBirthDate: viewModel.minBirthDate,
+                maxBirthDate: viewModel.maxBirthDate
             )
-            .onChange(of: viewModel.day) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .date)
-            }
-            .onChange(of: viewModel.month) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .date)
-            }
-            .onChange(of: viewModel.year) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .date)
-            }
 
             FormErrorMessage(error: viewModel.fieldErrors[.date])
         }
@@ -224,9 +216,7 @@ struct StaffRegistrationContent: View {
         !viewModel.email.isEmpty &&
         viewModel.gender != nil &&
         viewModel.role != nil &&
-        !viewModel.day.isEmpty &&
-        !viewModel.month.isEmpty &&
-        !viewModel.year.isEmpty
+        viewModel.dob != Date()
     }
 
     private func handleRegistration() {
@@ -288,9 +278,7 @@ struct StaffRegistrationContent: View {
                 email: viewModel.email,
                 profileImage: viewModel.photoData,
                 profileBgColor: viewModel.profileBgColor,
-                dob: Calendar.current.date(
-                    from: viewModel.dateOfBirthComponents
-                )!
+                dob: viewModel.dob
             )
 
             do {
@@ -310,6 +298,6 @@ struct StaffRegistrationContent: View {
 
 #Preview {
     @Previewable @State var viewModel = StaffRegistrationFormViewModel()
-    return StaffRegistrationContent(viewModel: viewModel)
+    StaffRegistrationContent(viewModel: viewModel)
         .modelContainer(for: Staff.self, inMemory: true)
 }

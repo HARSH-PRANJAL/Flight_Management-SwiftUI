@@ -21,6 +21,7 @@ struct StaffRegistrationForm: View {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
             StaffRegistrationContent(viewModel: viewModel, isPresented: isPresented)
         }
+        .scrollDismissesKeyboard(.interactively)
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
         }
