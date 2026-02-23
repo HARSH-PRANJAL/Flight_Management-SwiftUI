@@ -26,17 +26,12 @@ struct SplashView: View {
                     }
                 }
                 .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        withAnimation(.easeOut) {
-                            showContent = true
-                        }
-                    }
                     Task {
                         let start = Date()
                         await DemoDataAPI.seedIfNeeded(in: context)
                         DemoDataAPI.startAutoUpdates(in: context)
                         let elapsed = Date().timeIntervalSince(start)
-                        let minDelay: TimeInterval = 1.5
+                        let minDelay: TimeInterval = 0.5
                         if elapsed < minDelay {
                             do { try await Task.sleep(nanoseconds: UInt64((minDelay - elapsed) * 1_000_000_000)) } catch { }
                         }
