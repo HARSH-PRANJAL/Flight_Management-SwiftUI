@@ -4,16 +4,16 @@ import SwiftUI
 struct StaffDetailScreen: View {
     let staff: Staff
     var isAdmin: Bool = false
-
+    
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
     @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPageShowing: Bool
-
+    
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
                 if staff.completedTrips.isEmpty {
                     detailView
@@ -48,7 +48,7 @@ struct StaffDetailScreen: View {
             }
         }
     }
-
+    
     var detailView: some View {
         List {
             Section {
@@ -57,7 +57,7 @@ struct StaffDetailScreen: View {
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
             .listRowBackground(cardTheme())
             .listRowSeparator(.hidden)
-
+            
             if onActionButtonTapped != nil {
                 Section {
                     Button {
@@ -66,18 +66,18 @@ struct StaffDetailScreen: View {
                         HStack(spacing: 8) {
                             Image(
                                 systemName: staff.isMarkedUnavailable
-                                    ? "person.badge.plus" : "person.slash"
+                                ? "person.badge.plus" : "person.slash"
                             )
                             .font(.body.weight(.semibold))
                             Text(
                                 staff.isMarkedUnavailable
-                                    ? "Mark Available" : "Mark Unavailable"
+                                ? "Mark Available" : "Mark Unavailable"
                             )
                             .font(.body.weight(.semibold))
                         }
                         .foregroundStyle(
                             staff.isMarkedUnavailable
-                                ? Color(.systemGreen) : Color(.systemRed)
+                            ? Color(.systemGreen) : Color(.systemRed)
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -85,8 +85,8 @@ struct StaffDetailScreen: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .strokeBorder(
                                     staff.isMarkedUnavailable
-                                        ? Color(.systemGreen).opacity(0.4)
-                                        : Color(.systemRed).opacity(0.4),
+                                    ? Color(.systemGreen).opacity(0.4)
+                                    : Color(.systemRed).opacity(0.4),
                                     lineWidth: 1.5
                                 )
                         )
@@ -95,12 +95,12 @@ struct StaffDetailScreen: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowBackground(
                         staff.isMarkedUnavailable
-                            ? Color(.systemGreen).opacity(0.05) : Color(.systemRed).opacity(0.05)
+                        ? Color(.systemGreen).opacity(0.05) : Color(.systemRed).opacity(0.05)
                     )
                     .listRowSeparator(.hidden)
                 }
             }
-
+            
             Section {
                 HStack(spacing: 12) {
                     CardView(
@@ -122,7 +122,7 @@ struct StaffDetailScreen: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-
+            
             if let trip = staff.currentTrip {
                 Section {
                     NavigationLink(destination: TripDetailView(trip: trip)) {
@@ -133,7 +133,7 @@ struct StaffDetailScreen: View {
                         .foregroundStyle(Color(.systemCyan))
                 }
             }
-
+            
             if let trip = staff.nextScheduledTrip {
                 Section {
                     NavigationLink(destination: TripDetailView(trip: trip)) {
@@ -144,7 +144,7 @@ struct StaffDetailScreen: View {
                         .foregroundStyle(Color(.systemIndigo))
                 }
             }
-
+            
             if let trip = staff.lastCompletedTrip {
                 Section {
                     NavigationLink(destination: TripDetailView(trip: trip)) {
@@ -172,7 +172,9 @@ struct StaffDetailScreen: View {
     var tripHistoryContent: some View {
         TripListView(externalTrips: staff.trips, navigationTitle: "")
     }
-
+}
+//MARK: UI
+extension StaffDetailScreen {
     var primaryCard: some View {
         VStack(spacing: 0) {
             displayImage
@@ -198,7 +200,6 @@ struct StaffDetailScreen: View {
                         TextWithCopyView(text: "\(staff.email)")
                     } icon: {
                         Image(systemName: "envelope.circle.fill")
-                            .font(.title)
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(
                                 .white,
@@ -213,14 +214,12 @@ struct StaffDetailScreen: View {
                                 )
                             )
                     }
-                    .padding(.bottom, -19)
                     Label {
                         Text("\(formatDate(staff.dob, format: "d MMM yyyy"))")
                             .font(.body)
                             .textSelection(.enabled)
                     } icon: {
                         Image(systemName: "calendar.circle.fill")
-                            .font(.title)
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(
                                 .white,
@@ -274,20 +273,5 @@ struct StaffDetailScreen: View {
             Circle().stroke(Color(.secondarySystemBackground), lineWidth: 3)
         )
         .foregroundStyle(.gray)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        StaffDetailScreen(
-            staff: Staff(
-                name: "Captain John Doe",
-                designation: .pilot,
-                gender: .male,
-                email: "john@example.com",
-                dob: Date()
-            ),
-            isEditPageShowing: .constant(false)
-        )
     }
 }
