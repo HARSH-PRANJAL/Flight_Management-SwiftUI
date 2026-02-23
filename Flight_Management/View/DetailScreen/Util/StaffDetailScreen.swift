@@ -108,16 +108,14 @@ struct StaffDetailScreen: View {
                         value: "\(staff.trips.count)",
                         subtitle: "",
                         icon: "airplane.up.right",
-                        iconColor: Color(.white),
-                        background: Color(.systemBlue)
+                        iconColor: Color(.systemBlue)
                     )
                     CardView(
                         title: "Flight Hours",
                         value: String(format: "%.1f", staff.totalTripHours),
                         subtitle: "",
                         icon: "clock",
-                        iconColor: Color(.white),
-                        background: Color(.systemBrown)
+                        iconColor: Color(.systemPurple)
                     )
                 }
             }

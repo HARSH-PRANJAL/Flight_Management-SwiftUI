@@ -34,16 +34,14 @@ struct RouteDetailView: View {
                             value: "\(route.trips.count)",
                             subtitle: "",
                             icon: "airplane.up.right",
-                            iconColor: Color(.white),
-                            background: Color(.systemBlue)
+                            iconColor: Color(.systemBlue)
                         )
                         CardView(
                             title: "Scheduled Trips",
                             value: "\(countScheduleTrips)",
                             subtitle: "",
                             icon: "calendar",
-                            iconColor: Color(.white),
-                            background: Color(.systemIndigo)
+                            iconColor: Color(.systemMint)
                         )
                     }
                 }

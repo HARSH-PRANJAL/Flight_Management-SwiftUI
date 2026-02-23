@@ -76,16 +76,14 @@ struct AircraftDetailScreen: View {
                         value: "\(aircraft.totalTripsOperated)",
                         subtitle: "",
                         icon: "airplane.up.right",
-                        iconColor: Color(.white),
-                        background: Color(.systemBlue)
+                        iconColor: Color(.systemBlue)
                     )
                     CardView(
                         title: "Flight Hours",
                         value: String(format: "%.1f", aircraft.totalTripHour),
                         subtitle: "",
                         icon: "clock",
-                        iconColor: Color(.white),
-                        background: Color(.systemRed)
+                        iconColor: Color(.systemBrown)
                     )
                 }
             }
@@ -100,16 +98,14 @@ struct AircraftDetailScreen: View {
                         value: "\(aircraft.seatingCapacity)",
                         subtitle: "capacity",
                         icon: "person.3",
-                        iconColor: Color(.white),
-                        background: Color(.systemGreen)
+                        iconColor: Color(.systemMint)
                     )
                     CardView(
                         title: "Scheduled",
                         value: "\(aircraft.scheduledTrips.count)",
                         subtitle: "trips",
                         icon: "calendar",
-                        iconColor: Color(.white),
-                        background: Color(.systemIndigo)
+                        iconColor: Color(.systemIndigo)
                     )
                 }
             }

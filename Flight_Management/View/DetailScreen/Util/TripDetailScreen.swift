@@ -60,16 +60,14 @@ struct TripDetailScreen: View {
                         value: "\(trip.route.totalPlannedDurationMinutes)m",
                         subtitle: "planned",
                         icon: "clock",
-                        iconColor: Color(.white),
-                        background: Color(.systemBlue)
+                        iconColor: Color(.systemBrown)
                     )
                     CardView(
                         title: "Crew",
                         value: "\(trip.staffs.count)",
                         subtitle: "assigned",
                         icon: "person.2",
-                        iconColor: Color(.white),
-                        background: Color(.systemIndigo)
+                        iconColor: Color(.systemIndigo)
                     )
                 }
             }
@@ -87,8 +85,7 @@ struct TripDetailScreen: View {
                         ).appending("hr"),
                         subtitle: "total",
                         icon: "exclamationmark.triangle",
-                        iconColor: Color(.white),
-                        background: Color(.systemOrange)
+                        iconColor: Color(.systemOrange).opacity(0.75)
                     )
                 }
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))

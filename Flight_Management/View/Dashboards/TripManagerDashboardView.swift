@@ -61,8 +61,7 @@ extension TripManagerDashboardView {
                 value: "\(onTimePercentage)%",
                 subtitle: "Flights today",
                 icon: "clock.fill",
-                iconColor: Color(.systemGreen).opacity(0.75),
-                background: Color(.systemBackground)
+                iconColor: Color(.systemGreen).opacity(0.75)
             )
 
             CardView(
@@ -70,8 +69,7 @@ extension TripManagerDashboardView {
                 value: "\(delayedCount)",
                 subtitle: "Today",
                 icon: "airplane.departure",
-                iconColor: Color(.systemRed).opacity(0.75),
-                background: Color(.systemBackground)
+                iconColor: Color(.systemRed).opacity(0.75)
             )
         }
     }

@@ -6,17 +6,16 @@ struct CardView: View {
     let subtitle: String
     let icon: String
     let iconColor: Color
-    let background: Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(.headline)
                     Text(value)
-                        .font(.system(size: 28, weight: .semibold))
+                        .font(.title)
+                        .fontWeight(.semibold)
                 }
                 Spacer()
                 Image(systemName: icon)
@@ -26,18 +25,13 @@ struct CardView: View {
 
             if !subtitle.isEmpty {
                 Text(subtitle)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
+                    .font(.subheadline)
             }
         }
         .padding()
         .frame(maxWidth: .infinity)
         .background(RoundedRectangle(cornerRadius: 12).fill(
-            LinearGradient(
-                colors: [background, background.opacity(0.75), background.opacity(0.5)],
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
+            Color(.tertiarySystemFill)
         ))
     }
 }
@@ -48,8 +42,7 @@ struct CardView: View {
         value: "92%",
         subtitle: "Flights today",
         icon: "clock.fill",
-        iconColor: Color(.blue),
-        background: Color(.systemBackground)
+        iconColor: Color(.blue)
     )
     .padding()
 }
