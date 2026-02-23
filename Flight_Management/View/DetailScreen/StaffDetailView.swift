@@ -25,18 +25,8 @@ struct StaffDetailView: View {
         session.user?.role == UserRole.admin.rawValue
     }
 
-    var profileImage: Image? {
-        if let imageData = staff.profileImage,
-            let uiImage = UIImage(data: imageData)
-        {
-            return Image(uiImage: uiImage)
-        } else {
-            return nil
-        }
-    }
-
     var isStaffOnDuty: Bool {
-        staff.currentTrip != nil
+        staff.currentStatus == .onDuty
     }
 
     var hasScheduledTrips: Bool {
