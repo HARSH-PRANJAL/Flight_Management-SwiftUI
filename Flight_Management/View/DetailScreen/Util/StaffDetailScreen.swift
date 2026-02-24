@@ -73,10 +73,10 @@ struct StaffDetailScreen: View {
                                 )
                                 .font(.body.weight(.semibold))
                             }
-                            .foregroundStyle(
-                                staff.isMarkedUnavailable
-                                    ? Color(.systemGreen) : Color(.systemRed)
-                            )
+                            //                            .foregroundStyle(
+                            //                                staff.isMarkedUnavailable
+                            //                                    ? Color(.systemGreen) : Color(.systemRed)
+                            //                            )
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                         }
@@ -100,8 +100,9 @@ struct StaffDetailScreen: View {
                             iconColor: Color(.systemBlue)
                         )
                         CardView(
-                            title: "Flight Hours",
-                            value: String(format: "%.1f", staff.totalTripHours),
+                            title: "Flying Hours",
+                            value:
+                                "\(String(format: "%.1f", staff.totalTripHours)) hr",
                             subtitle: "",
                             icon: "clock",
                             iconColor: Color(.systemPurple)
@@ -125,7 +126,7 @@ struct StaffDetailScreen: View {
             }
         }
     }
-    
+
     var tripHistoryContent: some View {
         TripListView(externalTrips: staff.trips, navigationTitle: "")
     }
@@ -136,27 +137,30 @@ extension StaffDetailScreen {
     var flightSectionsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let trip = staff.currentTrip {
-                ClickableTripSection(
+                ClickableSection(
                     title: "Current Flight",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
-                    trip: trip
+                    row: {ListRow(trip: trip)},
+                    destination: {TripDetailView(trip: trip)}
                 )
             }
             if let trip = staff.nextScheduledTrip {
-                ClickableTripSection(
+                ClickableSection(
                     title: "Next Flight",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
-                    trip: trip
+                    row: {ListRow(trip: trip)},
+                    destination: {TripDetailView(trip: trip)}
                 )
             }
             if let trip = staff.lastCompletedTrip {
-                ClickableTripSection(
+                ClickableSection(
                     title: "Last Flight",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
-                    trip: trip
+                    row: {ListRow(trip: trip)},
+                    destination: {TripDetailView(trip: trip)}
                 )
             }
         }
