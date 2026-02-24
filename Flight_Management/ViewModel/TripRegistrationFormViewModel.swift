@@ -47,9 +47,11 @@ final class TripRegistrationFormViewModel {
         switch role {
         case .pilot where !selectedPilots.contains(where: { $0.id == staff.id }):
             selectedPilots.append(staff)
-        case .coPilot where !selectedCoPilots.contains(where: { $0.id == staff.id }):
+        case .coPilot
+        where !selectedCoPilots.contains(where: { $0.id == staff.id }):
             selectedCoPilots.append(staff)
-        case .cabinCrew where !selectedCrewMembers.contains(where: { $0.id == staff.id }):
+        case .cabinCrew
+        where !selectedCrewMembers.contains(where: { $0.id == staff.id }):
             selectedCrewMembers.append(staff)
         default:
             break
@@ -72,7 +74,8 @@ final class TripRegistrationFormViewModel {
         fieldErrors.removeAll()
         var valid = true
 
-        if flightNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if flightNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
             fieldErrors["flightNumber"] = "Flight number is required"
             valid = false
         }
@@ -84,6 +87,10 @@ final class TripRegistrationFormViewModel {
             fieldErrors["aircraft"] = "Aircraft is required"
             valid = false
         }
+        if scheduledDeparture <= Date() {
+            fieldErrors["departureDate"] = "Departure must be in the future"
+            valid = false
+        }
         let counts: [StaffRole: Int] = [
             .pilot: selectedPilots.count,
             .coPilot: selectedCoPilots.count,
@@ -92,7 +99,8 @@ final class TripRegistrationFormViewModel {
         for (role, minReq) in minRequired where minReq > 0 {
             let assigned = counts[role] ?? 0
             if assigned < minReq {
-                fieldErrors["staff"] = "Aircraft requires at least \(minReq) \(role.rawValue); \(assigned) assigned"
+                fieldErrors["staff"] =
+                    "Aircraft requires at least \(minReq) \(role.rawValue); \(assigned) assigned"
                 valid = false
             }
         }
