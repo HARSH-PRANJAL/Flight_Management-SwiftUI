@@ -70,11 +70,13 @@ struct DetailView: View {
         }
         .animation(.linear(duration: 0.5), value: selectedTab)
         .fullScreenCover(isPresented: $showImagePreview) {
-            ImagePreviewer(
-                image: profileImage,
-                title: titleText,
-                profileBgColor: profileBgColor
-            )
+            NavigationStack {
+                ImagePreviewer(
+                    image: profileImage,
+                    title: titleText,
+                    profileBgColor: profileBgColor
+                )
+            }
         }
     }
 

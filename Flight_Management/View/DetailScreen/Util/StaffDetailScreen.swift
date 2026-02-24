@@ -37,12 +37,14 @@ struct StaffDetailScreen: View {
         .animation(.linear(duration: 0.5), value: selectedTab)
         .fullScreenCover(isPresented: $showImagePreview) {
             if let image = staff.avatarImage {
-                ImagePreviewer(
-                    image: image,
-                    title: "Profile Photo",
-                    circular: true,
-                    profileBgColor: staff.profileBgColor
-                )
+                NavigationStack {
+                    ImagePreviewer(
+                        image: image,
+                        title: "Profile Photo",
+                        circular: true,
+                        profileBgColor: staff.profileBgColor
+                    )
+                }
             } else {
                 EmptyView()
             }
