@@ -14,7 +14,7 @@ struct UserDetailView: View {
             let uiImage = UIImage(data: imageData) {
             return Image(uiImage: uiImage)
         } else {
-            return Image(systemName: "person")
+            return nil
         }
     }
 
@@ -27,9 +27,7 @@ struct UserDetailView: View {
                 profileImage: profileImage,
                 titleText: user?.name ?? "Unknown User",
                 subTitleText: user?.role.rawValue ?? "Unknown Designation",
-                detailText: user?.email,
-                statusBadge: nil,
-                listData: [],
+                detailText: user?.email ?? "Unknown Email",
                 profileBgColor: user?.profileBgColor,
                 onActionButtonTapped: {
                     isEditPageShowing.toggle()
