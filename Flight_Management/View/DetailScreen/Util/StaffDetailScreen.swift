@@ -15,14 +15,14 @@ struct StaffDetailScreen: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if staff.completedTrips.isEmpty {
+                if staff.trips.isEmpty {
                     detailView
                 } else {
                     switch selectedTab {
                     case .detail:
                         detailView
                     case .tripHistory:
-                        tripHistoryContent
+                        tripContent
                     }
                 }
             }
@@ -74,11 +74,7 @@ struct StaffDetailScreen: View {
                                         ? "Mark Available" : "Mark Unavailable"
                                 )
                                 .font(.body.weight(.semibold))
-                            }
-                            //                            .foregroundStyle(
-                            //                                staff.isMarkedUnavailable
-                            //                                    ? Color(.systemGreen) : Color(.systemRed)
-                            //                            )
+                            }                            
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                         }
@@ -129,10 +125,11 @@ struct StaffDetailScreen: View {
         }
     }
 
-    var tripHistoryContent: some View {
-        TripListView(externalTrips: staff.trips, navigationTitle: "")
+    var tripContent: some View {
+        TripListView(externalTrips: staff.trips, navigationTitle: "", requiredFilters: [.completed, .scheduled, .cancelled])
     }
 }
+
 //MARK: UI
 extension StaffDetailScreen {
 
@@ -143,8 +140,8 @@ extension StaffDetailScreen {
                     title: "Current Flight",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
-                    row: {ListRow(trip: trip)},
-                    destination: {TripDetailView(trip: trip)}
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
                 )
             }
             if let trip = staff.nextScheduledTrip {
@@ -152,8 +149,8 @@ extension StaffDetailScreen {
                     title: "Next Flight",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
-                    row: {ListRow(trip: trip)},
-                    destination: {TripDetailView(trip: trip)}
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
                 )
             }
             if let trip = staff.lastCompletedTrip {
@@ -161,15 +158,13 @@ extension StaffDetailScreen {
                     title: "Last Flight",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
-                    row: {ListRow(trip: trip)},
-                    destination: {TripDetailView(trip: trip)}
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
                 )
             }
         }
         .padding(.bottom, 16)
     }
-
-    
 
     var primaryCard: some View {
         VStack(spacing: 0) {
@@ -196,6 +191,7 @@ extension StaffDetailScreen {
                         TextWithCopyView(text: "\(staff.email)")
                     } icon: {
                         Image(systemName: "envelope.circle.fill")
+                            .font(.title)
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(
                                 .white,
@@ -210,12 +206,14 @@ extension StaffDetailScreen {
                                 )
                             )
                     }
+                    .padding(.bottom, -19)
                     Label {
                         Text("\(formatDate(staff.dob, format: "d MMM yyyy"))")
                             .font(.body)
                             .textSelection(.enabled)
                     } icon: {
                         Image(systemName: "calendar.circle.fill")
+                            .font(.title)
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(
                                 .white,
