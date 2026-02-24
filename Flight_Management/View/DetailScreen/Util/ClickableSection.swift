@@ -1,14 +1,28 @@
 import SwiftUI
 
-struct ClickableTripSection: View {
+struct ClickableSection<Row: View, Destination: View>: View {
     let title: String
     let icon: String
     let iconColor: Color
-    let trip: Trip
+    let row: Row
+    let destination: Destination
+
+    init(
+        title: String,
+        icon: String,
+        iconColor: Color,
+        @ViewBuilder row: () -> Row,
+        @ViewBuilder destination: () -> Destination
+    ) {
+        self.title = title
+        self.icon = icon
+        self.iconColor = iconColor
+        self.row = row()
+        self.destination = destination()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-
             Label {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
@@ -18,9 +32,9 @@ struct ClickableTripSection: View {
                     .foregroundStyle(iconColor)
             }
 
-            NavigationLink(destination: TripDetailView(trip: trip)) {
+            NavigationLink(destination: destination) {
                 HStack {
-                    ListRow(trip: trip)
+                    row
 
                     Spacer()
 
@@ -30,11 +44,10 @@ struct ClickableTripSection: View {
                 }
                 .padding(12)
             }
-            .buttonStyle(PressableRowStyle())   // 👈 custom style
+            .buttonStyle(PressableRowStyle())
         }
     }
 }
-
 
 struct PressableRowStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -43,10 +56,13 @@ struct PressableRowStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         configuration.isPressed
-                        ? Color(.systemGray5)
-                        : Color(.tertiarySystemBackground)
+                            ? Color(.systemGray5)
+                            : Color(.tertiarySystemBackground)
                     )
             )
-            .animation(.easeInOut(duration: 0.02), value: configuration.isPressed)
+            .animation(
+                .easeInOut(duration: 0.02),
+                value: configuration.isPressed
+            )
     }
 }
