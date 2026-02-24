@@ -10,6 +10,7 @@ struct TripListView: View {
 
     var externalTrips: [Trip] = []
     var navigationTitle: String = "Trip List"
+    var requiredFilters: [TripStatus]? = nil
 
     @Environment(\.modelContext) private var context
 
@@ -56,7 +57,7 @@ struct TripListView: View {
             }
             .searchable(
                 text: $searchText,
-                placement: .automatic,
+                placement: .toolbar,
                 prompt: "Search by trip number"
             )
             .searchToolbarBehavior(.minimize)
@@ -112,7 +113,7 @@ extension TripListView {
                             }
                         }
                         ForEach(
-                            TripStatus.allCases,
+                            filterOptions,
                             id: \.self
                         ) { filter in
                             Button {
@@ -168,6 +169,15 @@ extension TripListView {
 
 // MARK: Fallback and Filter Data
 extension TripListView {
+    
+    var filterOptions: [TripStatus] {
+        guard let requiredFilters else {
+            return TripStatus.allCases
+        }
+        
+        return requiredFilters
+    }
+    
     var fallbackBackground: some View {
         ContentUnavailableView {
             Label("No Trips", systemImage: "airplane.departure")
