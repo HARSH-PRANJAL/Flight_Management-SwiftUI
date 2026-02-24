@@ -36,7 +36,7 @@ class Aircraft {
     }
 
     var totalTripHour: Double {
-        return trips.filter({
+        let result = trips.filter({
             $0.isCompleted == true || $0.isCancelled == true
         }).reduce(0.0) {
             $0
@@ -44,6 +44,7 @@ class Aircraft {
                     $1.scheduledDepartureTime
                 )
         } / 3600.0
+        return max(result, 0)
     }
 
     var currentStatus: AircraftStatus {

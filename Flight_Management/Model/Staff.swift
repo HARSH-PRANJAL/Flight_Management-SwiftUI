@@ -23,14 +23,17 @@ class Staff {
     var isMarkedUnavailable: Bool = false
 
     var totalTripHours: Double {
-        return trips.filter({
-            $0.isCompleted == true || $0.isCancelled == true
-        }).reduce(0.0) {
-            $0
-                + $1.estimatedArrivalTime.timeIntervalSince(
-                    $1.scheduledDepartureTime
-                )
-        } / 3600.0
+        let result =
+            trips.filter({
+                $0.isCompleted == true || $0.isCancelled == true
+            }).reduce(0.0) {
+                $0
+                    + $1.estimatedArrivalTime.timeIntervalSince(
+                        $1.scheduledDepartureTime
+                    )
+            } / 3600.0
+
+        return max(result, 0)
     }
 
     var completedTrips: [Trip] {
@@ -119,7 +122,7 @@ class Staff {
             trip.cancel()
         }
 
-        if let _ = currentTrip {
+        if currentTrip != nil {
             self.lastCompletedTrip = self.currentTrip!
         }
         self.currentTrip = nil
