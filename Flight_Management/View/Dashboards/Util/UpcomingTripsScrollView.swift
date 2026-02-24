@@ -55,12 +55,11 @@ struct UpcomingTripsScrollView: View {
                     .buttonStyle(.plain)
                 }
                 if trips.isEmpty {
-                    Text("No upcoming flights")
+                    Text("No upcoming flights in next 6 hours")
                         .foregroundColor(.secondary)
                         .padding()
                 }
             }
-            .padding(.vertical, 8)
         }
     }
 }
