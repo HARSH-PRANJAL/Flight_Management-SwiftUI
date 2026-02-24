@@ -23,19 +23,19 @@ struct RouteDetailView: View {
 
                     HStack(spacing: 12) {
                         CardView(
-                            title: "Total Trips",
+                            title: "Trips",
                             value: "\(route.trips.count)",
                             subtitle: "",
                             icon: "airplane.up.right",
-                            iconColor: Color(.white)
+                            iconColor: Color(.systemBlue)
                         )
 
                         CardView(
                             title: "Scheduled",
                             value: "\(countScheduleTrips)",
-                            subtitle: "trips",
+                            subtitle: "",
                             icon: "calendar",
-                            iconColor: Color(.white)
+                            iconColor: Color(.systemMint)
                         )
                     }
 
