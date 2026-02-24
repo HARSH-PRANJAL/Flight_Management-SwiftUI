@@ -33,7 +33,7 @@ struct AirportSearchDropdown: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color(.systemGray))
 
-                TextField("Search airport eg. MAA/Chennai/Xyz airport", text: $searchText)
+                TextField("Search by code, name or city", text: $searchText)
                     .autocorrectionDisabled()
                     .focused($isFocused)
                     .onChange(of: isFocused) { _, newValue in
@@ -55,12 +55,6 @@ struct AirportSearchDropdown: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.tertiarySystemFill))
                     .stroke(Color(.systemGray3), lineWidth: 1)
-            )
-            .shadow(
-                color: Color.black.opacity(0.07),
-                radius: 2,
-                x: 0,
-                y: 2
             )
 
             // Dropdown List
@@ -105,7 +99,6 @@ struct AirportSearchDropdown: View {
                     }
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                     .padding(.top, 8)
                 }
                 .frame(maxHeight: 300)
