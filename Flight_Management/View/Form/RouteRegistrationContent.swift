@@ -117,6 +117,7 @@ struct RouteRegistrationContent: View {
                 )
             }
         }
+        .scrollDismissesKeyboard(.immediately)
     }
 }
 
@@ -159,9 +160,7 @@ extension RouteRegistrationContent {
             // Selected Airports List
             if !viewModel.selectedNodes.isEmpty {
                 VStack(spacing: 0) {
-                    ForEach(0..<viewModel.selectedNodes.count, id: \.self) {
-                        index in
-                        let node = viewModel.selectedNodes[index]
+                    ForEach($viewModel.selectedNodes, id: \.id) { $node in
                         VStack(spacing: 0) {
                             HStack {
                                 // Airport Info
@@ -180,7 +179,8 @@ extension RouteRegistrationContent {
                                 Spacer()
 
                                 // Journey Time Input
-                                if index > 0 {
+                                if node.id != viewModel.selectedNodes.first?.id
+                                {
                                     VStack(alignment: .trailing, spacing: 4) {
                                         Text("Trip")
                                             .font(
@@ -194,7 +194,7 @@ extension RouteRegistrationContent {
                                         HStack(spacing: 4) {
                                             TextField(
                                                 "0",
-                                                text: textBinding(for: index)
+                                                text: textBinding(for: node)
                                             )
                                             .keyboardType(.numberPad)
                                             .multilineTextAlignment(.trailing)
@@ -235,7 +235,7 @@ extension RouteRegistrationContent {
 
                                 // Remove Button
                                 Button(action: {
-                                    viewModel.removeAirport(at: index)
+                                    viewModel.removeAirport(node)
                                 }) {
                                     Image(systemName: "xmark")
                                         .font(
@@ -249,7 +249,7 @@ extension RouteRegistrationContent {
                             .background(Color(.systemGray6))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                            if index < viewModel.selectedNodes.count - 1 {
+                            if node.id != viewModel.selectedNodes.last?.id {
                                 Divider()
                                     .padding(.vertical, 8)
                             }
@@ -269,11 +269,10 @@ extension RouteRegistrationContent {
                 }
                 .foregroundColor(Color(.systemBlue))
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemGray5))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 8)
             }
-            .opacity(viewModel.selectedNodes.isEmpty ? 0.5 : 1)
+            .buttonStyle(.bordered)
+            .tint(Color(.systemBlue))
 
             FormErrorMessage(error: viewModel.fieldErrors[.airports])
             FormErrorMessage(error: viewModel.fieldErrors[.journeyTime])
@@ -291,7 +290,7 @@ extension RouteRegistrationContent {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
+                        .fill(Color.clear)
                         .stroke(Color(.systemGray5), lineWidth: 1)
                 )
 
@@ -308,7 +307,7 @@ extension RouteRegistrationContent {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
+                    .fill(Color.clear)
                     .stroke(Color(.systemGray5), lineWidth: 1)
             )
         }
@@ -337,27 +336,33 @@ extension RouteRegistrationContent {
         !viewModel.routeName.isEmpty && viewModel.selectedNodes.count >= 2
     }
 
-    private func textBinding(for index: Int) -> Binding<String> {
-        Binding(
-            get: {
-                viewModel.selectedNodes[index].journeyTimeMinutes
-            },
-            set: { newValue in
-                viewModel.updateJourneyTime(at: index, minutes: newValue)
-            }
-        )
+    private func textBinding(for node: RouteNodeData) -> Binding<String> {
+        if viewModel.selectedNodes.contains(where: { $0.id == node.id }) {
+            return Binding(
+                get: {
+                    viewModel.selectedNodes.first(where: { $0.id == node.id })!
+                        .journeyTimeMinutes
+                },
+                set: { newValue in
+                    viewModel.updateJourneyTime(for: node, minutes: newValue)
+                }
+            )
+        } else {
+            return Binding(
+                get: { "" },
+                set: { _ in }
+            )
+        }
     }
 
     private func handleSave() {
         if viewModel.saveRoute(to: context) {
             let message =
                 viewModel.isEditMode
-                ? "Route updated successfully" : "Route created successfully"
+                ? "Route updated successfully" : "Route added successfully"
             notificationManager.showSuccess(message)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                isPresented?.wrappedValue = false
-                dismiss()
-            }
+            isPresented?.wrappedValue = false
+            dismiss()
         } else {
             let message =
                 viewModel.isEditMode

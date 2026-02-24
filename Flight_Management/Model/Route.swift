@@ -30,7 +30,7 @@ class Route {
     func addNode(
         airport: Airport,
         journeyTimeMinutes: Int,
-        turnAroundTimeMinutes: Int = 30
+        turnAroundTimeMinutes: Int = 0
     ) {
         let sequence = nodes.count + 1
         let arrivalOffset: Int
