@@ -24,6 +24,7 @@ struct SplashView: View {
                             .font(.title2)
                             .bold()
                     }
+                    .padding(16)
                 }
                 .onAppear {
                     Task {
