@@ -3,7 +3,9 @@ import SwiftUI
 
 struct RouteListView: View {
 
-    @Query var routes: [Route]
+    @Environment(\.modelContext) private var context
+
+    @State private var viewModel = RouteListViewModel()
 
     @State private var selectedSort: RouteSort = .name
     @State private var selectedSortOrder: SortOrder = .ascending
@@ -20,6 +22,16 @@ struct RouteListView: View {
                             NavigationLink(destination: RouteDetailView(route: route)) {
                                 ListRow(route: route)
                             }
+                            .onAppear {
+                                if route.id == displayedRoutes.last?.id {
+                                    Task {
+                                        await viewModel.loadMore(
+                                            context: context,
+                                            searchText: searchText
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -31,9 +43,23 @@ struct RouteListView: View {
             }
             .searchable(
                 text: $searchText,
-                prompt: "Search by name or flight number"
+                prompt: "Search by name"
             )
             .searchToolbarBehavior(.minimize)
+            .task {
+                await viewModel.loadInitial(
+                    context: context,
+                    searchText: searchText
+                )
+            }
+            .onChange(of: searchText) { _, newSearch in
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        searchText: newSearch
+                    )
+                }
+            }
         }
     }
 }
@@ -93,36 +119,7 @@ extension RouteListView {
     }
 
     var displayedRoutes: [Route] {
-        var filtered = routes
-
-        if !searchText.isEmpty {
-            let cleanSearchText =
-                searchText
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
-
-            if !cleanSearchText.isEmpty {
-                filtered = routes.filter { route in
-                    let nameMatch = route.name
-                        .lowercased()
-                        .contains(cleanSearchText)
-
-                    let airportMatch = route.nodes.contains { node in
-                        node.airport.code.lowercased().contains(cleanSearchText)
-                            || node.airport.name.lowercased().contains(
-                                cleanSearchText
-                            )
-                            || node.airport.city.lowercased().contains(
-                                cleanSearchText
-                            )
-                    }
-
-                    return nameMatch || airportMatch
-                }
-            }
-        }
-
-        return filtered.sorted { lhs, rhs in
+        let sorted = viewModel.items.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .name {
@@ -135,6 +132,8 @@ extension RouteListView {
                 return isAscending ? comparison : !comparison
             }
         }
+
+        return sorted
     }
 }
 

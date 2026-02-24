@@ -11,44 +11,84 @@ struct TripListView: View {
     var externalTrips: [Trip] = []
     var navigationTitle: String = "Trip List"
 
-    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
-        [Trip]
+    @Environment(\.modelContext) private var context
+
+    @State private var viewModel = TripListViewModel()
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
-    @State private var selectedTrip: Trip?
 
     var body: some View {
         VStack(spacing: 0) {
-                Group {
-                    if displayedTrips.isEmpty {
-                        fallbackBackground
-                    } else {
-                        List {
-                            ForEach(displayedTrips, id: \.id) { trip in
-                                NavigationLink(
-                                    destination: TripDetailView(trip: trip)
-                                ) {
-                                    ListRow(trip: trip)
+            Group {
+                if displayedTrips.isEmpty {
+                    fallbackBackground
+                } else {
+                    List {
+                        ForEach(displayedTrips, id: \.id) { trip in
+                            NavigationLink(
+                                destination: TripDetailView(trip: trip)
+                            ) {
+                                ListRow(trip: trip)
+                            }
+                            .onAppear {
+                                guard externalTrips.isEmpty else { return }
+                                if trip.id == displayedTrips.last?.id {
+                                    Task {
+                                        await viewModel.loadMore(
+                                            context: context,
+                                            filter: selectedFilter,
+                                            searchText: searchText
+                                        )
+                                    }
                                 }
                             }
                         }
-                        .listStyle(.insetGrouped)
                     }
+                    .listStyle(.insetGrouped)
                 }
-                .navigationTitle(navigationTitle)
-                .toolbar {
-                    toolbarFilterSortItem
-                }
-                .searchable(
-                    text: $searchText,
-                    placement: .automatic,
-                    prompt: "Search by trip number"
-                )
-                .searchToolbarBehavior(.minimize)
             }
+            .navigationTitle(navigationTitle)
+            .toolbar {
+                toolbarFilterSortItem
+            }
+            .searchable(
+                text: $searchText,
+                placement: .automatic,
+                prompt: "Search by trip number"
+            )
+            .searchToolbarBehavior(.minimize)
+            .task {
+                guard externalTrips.isEmpty else { return }
+                await viewModel.loadInitial(
+                    context: context,
+                    filter: selectedFilter,
+                    searchText: searchText
+                )
+            }
+            .onChange(of: selectedFilter) { _, newFilter in
+                guard externalTrips.isEmpty else { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: newFilter,
+                        searchText: searchText
+                    )
+                }
+            }
+            .onChange(of: searchText) { _, newSearch in
+                guard externalTrips.isEmpty else { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: newSearch
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -137,32 +177,23 @@ extension TripListView {
     }
 
     var displayedTrips: [Trip] {
-        var filtered: [Trip]
+        var filtered: [Trip] = externalTrips.isEmpty
+            ? viewModel.items
+            : externalTrips
 
-        if externalTrips.count != 0 {
-            filtered = externalTrips
-        } else {
-            filtered = trips
+        // Apply in-memory filter on the currently loaded batch / external list
+        if let status = selectedFilter {
+            filtered = filtered.filter { $0.currentStatus == status }
         }
 
-        filtered = filtered.filter { trip in
-            if selectedFilter == nil {
-                return true
-            } else {
-                return trip.currentStatus == selectedFilter
+        if !searchText.isEmpty {
+            filtered = filtered.filter { trip in
+                let flightMatch = trip.flightNumber
+                    .localizedCaseInsensitiveContains(searchText)
+                let routeMatch = trip.route.name
+                    .localizedCaseInsensitiveContains(searchText)
+                return flightMatch || routeMatch
             }
-        }
-
-        filtered = filtered.filter { trip in
-            if searchText.isEmpty { return true }
-
-            let flightMatch = trip.flightNumber
-                .localizedCaseInsensitiveContains(searchText)
-
-            let routeMatch = trip.route.name
-                .localizedCaseInsensitiveContains(searchText)
-
-            return flightMatch || routeMatch
         }
 
         let sorted = filtered.sorted { lhs, rhs in

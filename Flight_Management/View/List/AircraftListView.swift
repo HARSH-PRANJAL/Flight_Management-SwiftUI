@@ -3,7 +3,9 @@ import SwiftUI
 
 struct AircraftListView: View {
 
-    @Query var aircrafts: [Aircraft]
+    @Environment(\.modelContext) private var context
+
+    @State private var viewModel = AircraftListViewModel()
 
     @State private var selectedSort: AircraftSort = .registration
     @State private var selectedSortOrder: SortOrder = .ascending
@@ -23,6 +25,16 @@ struct AircraftListView: View {
                         ) {
                             ListRow(aircraft: aircraft)
                         }
+                        .onAppear {
+                            if aircraft.id == displayedAircrafts.last?.id {
+                                Task {
+                                    await viewModel.loadMore(
+                                        context: context,
+                                        searchText: searchText
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -41,9 +53,23 @@ struct AircraftListView: View {
         }
         .searchable(
             text: $searchText,
-            prompt: "Search by registration or type"
+            prompt: "Search by registration"
         )
         .searchToolbarBehavior(.minimize)
+        .task {
+            await viewModel.loadInitial(
+                context: context,
+                searchText: searchText
+            )
+        }
+        .onChange(of: searchText) { _, newSearch in
+            Task {
+                await viewModel.loadInitial(
+                    context: context,
+                    searchText: newSearch
+                )
+            }
+        }
         .sheet(isPresented: $showAircraftRegistration) {
             NavigationStack {
                 AircraftRegistrationContent(
@@ -107,18 +133,7 @@ extension AircraftListView {
     }
 
     var displayedAircrafts: [Aircraft] {
-        let filtered = aircrafts.filter { aircraft in
-            if searchText.isEmpty { return true }
-
-            let registrationMatch = aircraft.registrationNumber
-                .localizedCaseInsensitiveContains(searchText)
-            let typeMatch = aircraft.type
-                .localizedCaseInsensitiveContains(searchText)
-
-            return registrationMatch || typeMatch
-        }
-
-        return filtered.sorted { lhs, rhs in
+        let sorted = viewModel.items.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .registration {
@@ -131,6 +146,8 @@ extension AircraftListView {
                 return isAscending ? comparison : !comparison
             }
         }
+
+        return sorted
     }
 }
 
