@@ -9,16 +9,12 @@ struct AircraftDetailScreen: View {
     @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPagePresented: Bool
 
-    var hasTripHistory: Bool {
-        !aircraft.trips.isEmpty
-    }
-
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if !hasTripHistory {
+                if aircraft.trips.isEmpty {
                     detailView
                 } else {
                     switch selectedTab {
@@ -31,7 +27,7 @@ struct AircraftDetailScreen: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    if hasTripHistory {
+                    if !aircraft.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
                     }
                 }
@@ -61,98 +57,80 @@ struct AircraftDetailScreen: View {
     }
 
     var detailView: some View {
-        List {
-            Section {
-                primaryCard
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowBackground(cardTheme())
-            .listRowSeparator(.hidden)
-
-            Section {
-                HStack(spacing: 12) {
-                    CardView(
-                        title: "Total Trips",
-                        value: "\(aircraft.totalTripsOperated)",
-                        subtitle: "",
-                        icon: "airplane.up.right",
-                        iconColor: Color(.systemBlue)
-                    )
-                    CardView(
-                        title: "Flight Hours",
-                        value: String(format: "%.1f", aircraft.totalTripHour),
-                        subtitle: "",
-                        icon: "clock",
-                        iconColor: Color(.systemBrown)
-                    )
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-
-            Section {
-                HStack(spacing: 12) {
-                    CardView(
-                        title: "Seating",
-                        value: "\(aircraft.seatingCapacity)",
-                        subtitle: "capacity",
-                        icon: "person.3",
-                        iconColor: Color(.systemMint)
-                    )
-                    CardView(
-                        title: "Scheduled",
-                        value: "\(aircraft.scheduledTrips.count)",
-                        subtitle: "trips",
-                        icon: "calendar",
-                        iconColor: Color(.systemIndigo)
-                    )
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-
-            if let trip = aircraft.currentTrip {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
                 Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
-                    }
-                } header: {
-                    Label("Current Trip", systemImage: "airplane.departure")
-                        .foregroundStyle(Color(.systemCyan))
+                    primaryCard
                 }
-            }
 
-            if let trip = aircraft.nextScheduledTrip {
                 Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
+                    HStack(spacing: 12) {
+                        CardView(
+                            title: "Scheduled",
+                            value: "\(aircraft.scheduledTrips.count)",
+                            subtitle: "trips",
+                            icon: "calendar",
+                            iconColor: Color(.systemIndigo)
+                        )
+                        CardView(
+                            title: "Flying Hours",
+                            value: String(
+                                format: "%.1f",
+                                aircraft.totalTripHour
+                            ),
+                            subtitle: "  ",
+                            icon: "clock",
+                            iconColor: Color(.systemBrown)
+                        )
                     }
-                } header: {
-                    Label("Next Trip", systemImage: "calendar.badge.clock")
-                        .foregroundStyle(Color(.systemIndigo))
                 }
-            }
 
-            if let trip = aircraft.lastCompletedTrip {
-                Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
-                    }
-                } header: {
-                    Label("Last Trip", systemImage: "checkmark.circle")
-                        .foregroundStyle(Color(.systemGreen))
-                }
+                tripSectionCards
             }
+            .padding(.horizontal, 16)
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .scrollIndicators(.hidden)
     }
 
     var tripHistoryContent: some View {
         TripListView(externalTrips: aircraft.trips, navigationTitle: "")
+    }
+}
+
+// MARK: UI
+extension AircraftDetailScreen {
+
+    var tripSectionCards: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let trip = aircraft.currentTrip {
+                ClickableSection(
+                    title: "Current Flight",
+                    icon: "clock.badge.airplane",
+                    iconColor: Color(.systemCyan),
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
+                )
+            }
+            if let trip = aircraft.nextScheduledTrip {
+                ClickableSection(
+                    title: "Next Flight",
+                    icon: "calendar.badge.clock",
+                    iconColor: Color(.systemIndigo),
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
+                )
+            }
+            if let trip = aircraft.lastCompletedTrip {
+                ClickableSection(
+                    title: "Last Flight",
+                    icon: "checkmark.circle",
+                    iconColor: Color(.systemGreen),
+                    row: { ListRow(trip: trip) },
+                    destination: { TripDetailView(trip: trip) }
+                )
+            }
+        }
+        .padding(.bottom, 16)
     }
 
     var primaryCard: some View {
@@ -185,16 +163,33 @@ struct AircraftDetailScreen: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 DetailRowView(
-                    label: "Seating Capacity",
-                    value: "\(aircraft.seatingCapacity) seats"
+                    label: "Total trips",
+                    value: "\(aircraft.trips.count)"
                 )
-
-                let staffReq = aircraft.minimumStaffRequired.map {
-                    "\($0.key.rawValue): \($0.value)"
-                }.joined(separator: ", ")
                 DetailRowView(
-                    label: "Min Staff Required",
-                    value: staffReq.isEmpty ? "None" : staffReq
+                    label: "Seating capacity",
+                    value: "\(aircraft.seatingCapacity)"
+                )
+                .padding(.bottom, 12)
+                
+                Divider()
+                    .opacity(0.75)
+                    .padding(.bottom, 12)
+                
+                Text("Minimum Staff Required for operation")
+                    .foregroundStyle(Color.gray)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                DetailRowView(
+                    label: "Pilot",
+                    value: "\(aircraft.minimumStaffRequired[.pilot] ?? 0)"
+                )
+                DetailRowView(
+                    label: "Co-Pilot",
+                    value: "\(aircraft.minimumStaffRequired[.coPilot] ?? 0)"
+                )
+                DetailRowView(
+                    label: "Cabin Crew",
+                    value: "\(aircraft.minimumStaffRequired[.cabinCrew] ?? 0)"
                 )
             }
             .fixedSize(horizontal: false, vertical: true)
@@ -218,4 +213,3 @@ struct AircraftDetailScreen: View {
         )
     }
 }
-
