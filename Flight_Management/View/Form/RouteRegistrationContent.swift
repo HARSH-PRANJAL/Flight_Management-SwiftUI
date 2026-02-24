@@ -5,6 +5,7 @@ struct RouteRegistrationContent: View {
     @State var viewModel: RouteRegistrationFormViewModel
     @State var isAirportRegistrationFormDisplayed = false
     @State private var showConfirmCloseAlert = false
+    @State private var showConfirmSaveAlert = false
     @State private var currentDetent: PresentationDetent = .large
 
     var isPresented: Binding<Bool>?
@@ -21,21 +22,17 @@ struct RouteRegistrationContent: View {
             VStack(spacing: 0) {
                 VStack(spacing: 20) {
                     routeNameFieldSection
-                    if !viewModel.isEditMode {
-                        airportsSection
-                    }
+                    airportsSection
                     routeSummarySection
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 20)
 
                 Spacer()
-                if !viewModel.isEditMode {
-                    disclaimerText
-                }
+                disclaimerText
             }
             .navigationTitle(
-                viewModel.isEditMode ? "Update Route" : "Add Route"
+                "Add Route"
             )
             .navigationBarTitleDisplayMode(.inline)
             .onTapGesture {
@@ -93,7 +90,7 @@ struct RouteRegistrationContent: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
-                        handleSave()
+                        showConfirmSaveAlert = true
                     } label: {
                         Image(systemName: "checkmark")
                     }
@@ -114,6 +111,18 @@ struct RouteRegistrationContent: View {
             } message: {
                 Text(
                     "You have unsaved changes. Are you sure you want to discard them?"
+                )
+            }
+            .alert("Discard Changes?", isPresented: $showConfirmSaveAlert) {
+                Button("Save", role: .destructive) {
+                    handleSave()
+                    isPresented?.wrappedValue = false
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text(
+                    "After saving, this route can’t be edited."
                 )
             }
         }
@@ -357,17 +366,12 @@ extension RouteRegistrationContent {
 
     private func handleSave() {
         if viewModel.saveRoute(to: context) {
-            let message =
-                viewModel.isEditMode
-                ? "Route updated successfully" : "Route added successfully"
+            let message = "Route added successfully"
             notificationManager.showSuccess(message)
             isPresented?.wrappedValue = false
             dismiss()
         } else {
-            let message =
-                viewModel.isEditMode
-                ? "Failed to update route. Please try again."
-                : "Failed to add route. Please try again."
+            let message = "Failed to add route. Please try again."
             notificationManager.showError(message)
         }
     }

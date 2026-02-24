@@ -6,8 +6,6 @@ struct RouteDetailView: View {
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
 
-    @State private var isEditPageShowing: Bool = false
-
     var isAdmin: Bool {
         session.user?.role == UserRole.admin.rawValue
     }
@@ -50,23 +48,6 @@ struct RouteDetailView: View {
             }
         }
         .toolbar(.hidden, for: .tabBar)
-        .toolbar {
-            if isAdmin {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { isEditPageShowing = true }) {
-                        Image(systemName: "pencil")
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $isEditPageShowing) {
-            NavigationStack {
-                RouteRegistrationForm(
-                    route: route,
-                    isPresented: $isEditPageShowing
-                )
-            }
-        }
     }
 
     var primaryCard: some View {

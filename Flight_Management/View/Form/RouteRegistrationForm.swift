@@ -10,11 +10,6 @@ struct RouteRegistrationForm: View {
         _viewModel = State(initialValue: RouteRegistrationFormViewModel())
         self.isPresented = isPresented
     }
-    
-    init(route: Route, isPresented: Binding<Bool>? = nil) {
-        _viewModel = State(initialValue: RouteRegistrationFormViewModel(route: route))
-        self.isPresented = isPresented
-    }
 
     var body: some View {
         ZStack {

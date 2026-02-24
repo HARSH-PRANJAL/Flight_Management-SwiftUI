@@ -23,9 +23,6 @@ final class RouteRegistrationFormViewModel {
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
 
-    var isEditMode: Bool = false
-    var routeToEdit: Route?
-
     var originalSnapshot: Snapshot?
     struct Snapshot: Equatable {
         let routeName: String
@@ -45,12 +42,6 @@ final class RouteRegistrationFormViewModel {
     }
 
     init() {}
-
-    init(route: Route) {
-        self.isEditMode = true
-        self.routeToEdit = route
-        self.loadRouteData(route)
-    }
 
     private func loadRouteData(_ route: Route) {
         self.routeName = route.name
