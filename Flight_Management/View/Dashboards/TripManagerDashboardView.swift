@@ -33,17 +33,13 @@ struct TripManagerDashboardView: View {
                             data: tripsSummary,
                             defaultTitle: "Total trips"
                         )
-                        .frame(height: 500)
+                        .frame(maxHeight: 500)
                         .frame(maxWidth: .infinity)
-                        .padding(.top, 16)
+                        .padding(.vertical, 16)
                         .background(
                             cardTheme()
                         )
-                        .padding(.bottom, 16)
                     }
-
-//                    ongoingTrips
-//                    activeStaffCards
                 }
                 .padding(.horizontal, 16)
             }

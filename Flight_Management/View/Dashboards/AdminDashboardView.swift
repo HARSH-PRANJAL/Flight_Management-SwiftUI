@@ -69,9 +69,9 @@ struct AdminDashboardView: View {
                             data: crewStatusCounts,
                             defaultTitle: "Total staff"
                         )
-                        .frame(height: 500)
+                        .frame(maxHeight: 500)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 16)
                         .background(
                             cardTheme()
                         )
