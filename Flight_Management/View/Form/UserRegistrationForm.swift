@@ -109,7 +109,8 @@ struct UserRegistrationForm: View {
                     }
                     .disabled(!viewModel.isDirty)
                     .foregroundStyle(
-                        viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                        viewModel.isDirty
+                            ? Color(.systemBlue) : Color(.systemGray3)
                     )
                     .symbolRenderingMode(.palette)
                 }
@@ -335,22 +336,17 @@ extension UserRegistrationForm {
     private func handleUpdateUser() {
         guard let targetUser = viewModel.userToEdit else { return }
 
-        if !viewModel.checkEmailUniqueness(context: context) {
-            return
-        }
-
-        let trimmedEmail = viewModel.email.trimmingCharacters(
+        targetUser.name = viewModel.name.trimmingCharacters(
             in: .whitespacesAndNewlines
         )
-        targetUser.email = trimmedEmail
 
         if !viewModel.password.isEmpty {
             targetUser.password = viewModel.password
         }
         if let newPhotoData = viewModel.photoData {
             targetUser.profileImage = newPhotoData
+            targetUser.profileBgColor = viewModel.profileBgColor
         }
-        targetUser.profileBgColor = viewModel.profileBgColor
 
         do {
             try context.save()
@@ -358,10 +354,8 @@ extension UserRegistrationForm {
                 session.loginUser(targetUser)
             }
             notificationManager.showSuccess("Profile updated successfully")
-            DispatchQueue.main.asyncAfter(deadline: .now()) {
-                withAnimation(.easeOut) {
-                    isPresented = false
-                }
+            withAnimation(.easeOut) {
+                isPresented = false
             }
         } catch {
             notificationManager.showError(
