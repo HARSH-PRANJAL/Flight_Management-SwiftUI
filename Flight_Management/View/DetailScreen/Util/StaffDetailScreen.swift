@@ -4,16 +4,16 @@ import SwiftUI
 struct StaffDetailScreen: View {
     let staff: Staff
     var isAdmin: Bool = false
-    
+
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
     @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPageShowing: Bool
-    
+
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 if staff.completedTrips.isEmpty {
                     detailView
@@ -28,7 +28,7 @@ struct StaffDetailScreen: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    if !staff.completedTrips.isEmpty {
+                    if !staff.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
                     }
                 }
@@ -48,117 +48,73 @@ struct StaffDetailScreen: View {
             }
         }
     }
-    
+
     var detailView: some View {
-        List {
-            Section {
-                primaryCard
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowBackground(cardTheme())
-            .listRowSeparator(.hidden)
-            
-            if onActionButtonTapped != nil {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
                 Section {
-                    Button {
-                        onActionButtonTapped!()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(
-                                systemName: staff.isMarkedUnavailable
-                                ? "person.badge.plus" : "person.slash"
-                            )
-                            .font(.body.weight(.semibold))
-                            Text(
-                                staff.isMarkedUnavailable
-                                ? "Mark Available" : "Mark Unavailable"
-                            )
-                            .font(.body.weight(.semibold))
-                        }
-                        .foregroundStyle(
-                            staff.isMarkedUnavailable
-                            ? Color(.systemGreen) : Color(.systemRed)
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(
-                                    staff.isMarkedUnavailable
-                                    ? Color(.systemGreen).opacity(0.4)
-                                    : Color(.systemRed).opacity(0.4),
-                                    lineWidth: 1.5
+                    primaryCard
+                }
+
+                if onActionButtonTapped != nil {
+                    Section {
+                        Button {
+                            onActionButtonTapped!()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(
+                                    systemName: staff.isMarkedUnavailable
+                                        ? "person.badge.plus" : "person.slash"
                                 )
+                                .font(.body.weight(.semibold))
+                                Text(
+                                    staff.isMarkedUnavailable
+                                        ? "Mark Available" : "Mark Unavailable"
+                                )
+                                .font(.body.weight(.semibold))
+                            }
+                            .foregroundStyle(
+                                staff.isMarkedUnavailable
+                                    ? Color(.systemGreen) : Color(.systemRed)
+                            )
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(
+                            staff.isMarkedUnavailable
+                                ? Color(.systemGreen)
+                                : Color(.systemRed)
+                        )
+                        .padding(.bottom, 8)
+                    }
+                }
+
+                Section {
+                    HStack(spacing: 12) {
+                        CardView(
+                            title: "Total Trips",
+                            value: "\(staff.trips.count)",
+                            subtitle: "",
+                            icon: "airplane.up.right",
+                            iconColor: Color(.systemBlue)
+                        )
+                        CardView(
+                            title: "Flight Hours",
+                            value: String(format: "%.1f", staff.totalTripHours),
+                            subtitle: "",
+                            icon: "clock",
+                            iconColor: Color(.systemPurple)
                         )
                     }
-                    .buttonStyle(.plain)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(
-                        staff.isMarkedUnavailable
-                        ? Color(.systemGreen).opacity(0.05) : Color(.systemRed).opacity(0.05)
-                    )
-                    .listRowSeparator(.hidden)
+                    .padding(.bottom, 8)
                 }
-            }
-            
-            Section {
-                HStack(spacing: 12) {
-                    CardView(
-                        title: "Total Trips",
-                        value: "\(staff.trips.count)",
-                        subtitle: "",
-                        icon: "airplane.up.right",
-                        iconColor: Color(.systemBlue)
-                    )
-                    CardView(
-                        title: "Flight Hours",
-                        value: String(format: "%.1f", staff.totalTripHours),
-                        subtitle: "",
-                        icon: "clock",
-                        iconColor: Color(.systemPurple)
-                    )
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-            
-            if let trip = staff.currentTrip {
-                Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
-                    }
-                } header: {
-                    Label("Current Flight", systemImage: "clock.badge.airplane")
-                        .foregroundStyle(Color(.systemCyan))
-                }
-            }
-            
-            if let trip = staff.nextScheduledTrip {
-                Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
-                    }
-                } header: {
-                    Label("Next Flight", systemImage: "calendar.badge.clock")
-                        .foregroundStyle(Color(.systemIndigo))
-                }
-            }
-            
-            if let trip = staff.lastCompletedTrip {
-                Section {
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        ListRow(trip: trip)
-                    }
-                } header: {
-                    Label("Last Flight", systemImage: "checkmark.circle")
-                        .foregroundStyle(Color(.systemGreen))
-                }
+
+                flightSectionsCard
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .padding(.horizontal, 16)
+        .scrollIndicators(.hidden)
         .toolbar {
             if isAdmin {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -169,12 +125,46 @@ struct StaffDetailScreen: View {
             }
         }
     }
+    
     var tripHistoryContent: some View {
         TripListView(externalTrips: staff.trips, navigationTitle: "")
     }
 }
 //MARK: UI
 extension StaffDetailScreen {
+
+    var flightSectionsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let trip = staff.currentTrip {
+                ClickableTripSection(
+                    title: "Current Flight",
+                    icon: "clock.badge.airplane",
+                    iconColor: Color(.systemCyan),
+                    trip: trip
+                )
+            }
+            if let trip = staff.nextScheduledTrip {
+                ClickableTripSection(
+                    title: "Next Flight",
+                    icon: "calendar.badge.clock",
+                    iconColor: Color(.systemIndigo),
+                    trip: trip
+                )
+            }
+            if let trip = staff.lastCompletedTrip {
+                ClickableTripSection(
+                    title: "Last Flight",
+                    icon: "checkmark.circle",
+                    iconColor: Color(.systemGreen),
+                    trip: trip
+                )
+            }
+        }
+        .padding(.bottom, 16)
+    }
+
+    
+
     var primaryCard: some View {
         VStack(spacing: 0) {
             displayImage
