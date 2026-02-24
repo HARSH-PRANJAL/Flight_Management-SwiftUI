@@ -30,9 +30,7 @@ struct CardView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 12).fill(
-            Color(.tertiarySystemFill)
-        ))
+        .background(cardTheme())
     }
 }
 
