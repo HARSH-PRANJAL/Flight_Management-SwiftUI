@@ -192,8 +192,8 @@ struct StaffRegistrationContent: View {
             FormDateField(
                 selectedDate: $viewModel.dob,
                 hasError: viewModel.fieldErrors[.date] != nil,
-                minBirthDate: viewModel.minBirthDate,
-                maxBirthDate: viewModel.maxBirthDate
+                minDate: viewModel.maxBirthDate,
+                maxDate: viewModel.minBirthDate
             )
 
             FormErrorMessage(error: viewModel.fieldErrors[.date])

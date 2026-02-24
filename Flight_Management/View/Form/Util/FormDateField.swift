@@ -5,12 +5,16 @@ struct FormDateField: View {
     @Binding var selectedDate: Date
     @State private var showDatePicker = false
 
-    let hasError: Bool
-    let minBirthDate: Date
-    let maxBirthDate: Date
+    var title: String = "Date of birth"
+    var title2: String = "Select date of birth"
+    var format: String = "d MMMM yyyy"
+    var hasError: Bool
+    let minDate: Date
+    let maxDate: Date
+    var datePickerComponents: DatePickerComponents = [.date]
 
     var allowedDateRange: ClosedRange<Date> {
-        maxBirthDate...minBirthDate
+        minDate...maxDate
     }
 
     private var borderColor: Color {
@@ -22,11 +26,11 @@ struct FormDateField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Date of Birth")
+            Text(title)
                 .formFieldLabel()
 
             HStack {
-                Text(formatDate(selectedDate, format: "d MMM yyyy"))
+                Text(formatDate(selectedDate, format: format))
                     .foregroundStyle(
                         Calendar.current.isDateInToday(selectedDate)
                             ? Color(.systemGray3) : Color(.label)
@@ -52,8 +56,8 @@ struct FormDateField: View {
                 showDatePicker = true
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Date of Birth")
-            .accessibilityValue(formatDate(selectedDate, format: "d MMMM yyyy"))
+            .accessibilityLabel(title2)
+            .accessibilityValue(formatDate(selectedDate, format: format))
             .accessibilityHint("Tap to change date")
             .accessibilityAddTraits(.isButton)
         }
@@ -61,11 +65,12 @@ struct FormDateField: View {
             NavigationStack {
                 VStack(spacing: 0) {
                     DatePicker(
-                        "Select date of birth",
+                        title2,
                         selection: $selectedDate,
                         in: allowedDateRange,
-                        displayedComponents: .date
+                        displayedComponents: datePickerComponents
                     )
+                    .environment(\.locale, Locale(identifier: "en_GB"))
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .padding(.horizontal)
@@ -73,7 +78,7 @@ struct FormDateField: View {
 
                     Spacer()
                 }
-                .navigationTitle("Date of Birth")
+                .navigationTitle(title2)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
@@ -101,7 +106,8 @@ struct FormDateField: View {
     FormDateField(
         selectedDate: .constant(Date()),
         hasError: false,
-        minBirthDate: Date(),
-        maxBirthDate: Date()
+        minDate: Date(),
+        maxDate: Date(),
+        datePickerComponents: [.date]
     )
 }
