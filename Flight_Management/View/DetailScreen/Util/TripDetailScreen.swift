@@ -20,104 +20,68 @@ struct TripDetailScreen: View {
     }
 
     var detailView: some View {
-        List {
-            Section {
-                primaryCard
-            }
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowBackground(cardTheme())
-            .listRowSeparator(.hidden)
-
-            if canCancelTrip {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
                 Section {
-                    Button {
-                        onCancelTapped?()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "xmark.circle")
-                                .font(.body.weight(.semibold))
-                            Text("Cancel Trip")
-                                .font(.body.weight(.semibold))
+                    primaryCard
+                }
+
+                if canCancelTrip {
+                    Section {
+                        Button {
+                            onCancelTapped?()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "xmark.circle")
+                                    .font(.body.weight(.semibold))
+                                Text("Cancel Trip")
+                                    .font(.body.weight(.semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
                         }
-                        .foregroundStyle(Color(.systemRed))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color(.systemRed).opacity(0.4), lineWidth: 1.5)
+                        .buttonStyle(.bordered)
+                        .tint(Color(.systemRed))
+                    }
+                }
+
+                Section {
+                    HStack(spacing: 12) {
+                        CardView(
+                            title: "Duration",
+                            value:
+                                "\(trip.route.totalPlannedDurationMinutes) m",
+                            subtitle: "planned",
+                            icon: "clock",
+                            iconColor: Color(.systemBrown)
+                        )
+                        CardView(
+                            title: "Crew",
+                            value: "\(trip.staffs.count)",
+                            subtitle: "assigned",
+                            icon: "person.2",
+                            iconColor: Color(.systemIndigo)
                         )
                     }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowBackground(Color(.systemRed).opacity(0.05))
-                    .listRowSeparator(.hidden)
                 }
-            }
+                .padding(.bottom, 8)
 
-            Section {
-                HStack(spacing: 12) {
-                    CardView(
-                        title: "Duration",
-                        value: "\(trip.route.totalPlannedDurationMinutes)m",
-                        subtitle: "planned",
-                        icon: "clock",
-                        iconColor: Color(.systemBrown)
-                    )
-                    CardView(
-                        title: "Crew",
-                        value: "\(trip.staffs.count)",
-                        subtitle: "assigned",
-                        icon: "person.2",
-                        iconColor: Color(.systemIndigo)
-                    )
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+                ClickableSection(
+                    title: "Assigned Aircraft",
+                    icon: "airplane",
+                    iconColor: Color(.systemBlue),
+                    row: { ListRow(aircraft: trip.aircraft) },
+                    destination: { AircraftDetailView(aircraft: trip.aircraft) }
+                )
+                .padding(.bottom, 8)
 
-            if trip.totalDelayedMinutes > 0 {
-                Section {
-                    CardView(
-                        title: "Delay",
-                        value: String(
-                            format: "%.1f",
-                            Double(trip.route.totalPlannedDurationMinutes) / 60.0
-                        ).appending("hr"),
-                        subtitle: "total",
-                        icon: "exclamationmark.triangle",
-                        iconColor: Color(.systemOrange).opacity(0.75)
-                    )
-                }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-
-            Section {
-                NavigationLink(destination: AircraftDetailView(aircraft: trip.aircraft)) {
-                    ListRow(aircraft: trip.aircraft)
-                }
-            } header: {
-                Label("Assigned Aircraft", systemImage: "airplane")
-                    .foregroundStyle(Color(.systemBlue))
-            }
-
-            if !trip.staffs.isEmpty {
-                Section {
-                    ForEach(trip.staffs, id: \.id) { staff in
-                        NavigationLink(destination: StaffDetailView(staff: staff)) {
-                            ListRow(staff: staff)
-                        }
-                    }
-                } header: {
-                    Label("Flight Crew", systemImage: "person.2")
-                        .foregroundStyle(Color(.systemIndigo))
+                if !trip.staffs.isEmpty {
+                    assignedStaffList
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .scrollIndicators(.hidden)
+        .padding(.horizontal, 16)
     }
 
     var primaryCard: some View {
@@ -166,6 +130,12 @@ struct TripDetailScreen: View {
                         format: "dd MMM yyyy, HH:mm"
                     )
                 )
+                if trip.currentStatus == .delayed {
+                    DetailRowView(
+                        label: "Delayed by",
+                        value: "\(trip.totalDelayedMinutes) m"
+                    )
+                }
 
                 let origin = trip.route.nodes.first?.airport.code ?? "—"
                 let dest = trip.route.nodes.last?.airport.code ?? "—"
@@ -180,48 +150,45 @@ struct TripDetailScreen: View {
 
 }
 
-//#Preview {
-//    NavigationStack {
-//        let mockRoute = Route(name: "New York to London")
-//        mockRoute.nodes = [
-//            RouteNode(
-//                plannedArrivalOffsetMinutes: 0,
-//                airport: Airport(code: "JFK", name: "John F. Kennedy", city: "New York", country: "USA")
-//            ),
-//            RouteNode(
-//                plannedArrivalOffsetMinutes: 480,
-//                airport: Airport(code: "LHR", name: "London Heathrow", city: "London", country: "UK")
-//            ),
-//        ]
-//
-//        let mockAircraft = Aircraft(
-//            registrationNumber: "N12345",
-//            type: "Boeing 737",
-//            seatingCapacity: 180,
-//            minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
-//        )
-//
-//        let mockStaff = Staff(
-//            name: "John Doe",
-//            designation: .pilot,
-//            gender: .male,
-//            email: "john@example.com",
-//            dob: Date()
-//        )
-//
-//        let mockTrip = Trip(
-//            staff: [mockStaff],
-//            aircraft: mockAircraft,
-//            nodeStatuses: [],
-//            route: mockRoute,
-//            scheduledDepartureTime: Date().addingTimeInterval(3600),
-//            flightNumber: "AA-100",
-//            isCancelled: false
-//        )
-//
-//        TripDetailScreen(
-//            trip: mockTrip,
-//            onCancelTapped: {}
-//        )
-//    }
-//}
+extension TripDetailScreen {
+
+    @ViewBuilder
+    var assignedStaffList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text("Flight Crew")
+                    .font(.subheadline.weight(.semibold))
+            } icon: {
+                Image(systemName: "person.2")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.systemBlue))
+            }
+
+            VStack(spacing: 0) {
+                ForEach(trip.staffs, id: \.id) { staff in
+
+                    NavigationLink(
+                        destination: StaffDetailView(staff: staff)
+                    ) {
+                        HStack {
+                            ListRow(staff: staff)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.subheadline.smallCaps())
+                                .foregroundStyle(Color(.tertiaryLabel))
+                                .padding(.trailing, 12)
+                        }
+                        .padding(12)
+                    }
+                    if staff.id != trip.staffs.last?.id {
+                        Divider()
+                            .padding(.leading, 16)
+                    }
+                }
+            }
+            .buttonStyle(PressableRowStyle())
+            .background(cardTheme())
+        }
+        .padding(.bottom, 16)
+    }
+}
