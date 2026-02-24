@@ -6,6 +6,7 @@ struct DonutChartView: View {
     let defaultTitle: String
 
     @State private var selectedCategory: String? = nil
+    @State private var selectedAngle: Double? = nil
 
     var total: Int {
         data.reduce(0) { $0 + $1.count }
@@ -30,10 +31,9 @@ struct DonutChartView: View {
                 chartView
                 legendView
             }
+            .animation(.smooth, value: selectedCategory)
+            .animation(.smooth, value: selectedAngle)
             .padding(.horizontal)
-            .onDisappear {
-                selectedCategory = nil
-            }
         }
     }
 
@@ -55,54 +55,76 @@ struct DonutChartView: View {
             )
         }
         .frame(minWidth: 250, maxWidth: 500, minHeight: 250, maxHeight: 500)
+        .chartAngleSelection(value: $selectedAngle)
+        .onChange(of: selectedAngle) { oldValue, newValue in
+            guard let angle = newValue else {
+                selectedCategory = nil
+                return
+            }
+
+            // Convert angle to category
+            var cumulative: Double = 0
+
+            for item in data {
+                cumulative += Double(item.count)
+                if angle <= cumulative {
+                    selectedCategory = item.category
+                    break
+                }
+            }
+        }
         .chartBackground { proxy in
             GeometryReader { geo in
                 if let plotFrame = proxy.plotFrame {
                     let frame = geo[plotFrame]
                     let center = CGPoint(x: frame.midX, y: frame.midY)
 
-                    VStack(spacing: 6) {
-                        Text(selectedCategory ?? defaultTitle)
-                            .font(
-                                .system(
-                                    .title3,
-                                    design: .rounded,
-                                    weight: selectedCategory != nil
-                                        ? .bold : .medium
-                                )
-                            )
-                            .foregroundStyle(
-                                selectedCategory != nil ? .primary : .secondary
-                            )
-
-                        if let cat = selectedCategory,
-                            let item = data.first(where: { $0.category == cat })
-                        {
-                            Text(
-                                "\(item.count) • \(percentage(for: item.count))%"
-                            )
-                            .font(
-                                .system(
-                                    .title3,
-                                    design: .rounded,
-                                    weight: .semibold
-                                )
-                            )
-                            .foregroundStyle(item.color)
-                        } else {
-                            Text("\(total)")
-                                .font(
-                                    .system(
-                                        .title2,
-                                        design: .rounded,
-                                        weight: .bold
-                                    )
-                                )
-                        }
-                    }
-                    .multilineTextAlignment(.center)
-                    .position(center)
+                    internalLegendView
+                        .multilineTextAlignment(.center)
+                        .position(center)
                 }
+            }
+        }
+    }
+
+    private var internalLegendView: some View {
+        VStack(spacing: 6) {
+            Text(selectedCategory ?? defaultTitle)
+                .font(
+                    .system(
+                        .title3,
+                        design: .rounded,
+                        weight: selectedCategory != nil
+                            ? .bold : .medium
+                    )
+                )
+                .foregroundStyle(
+                    selectedCategory != nil ? .primary : .secondary
+                )
+
+            if let cat = selectedCategory,
+                let item = data.first(where: { $0.category == cat })
+            {
+                Text(
+                    "\(item.count) • \(percentage(for: item.count))%"
+                )
+                .font(
+                    .system(
+                        .title3,
+                        design: .rounded,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(item.color)
+            } else {
+                Text("\(total)")
+                    .font(
+                        .system(
+                            .title2,
+                            design: .rounded,
+                            weight: .bold
+                        )
+                    )
             }
         }
     }
