@@ -14,24 +14,6 @@ struct UpcomingTripCard: View {
 
     var body: some View {
         HStack {
-            //            Image(systemName: "airplane")
-            //                .font(.system(size: 22))
-            //                .foregroundColor(.blue)
-            //                .padding(.leading, 8)
-            //
-            //            VStack(alignment: .leading, spacing: 6) {
-            //                Text(trip.flightNumber)
-            //                    .font(.headline)
-            //                HStack {
-            //                    Text(departure)
-            //                        .font(.subheadline)
-            //                        .foregroundColor(.secondary)
-            //                    Spacer()
-            //                    Text(arrival)
-            //                        .font(.subheadline)
-            //                        .foregroundColor(.secondary)
-            //                }
-            //            }
             CardView(
                 title: trip.flightNumber,
                 value: departure,
