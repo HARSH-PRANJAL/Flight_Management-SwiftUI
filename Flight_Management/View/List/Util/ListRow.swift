@@ -86,9 +86,13 @@ extension ListRow {
         if let trip = staff.currentTrip {
             meta = "Current: \(trip.flightNumber)"
         } else if let next = staff.nextScheduledTrip {
-            meta = "Next: \(next.flightNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
+            meta =
+                "Next: \(next.flightNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
         } else {
-            meta = String(format: "%.0fh total • \(staff.completedTrips.count) trips", staff.totalTripHours)
+            meta = String(
+                format: "%.0fh total • \(staff.completedTrips.count) trips",
+                staff.totalTripHours
+            )
         }
         self.init(
             profileImage: staff.avatarImage,
@@ -101,7 +105,8 @@ extension ListRow {
     }
 
     init(aircraft: Aircraft) {
-        let meta = "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
+        let meta =
+            "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
         self.init(
             profileImage: nil,
             title: aircraft.registrationNumber,
@@ -112,13 +117,22 @@ extension ListRow {
     }
 
     init(trip: Trip) {
-        let origin = trip.route.nodes.first?.airport.code ?? "_"
-        let dest = trip.route.nodes.last?.airport.code ?? "_"
-        let meta = "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
+        let origin =
+            trip.route.nodes.first(where: { $0.sequence == 1 })?.airport.code
+            ?? "_"
+        let dest =
+            trip.route.nodes.first(where: {
+                $0.sequence == trip.route.nodes.count
+            })?.airport.code ?? "_"
+        let meta =
+            "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
         self.init(
             profileImage: nil,
             title: trip.flightNumber,
-            subtitle: formatDate(trip.scheduledDepartureTime, format: "dd MMM, HH:mm"),
+            subtitle: formatDate(
+                trip.scheduledDepartureTime,
+                format: "dd MMM, HH:mm"
+            ),
             metadata: meta,
             status: .from(tripStatus: trip.currentStatus),
             associatedTrip: trip
@@ -128,7 +142,10 @@ extension ListRow {
     init(route: Route) {
         let origin = route.nodes.first?.airport.code ?? "_"
         let dest = route.nodes.last?.airport.code ?? "_"
-        let meta = route.nodes.isEmpty ? "\(route.trips.count) trips" : "\(origin) → \(dest) • \(route.totalPlannedDurationMinutes)min • \(route.trips.count) trips"
+        let meta =
+            route.nodes.isEmpty
+            ? "\(route.trips.count) trips"
+            : "\(origin) → \(dest) • \(route.totalPlannedDurationMinutes)min • \(route.trips.count) trips"
         self.init(
             profileImage: nil,
             title: route.name,
