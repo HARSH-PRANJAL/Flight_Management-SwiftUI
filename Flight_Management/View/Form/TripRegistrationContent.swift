@@ -84,7 +84,7 @@ struct TripRegistrationContent: View {
                 "You have unsaved changes. Are you sure you want to discard them?"
             )
         }
-        .alert("Discard Changes?", isPresented: $showConfirmSaveAlert) {
+        .alert("Schedule Trip?", isPresented: $showConfirmSaveAlert) {
             Button("Save", role: .destructive) {
                 handleRegistration()
                 isPresented?.wrappedValue = false
@@ -93,7 +93,7 @@ struct TripRegistrationContent: View {
             Button("Keep Editing", role: .cancel) {}
         } message: {
             Text(
-                "After saving, this trip can’t be edited."
+                "After saving, this trip can’t be edited and only be cancelled."
             )
         }
     }

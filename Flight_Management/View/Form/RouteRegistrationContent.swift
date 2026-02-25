@@ -113,8 +113,8 @@ struct RouteRegistrationContent: View {
                     "You have unsaved changes. Are you sure you want to discard them?"
                 )
             }
-            .alert("Discard Changes?", isPresented: $showConfirmSaveAlert) {
-                Button("Save", role: .destructive) {
+            .alert("Add route?", isPresented: $showConfirmSaveAlert) {
+                Button("Add", role: .destructive) {
                     handleSave()
                     isPresented?.wrappedValue = false
                     dismiss()
