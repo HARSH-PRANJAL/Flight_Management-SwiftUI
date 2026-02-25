@@ -33,6 +33,14 @@ struct StaffDetailView: View {
         !staff.scheduledTrips.isEmpty
     }
 
+    var tripString: String {
+        if staff.scheduledTrips.count <= 1 {
+            return "trip"
+        }
+
+        return "trips"
+    }
+
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground)
@@ -65,24 +73,30 @@ struct StaffDetailView: View {
                 }
             )
         }
-
-        // Alert: Combined unavailable flow - shows future trips will be canceled + option to find replacement
         .alert("Mark Staff Unavailable", isPresented: $showMarkUnavailableAlert)
         {
             Button("Cancel", role: .cancel) {}
-            Button(
-                "Find Replacement",
-                role: .confirm,
-                action: findReplacementStaff
-            )
+            if isStaffOnDuty {
+                Button(
+                    "Find Replacement",
+                    role: .confirm,
+                    action: findReplacementStaff
+                )
+            } else {
+                Button(
+                    "Mark Unavailable",
+                    role: .destructive,
+                    action: markStaffUnavailableIncludingCurrentTrip
+                )
+            }
         } message: {
             if isStaffOnDuty {
                 Text(
-                    "\(staff.name) is currently assigned to a trip. \(staff.scheduledTrips.count != 0 ? "Additionally, they have \(staff.scheduledTrips.count) scheduled trip(s) that will be canceled." : "")\n\nWould you like to find a replacement for current trip (only)?"
+                    "\(staff.name) is currently assigned to a trip. \(staff.scheduledTrips.count != 0 ? "Additionally, they have \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled." : "")\n\nWould you like to find a replacement for current trip (only)?"
                 )
             } else {
                 Text(
-                    "\(staff.scheduledTrips.count != 0 ? "\(staff.name) has \(staff.scheduledTrips.count) scheduled trip(s) that will be canceled." : "")\n\nMark as unavailable?"
+                    "\(staff.scheduledTrips.count != 0 ? "\(staff.name) has \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled." : "No future trips are scheduled for this staff.")\n\nMark as unavailable?"
                 )
             }
         }
