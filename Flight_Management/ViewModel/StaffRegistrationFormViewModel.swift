@@ -140,7 +140,7 @@ extension StaffRegistrationFormViewModel {
 
     func validateDateOfBirth() -> Bool {
         if Calendar.current.isDateInToday(dob) {
-            fieldErrors[.date] = "Dob can not be empty."
+            fieldErrors[.date] = "Date of birth can not be empty."
             return false
         }
         
