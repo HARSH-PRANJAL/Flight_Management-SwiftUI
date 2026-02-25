@@ -5,102 +5,70 @@ struct ReplaceStaffSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
 
+    @State var searchedText: String = ""
+
     var currentStaff: Staff
     var availableStaffList: [Staff]
     var onReplacement: (Staff) -> Void
+
+    var displayedStaff: [Staff] {
+        return searchedText.isEmpty
+            ? availableStaffList
+            : availableStaffList.filter {
+                $0.name.localizedCaseInsensitiveContains(searchedText)
+            }
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(.systemGroupedBackground).ignoresSafeArea()
-
-                if availableStaffList.isEmpty {
-                    VStack(spacing: 16) {
-                        fallbackNoStaffDataImage()
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(Color(.systemGray3))
-                        Text("No Available Staff")
-                            .font(.headline)
-                        Text(
-                            "There are no available staff members with the designation \(currentStaff.designation.rawValue) to replace this crew member."
-                        )
-                        .font(.body)
-                        .foregroundStyle(Color(.systemGray))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-                    }
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: .infinity,
-                        alignment: .center
-                    )
-                } else {
-                    List {
-                        ForEach(availableStaffList) { staff in
-                            Button(action: {
-                                onReplacement(staff)
-                                dismiss()
-                            }) {
-                                HStack(spacing: 12) {
-                                    Group {
-                                        if let avatarImage = staff.avatarImage {
-                                            avatarImage
-                                                .resizable()
-                                                .clipShape(Circle())
-                                        } else {
-                                            fallbackStaffImage()
-                                        }
-                                    }
-                                    .frame(width: 48, height: 48)
-                                    .overlay {
-                                        Circle()
-                                            .stroke(Color(.systemGray4), lineWidth: 1)
-                                    }
-
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(staff.name)
-                                            .font(.headline)
-                                            .foregroundStyle(Color.primary)
-                                        Text(staff.designation.rawValue)
-                                            .font(.caption)
-                                            .foregroundStyle(Color(.systemGray))
-                                    }
+                Group {
+                    if displayedStaff.isEmpty {
+                        fallbackBackground
+                    } else {
+                        List {
+                            ForEach(displayedStaff) { staff in
+                                Button(action: {
+                                    onReplacement(staff)
+                                    dismiss()
+                                }) {
+                                    ListRow(staff: staff)
                                 }
-                                .padding(.vertical, 8)
                             }
                         }
-                    }
-                    .listStyle(.plain)
-                }
-            }
-            .navigationTitle("Select Replacement Staff")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
+                        .listStyle(.insetGrouped)
+                        .scrollDismissesKeyboard(.immediately)
                     }
                 }
+                .navigationTitle("Select Replacement Staff")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                }
+                .searchable(
+                    text: $searchedText,
+                    placement: .automatic,
+                    prompt: "Search by name"
+                )
             }
         }
     }
+}
 
-    private func isFirstTrip(for staff: Staff) -> Bool {
-        return staff.trips.count == 0
-    }
-    private func lastTripCompletedOn(for staff: Staff) -> String {
-        guard let lastCompletedTrip = staff.lastCompletedTrip else {
-            print("no last completed")
-            return ""
+extension ReplaceStaffSheet {
+    var fallbackBackground: some View {
+        ContentUnavailableView {
+            Image(systemName: "person.2")
+        } description: {
+            Text("No staff")
         }
-
-        return formatDate(
-            lastCompletedTrip.estimatedArrivalTime,
-            format: "d MMMM yyyy"
-        )
     }
 }
 
