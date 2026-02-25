@@ -1,16 +1,11 @@
 import SwiftData
 import SwiftUI
 
-enum SortOrder: String, CaseIterable {
-    case ascending = "Ascending"
-    case descending = "Descending"
-}
-
 struct TripListView: View {
 
     var externalTrips: [Trip] = []
     var navigationTitle: String = "Trip List"
-    var requiredFilters: [TripStatus]? = nil
+    var requiredFilters: [TripStatus] = TripStatus.allCases
 
     @Environment(\.modelContext) private var context
 
@@ -99,31 +94,33 @@ extension TripListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Section("Filter by") {
-                    VStack(spacing: 0) {
-                        Button {
-                            selectedFilter = nil
-                        } label: {
-                            HStack {
-                                Text("All")
-                                if selectedFilter == nil {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                        ForEach(
-                            filterOptions,
-                            id: \.self
-                        ) { filter in
+                if !requiredFilters.isEmpty {
+                    Section("Filter by") {
+                        VStack(spacing: 0) {
                             Button {
-                                selectedFilter = filter
+                                selectedFilter = nil
                             } label: {
                                 HStack {
-                                    Text(filter.rawValue)
-                                    if selectedFilter == filter {
+                                    Text("All")
+                                    if selectedFilter == nil {
                                         Spacer()
                                         Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            ForEach(
+                                requiredFilters,
+                                id: \.self
+                            ) { filter in
+                                Button {
+                                    selectedFilter = filter
+                                } label: {
+                                    HStack {
+                                        Text(filter.rawValue)
+                                        if selectedFilter == filter {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
                                     }
                                 }
                             }
@@ -169,15 +166,7 @@ extension TripListView {
 
 // MARK: Fallback and Filter Data
 extension TripListView {
-    
-    var filterOptions: [TripStatus] {
-        guard let requiredFilters else {
-            return TripStatus.allCases
-        }
-        
-        return requiredFilters
-    }
-    
+
     var fallbackBackground: some View {
         ContentUnavailableView {
             Label("No Trips", systemImage: "airplane.departure")
@@ -187,7 +176,8 @@ extension TripListView {
     }
 
     var displayedTrips: [Trip] {
-        var filtered: [Trip] = externalTrips.isEmpty
+        var filtered: [Trip] =
+            externalTrips.isEmpty
             ? viewModel.items
             : externalTrips
 
