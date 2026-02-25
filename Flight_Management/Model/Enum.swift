@@ -11,6 +11,11 @@ enum StaffRole: String, Codable, CaseIterable {
     case cabinCrew = "Cabin Crew"
 }
 
+enum SortOrder: String, CaseIterable {
+    case ascending = "Ascending"
+    case descending = "Descending"
+}
+
 enum TripStatus: String, Codable, CaseIterable {
     case scheduled = "Scheduled"
     case onTime = "On-time"
