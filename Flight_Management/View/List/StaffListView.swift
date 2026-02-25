@@ -186,7 +186,7 @@ extension StaffListView {
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison =
-                    lhs.currentStatus.rawValue < rhs.currentStatus.rawValue
+                    lhs.totalTripHours < rhs.totalTripHours
                 return isAscending ? comparison : !comparison
             }
         }
