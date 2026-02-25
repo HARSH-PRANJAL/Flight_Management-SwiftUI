@@ -37,6 +37,7 @@ struct AircraftListView: View {
                         }
                     }
                 }
+                .scrollDismissesKeyboard(.immediately)
                 .listStyle(.insetGrouped)
             }
         }

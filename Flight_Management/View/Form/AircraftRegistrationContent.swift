@@ -44,6 +44,8 @@ struct AircraftRegistrationContent: View {
             .navigationTitle(aircraft != nil ? "Update Aircraft" : "Add Aircraft")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.immediately)
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
         }

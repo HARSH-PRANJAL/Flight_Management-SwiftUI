@@ -40,6 +40,8 @@ struct StaffRegistrationContent: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.immediately)
         .presentationDetents([.large, .height(650)], selection: $currentDetent)
         .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled(viewModel.isDirty)

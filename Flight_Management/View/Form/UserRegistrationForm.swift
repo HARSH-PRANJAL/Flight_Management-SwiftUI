@@ -50,6 +50,7 @@ struct UserRegistrationForm: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.immediately)
             .presentationDetents(
                 [.large, .height(650)],
                 selection: $currentDetent

@@ -34,6 +34,7 @@ struct RouteListView: View {
                             }
                         }
                     }
+                    .scrollDismissesKeyboard(.immediately)
                     .listStyle(.insetGrouped)
                 }
             }

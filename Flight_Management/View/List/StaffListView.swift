@@ -43,6 +43,7 @@ struct StaffListView: View {
                             }
                         }
                     }
+                    .scrollDismissesKeyboard(.immediately)
                     .listStyle(.insetGrouped)
                 }
             }

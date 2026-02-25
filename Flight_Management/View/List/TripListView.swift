@@ -43,6 +43,7 @@ struct TripListView: View {
                             }
                         }
                     }
+                    .scrollDismissesKeyboard(.immediately)
                     .listStyle(.insetGrouped)
                 }
             }

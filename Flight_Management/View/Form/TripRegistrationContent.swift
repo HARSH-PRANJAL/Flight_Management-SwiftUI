@@ -48,6 +48,8 @@ struct TripRegistrationContent: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .padding(.vertical)
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.immediately)
         .presentationDetents(
             [.large, .height(650)],
             selection: $currentDetent
