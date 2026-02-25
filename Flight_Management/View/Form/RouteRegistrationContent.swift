@@ -90,7 +90,9 @@ struct RouteRegistrationContent: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
-                        showConfirmSaveAlert = true
+                        if viewModel.validateAll() {
+                            showConfirmSaveAlert = true
+                        }
                     } label: {
                         Image(systemName: "checkmark")
                     }
