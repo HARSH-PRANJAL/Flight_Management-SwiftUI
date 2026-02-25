@@ -10,10 +10,12 @@ final class NotificationManager {
     private var dismissTimer: Timer?
     private let audioEngine = AudioEngine()
     
+    deinit {
+        dismissTimer?.invalidate()
+    }
+    
     func showSuccess(_ message: String) {
         notification = .success(message: message)
-//        playSuccessSound()
-//        triggerSuccessHaptic()
         scheduleDismissal()
     }
     
