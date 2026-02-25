@@ -15,7 +15,7 @@ struct SplashView: View {
                 ZStack {
                     Color(.systemBackground).ignoresSafeArea()
                     VStack(spacing: 16) {
-                        Image("AppIcon")
+                        Image("AppIconPreview")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 120, height: 120)
@@ -27,19 +27,22 @@ struct SplashView: View {
                     .padding(16)
                 }
                 .onAppear {
-                    Task {
-                        let start = Date()
-                        await DemoDataAPI.seedIfNeeded(in: context)
-                        DemoDataAPI.startAutoUpdates(in: context)
-                        let elapsed = Date().timeIntervalSince(start)
-                        let minDelay: TimeInterval = 0.5
-                        if elapsed < minDelay {
-                            do { try await Task.sleep(nanoseconds: UInt64((minDelay - elapsed) * 1_000_000_000)) } catch { }
-                        }
-                        await MainActor.run {
-                            withAnimation(.easeOut) {
-                                showContent = true
-                            }
+                    DemoDataAPI.startAutoUpdates(in: context)
+                }
+                .task {
+                    let start = Date()
+
+                    await DemoDataAPI.seedIfNeeded(in: context)
+
+                    let duration = Date().timeIntervalSince(start)
+                    print("Seeding took \(duration) seconds")
+                    if duration < 0.5 {
+                        try? await Task.sleep(for: .seconds(1.0 - duration))
+                    }
+                    
+                    await MainActor.run {
+                        withAnimation(.easeOut) {
+                            showContent = true
                         }
                     }
                 }
