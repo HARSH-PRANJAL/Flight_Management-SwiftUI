@@ -21,16 +21,16 @@ struct AdminDashboardView: View {
                             subtitle: "Flights today",
                             icon: "clock.fill",
                             iconColor: Color(.systemGreen).opacity(0.75)
-                            )
+                        )
 
                         CardView(
                             title: "Delayed Flights",
                             value: "\(delayedCount)",
                             subtitle: "Today",
                             icon: "airplane.departure",
-                            iconColor: Color(.systemRed).opacity(0.75))
+                            iconColor: Color(.systemRed).opacity(0.75)
+                        )
                     }
-                    .padding(.horizontal, 16)
 
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
@@ -53,7 +53,6 @@ struct AdminDashboardView: View {
                             cardTheme()
                         )
                     }
-                    .padding(.horizontal, 16)
 
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
@@ -76,18 +75,16 @@ struct AdminDashboardView: View {
                             cardTheme()
                         )
                     }
-                    .padding(.horizontal, 16)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Upcoming Flights")
+                            .font(.headline)
+                        Text("Next 6 hours")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
 
-                    if upcomingTrips.count != 0 {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Upcoming Flights")
-                                .font(.headline)
-                            Text("Next 6 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-
-                            UpcomingTripsScrollView(trips: upcomingTrips)
-                                .frame(height: 140)
+                        UpcomingTripsScrollView(trips: upcomingTrips)
+                        if upcomingTrips.count > 3 {
                             HStack {
                                 Spacer()
                                 Button("View more") {
@@ -97,18 +94,34 @@ struct AdminDashboardView: View {
                                 .tint(Color(.systemBlue))
                             }
                         }
-                        .padding(.horizontal, 16)
                     }
 
                     Spacer(minLength: 24)
                 }
                 .padding(.top, 16)
+                .padding(.horizontal, 16)
             }
             .navigationTitle("Admin")
             .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showingTripList) {
-            TripListView(externalTrips: upcomingTrips)
+            NavigationStack {
+                TripListView(
+                    externalTrips: upcomingTrips,
+                    navigationTitle: "Trips in next 6 hours",
+                    requiredFilters: [.scheduled, .cancelled]
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            showingTripList = false
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+
+                    }
+                }
+            }
         }
     }
 }
@@ -123,7 +136,9 @@ extension AdminDashboardView {
     }
 
     private var onTimePercentage: Int {
-        let total = todayTrips.filter { !$0.isCancelled && $0.currentStatus != .scheduled && !$0.isCompleted }.count
+        let total = todayTrips.filter {
+            !$0.isCancelled && $0.currentStatus != .scheduled && !$0.isCompleted
+        }.count
         guard total > 0 else { return 100 }
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         return Int((Double(onTime) / Double(total)) * 100)
@@ -141,10 +156,22 @@ extension AdminDashboardView {
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
         return [
-            (category: "On-Time", count: onTime, color: Color.tripStatusColor(for: .onTime)),
-            (category: "Delayed", count: delayed, color: Color.tripStatusColor(for: .delayed)),
-            (category: "Cancelled", count: cancelled, color: Color.tripStatusColor(for: .cancelled)),
-            (category: "Scheduled", count: scheduled, color: Color.tripStatusColor(for: .scheduled)),
+            (
+                category: "On-Time", count: onTime,
+                color: Color.tripStatusColor(for: .onTime)
+            ),
+            (
+                category: "Delayed", count: delayed,
+                color: Color.tripStatusColor(for: .delayed)
+            ),
+            (
+                category: "Cancelled", count: cancelled,
+                color: Color.tripStatusColor(for: .cancelled)
+            ),
+            (
+                category: "Scheduled", count: scheduled,
+                color: Color.tripStatusColor(for: .scheduled)
+            ),
         ]
     }
 
@@ -154,9 +181,18 @@ extension AdminDashboardView {
         let unavailable = staffs.filter { $0.currentStatus == .unavailable }
             .count
         return [
-            (category: "Available", count: available, color: Color.staffStatusColor(for: .available)),
-            (category: "On Duty", count: onDuty, color: Color.staffStatusColor(for: .onDuty)),
-            (category: "Unavailable", count: unavailable, color: Color.staffStatusColor(for: .unavailable)),
+            (
+                category: "Available", count: available,
+                color: Color.staffStatusColor(for: .available)
+            ),
+            (
+                category: "On Duty", count: onDuty,
+                color: Color.staffStatusColor(for: .onDuty)
+            ),
+            (
+                category: "Unavailable", count: unavailable,
+                color: Color.staffStatusColor(for: .unavailable)
+            ),
         ]
     }
 
@@ -165,7 +201,7 @@ extension AdminDashboardView {
         let until =
             Calendar.current.date(byAdding: .hour, value: 6, to: now) ?? now
         return trips.filter {
-            $0.currentStatus == .scheduled && !$0.isCancelled && !$0.isCompleted
+            !$0.isCompleted
                 && $0.scheduledDepartureTime >= now
                 && $0.scheduledDepartureTime <= until
         }

@@ -14,31 +14,36 @@ struct UpcomingTripCard: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "airplane")
-                .font(.system(size: 22))
-                .foregroundColor(.blue)
-                .padding(.leading, 8)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(trip.flightNumber)
-                    .font(.headline)
-                HStack {
-                    Text(departure)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text(arrival)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
+            //            Image(systemName: "airplane")
+            //                .font(.system(size: 22))
+            //                .foregroundColor(.blue)
+            //                .padding(.leading, 8)
+            //
+            //            VStack(alignment: .leading, spacing: 6) {
+            //                Text(trip.flightNumber)
+            //                    .font(.headline)
+            //                HStack {
+            //                    Text(departure)
+            //                        .font(.subheadline)
+            //                        .foregroundColor(.secondary)
+            //                    Spacer()
+            //                    Text(arrival)
+            //                        .font(.subheadline)
+            //                        .foregroundColor(.secondary)
+            //                }
+            //            }
+            CardView(
+                title: trip.flightNumber,
+                value: departure,
+                subtitle: "Planned arrival: \(arrival)",
+                icon: "airplane",
+                iconColor: Color(.systemBlue)
+            )
             .padding(.horizontal, 8)
 
             Spacer()
         }
-        .frame(width: 300, height: 100)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color(.systemBackground)))
-        .shadow(color: Color.black.opacity(0.03), radius: 2, x: 0, y: 1)
+        .frame(width: 220, height: 100)
     }
 }
 

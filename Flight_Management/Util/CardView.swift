@@ -14,7 +14,7 @@ struct CardView: View {
                     Text(title)
                         .font(.headline)
                     Text(value)
-                        .font(.title)
+                        .font(.title3)
                         .fontWeight(.semibold)
                 }
                 Spacer()
