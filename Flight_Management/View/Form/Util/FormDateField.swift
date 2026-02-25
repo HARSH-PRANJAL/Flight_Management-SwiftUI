@@ -24,6 +24,13 @@ struct FormDateField: View {
         return Color(.systemGray2)
     }
 
+    private var isAcceptedDate: Bool {
+        if datePickerComponents.contains(.hourAndMinute) {
+            return selectedDate > Date()
+        }
+        return !Calendar.current.isDateInToday(selectedDate)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
@@ -32,8 +39,8 @@ struct FormDateField: View {
             HStack {
                 Text(formatDate(selectedDate, format: format))
                     .foregroundStyle(
-                        Calendar.current.isDateInToday(selectedDate)
-                            ? Color(.systemGray3) : Color(.label)
+                        isAcceptedDate
+                        ? Color(.label) : Color(.systemGray3)
                     )
 
                 Spacer()
