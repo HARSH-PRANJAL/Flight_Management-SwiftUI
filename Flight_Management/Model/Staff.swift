@@ -92,10 +92,15 @@ class Staff {
 
     // True if the staff has no overlapping trip (scheduled or in progress) in the window.
     func isAvailable(from: Date, to: Date) -> Bool {
-        return !trips.contains(where: {
-            !$0.isCancelled && !$0.isCompleted
-                && $0.estimatedArrivalTime > from
-                && $0.scheduledDepartureTime < to
+
+        return !trips.contains(where: { trip in
+
+            guard !trip.isCancelled && !trip.isCompleted else { return false }
+
+            let departure = trip.scheduledDepartureTime
+            let arrival = trip.estimatedArrivalTime
+
+            return departure < to && arrival > from
         })
     }
 
@@ -128,4 +133,10 @@ class Staff {
         self.currentTrip = nil
         self.isMarkedUnavailable = true
     }
+}
+
+extension Date {
+    func roundedToDay() -> Date {
+            Calendar.current.startOfDay(for: self)
+        }
 }

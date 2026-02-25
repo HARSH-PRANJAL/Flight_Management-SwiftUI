@@ -36,14 +36,15 @@ class Aircraft {
     }
 
     var totalTripHour: Double {
-        let result = trips.filter({
-            $0.isCompleted == true || $0.isCancelled == true
-        }).reduce(0.0) {
-            $0
-                + $1.estimatedArrivalTime.timeIntervalSince(
-                    $1.scheduledDepartureTime
-                )
-        } / 3600.0
+        let result =
+            trips.filter({
+                $0.isCompleted == true || $0.isCancelled == true
+            }).reduce(0.0) {
+                $0
+                    + $1.estimatedArrivalTime.timeIntervalSince(
+                        $1.scheduledDepartureTime
+                    )
+            } / 3600.0
         return max(result, 0)
     }
 
@@ -88,18 +89,22 @@ class Aircraft {
     }
 
     // True if the aircraft has no overlapping trip in the window and enough staff (by role) are available.
-    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int])
-        -> Bool
-    {
+    func isAvailable(from: Date, to: Date, availableStaff: [StaffRole: Int]) -> Bool {
+
         for (role, number) in availableStaff {
             if minimumStaffRequired[role, default: 0] > number {
                 return false
             }
         }
-        return !trips.contains(where: {
-            !$0.isCancelled && !$0.isCompleted
-                && $0.estimatedArrivalTime > from
-                && $0.scheduledDepartureTime < to
+
+        return !trips.contains(where: { trip in
+
+            guard !trip.isCancelled && !trip.isCompleted else { return false }
+
+            let departure = trip.scheduledDepartureTime
+            let arrival = trip.estimatedArrivalTime
+
+            return departure < to && arrival > from
         })
     }
 
