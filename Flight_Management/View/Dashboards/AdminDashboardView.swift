@@ -77,7 +77,7 @@ struct AdminDashboardView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Upcoming Flights")
+                        Text("Upcoming Trips")
                             .font(.headline)
                         Text("Next 6 hours")
                             .font(.subheadline)
