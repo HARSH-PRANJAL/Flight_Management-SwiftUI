@@ -18,102 +18,107 @@ struct UserRegistrationForm: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    ProfilePhotoField(
-                        selectedPhoto: $viewModel.selectedPhoto,
-                        profilePreview: $viewModel.profilePreview,
-                        onChangeAction: { item in
-                            await viewModel.processPhoto(item)
+            ZStack {
+                Color(.systemGroupedBackground).ignoresSafeArea(.all)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        ProfilePhotoField(
+                            selectedPhoto: $viewModel.selectedPhoto,
+                            profilePreview: $viewModel.profilePreview,
+                            onChangeAction: { item in
+                                await viewModel.processPhoto(item)
+                            }
+                        )
+
+                        userNameFieldSection
+                        if viewModel.isEditMode == false {
+                            emailFieldSection
                         }
+                        passwordFieldSection
+                        confirmPasswordFieldSection
+                        if viewModel.isEditMode == false {
+                            roleFieldSection
+                        }
+
+                    }
+                    .navigationTitle(
+                        viewModel.isEditMode ? "Update Profile" : "Add User"
                     )
-
-                    userNameFieldSection
-                    if viewModel.isEditMode == false {
-                        emailFieldSection
+                    .navigationBarTitleDisplayMode(.inline)
+                    .padding()
+                    Spacer()
+                    if !viewModel.isEditMode {
+                        disclaimerText
                     }
-                    passwordFieldSection
-                    confirmPasswordFieldSection
-                    if viewModel.isEditMode == false {
-                        roleFieldSection
-                    }
-
                 }
-                .navigationTitle(
-                    viewModel.isEditMode ? "Update Profile" : "Add User"
+                .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.immediately)
+                .presentationDetents(
+                    [.large, .height(650)],
+                    selection: $currentDetent
                 )
-                .navigationBarTitleDisplayMode(.inline)
-                .padding()
-                Spacer()
-                if !viewModel.isEditMode {
-                    disclaimerText
-                }
-            }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.immediately)
-            .presentationDetents(
-                [.large, .height(650)],
-                selection: $currentDetent
-            )
-            .presentationDragIndicator(.hidden)
-            .interactiveDismissDisabled(viewModel.isDirty)
-            .onChange(of: currentDetent) { oldValue, newValue in
-                guard newValue != oldValue else { return }
-                if newValue == .height(650) {
-                    if viewModel.isDirty {
-                        showConfirmCloseAlert = true
-                        withAnimation(
-                            .spring(response: 0.38, dampingFraction: 0.85)
-                        ) {
-                            currentDetent = .large
-                        }
-                    } else {
-                        isPresented = false
-                    }
-                }
-            }
-            .task {
-                if session.isLoggedIn {
-                    user = await session.getUserFromDB(modelContext: context)
-                    if let user = user {
-                        viewModel.userToEdit = user
-                        viewModel.isEditMode = true
-                        await viewModel.loadUserData(user)
-                    }
-                }
-                viewModel.originalSnapshot = viewModel.currentSnapshot()
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
+                .presentationDragIndicator(.hidden)
+                .interactiveDismissDisabled(viewModel.isDirty)
+                .onChange(of: currentDetent) { oldValue, newValue in
+                    guard newValue != oldValue else { return }
+                    if newValue == .height(650) {
                         if viewModel.isDirty {
                             showConfirmCloseAlert = true
+                            withAnimation(
+                                .spring(response: 0.38, dampingFraction: 0.85)
+                            ) {
+                                currentDetent = .large
+                            }
                         } else {
                             isPresented = false
                         }
-                    } label: {
-                        Image(systemName: "xmark")
                     }
                 }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        if viewModel.validateAll() {
-                            if viewModel.isEditMode {
-                                handleUpdateUser()
-                            } else {
-                                handleRegister()
-                            }
+                .task {
+                    if session.isLoggedIn {
+                        user = await session.getUserFromDB(
+                            modelContext: context
+                        )
+                        if let user = user {
+                            viewModel.userToEdit = user
+                            viewModel.isEditMode = true
+                            await viewModel.loadUserData(user)
                         }
-                    } label: {
-                        Image(systemName: "checkmark")
                     }
-                    .disabled(!viewModel.isDirty)
-                    .foregroundStyle(
-                        viewModel.isDirty
-                            ? Color(.systemBlue) : Color(.systemGray3)
-                    )
-                    .symbolRenderingMode(.palette)
+                    viewModel.originalSnapshot = viewModel.currentSnapshot()
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .close) {
+                            if viewModel.isDirty {
+                                showConfirmCloseAlert = true
+                            } else {
+                                isPresented = false
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(role: .confirm) {
+                            if viewModel.validateAll() {
+                                if viewModel.isEditMode {
+                                    handleUpdateUser()
+                                } else {
+                                    handleRegister()
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                        .disabled(!viewModel.isDirty)
+                        .foregroundStyle(
+                            viewModel.isDirty
+                                ? Color(.systemBlue) : Color(.systemGray3)
+                        )
+                        .symbolRenderingMode(.palette)
+                    }
                 }
             }
         }
