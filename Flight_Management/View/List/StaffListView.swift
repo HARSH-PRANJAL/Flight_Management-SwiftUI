@@ -12,6 +12,11 @@ struct StaffListView: View {
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
 
+    var externalStaffs: [Staff] = []
+    var navigationTitle: String = "Staff List"
+    var requiredFilters: [StaffAvailabilityStatus] = StaffAvailabilityStatus
+        .allCases
+
     var body: some View {
         VStack(spacing: 0) {
             Group {
@@ -41,7 +46,7 @@ struct StaffListView: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Staff List")
+            .navigationTitle(navigationTitle)
             .toolbar {
                 toolbarFilterSortItem
             }
@@ -85,37 +90,40 @@ extension StaffListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Section("Filter by") {
-                    VStack(spacing: 0) {
-                        Button {
-                            selectedFilter = nil
-                        } label: {
-                            HStack {
-                                Text("All")
-                                if selectedFilter == nil {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                        ForEach(
-                            StaffAvailabilityStatus.allCases,
-                            id: \.self
-                        ) { filter in
+                if !requiredFilters.isEmpty {
+                    Section("Filter by") {
+                        VStack(spacing: 0) {
                             Button {
-                                selectedFilter = filter
+                                selectedFilter = nil
                             } label: {
                                 HStack {
-                                    Text(filter.rawValue)
-                                    if selectedFilter == filter {
+                                    Text("All")
+                                    if selectedFilter == nil {
                                         Spacer()
                                         Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            ForEach(
+                                requiredFilters,
+                                id: \.self
+                            ) { filter in
+                                Button {
+                                    selectedFilter = filter
+                                } label: {
+                                    HStack {
+                                        Text(filter.rawValue)
+                                        if selectedFilter == filter {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
                 Section("Sort by") {
                     ForEach(StaffSort.allCases, id: \.self) { sort in
                         Button {
@@ -163,11 +171,18 @@ extension StaffListView {
     }
 
     var displayedStaffs: [Staff] {
-        let sorted = viewModel.items.sorted { lhs, rhs in
+        var filtered: [Staff] =
+            externalStaffs.isEmpty
+            ? viewModel.items
+            : externalStaffs
+
+        filtered = filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .name {
-                let comparison = lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
+                let comparison =
+                    lhs.name.localizedStandardCompare(rhs.name)
+                    == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison =
@@ -176,7 +191,7 @@ extension StaffListView {
             }
         }
 
-        return sorted
+        return filtered
     }
 }
 
