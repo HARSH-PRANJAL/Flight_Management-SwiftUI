@@ -214,7 +214,7 @@ extension TripManagerDashboardView {
     }
 
     private var onTimePercentage: Int {
-        let total = todayTrips.filter { !$0.isCancelled }.count
+        let total = todayTrips.filter { $0.currentStatus == .onTime || $0.currentStatus == .delayed }.count
 
         if total <= 0 { return 0 }
 

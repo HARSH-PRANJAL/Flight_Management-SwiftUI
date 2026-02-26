@@ -141,7 +141,7 @@ extension AdminDashboardView {
 
     private var onTimePercentage: Int {
         let total = todayTrips.filter {
-            !$0.isCancelled && $0.currentStatus != .scheduled && !$0.isCompleted
+            $0.currentStatus == .onTime || $0.currentStatus == .delayed
         }.count
         guard total > 0 else { return 100 }
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
