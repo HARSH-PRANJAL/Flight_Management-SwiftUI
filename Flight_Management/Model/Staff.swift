@@ -21,20 +21,7 @@ class Staff {
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
     var isMarkedUnavailable: Bool = false
-
-    var totalTripHours: Double {
-        let result =
-            trips.filter({
-                $0.isCompleted == true || $0.isCancelled == true
-            }).reduce(0.0) {
-                $0
-                    + $1.estimatedArrivalTime.timeIntervalSince(
-                        $1.scheduledDepartureTime
-                    )
-            } / 3600.0
-
-        return max(result, 0)
-    }
+    var totalTripHours: Double
 
     var completedTrips: [Trip] {
         return trips.filter({
@@ -88,6 +75,15 @@ class Staff {
         self.profileBgColor = profileBgColor
         self.trips = []
         self.dob = dob
+        self.totalTripHours = 0
+    }
+    
+    func addTripHours(for trip: Trip) {
+        let hours =
+            trip.estimatedArrivalTime
+            .timeIntervalSince(trip.scheduledDepartureTime) / 3600.0
+
+        totalTripHours += max(hours, 0)
     }
 
     // True if the staff has no overlapping trip (scheduled or in progress) in the window.
@@ -104,10 +100,16 @@ class Staff {
         })
     }
 
+    func startTrip(_ trip: Trip) {
+        currentTrip = trip
+        updateNextScheduledTrip(after: trip)
+    }
+
     func updateLastAndNextScheduledTrip(completedTrip: Trip) {
         lastCompletedTrip = completedTrip
         currentTrip = nil
         updateNextScheduledTrip(after: completedTrip)
+        addTripHours(for: completedTrip)
     }
 
     func updateNextScheduledTrip(after previousTrip: Trip) {
@@ -133,10 +135,4 @@ class Staff {
         self.currentTrip = nil
         self.isMarkedUnavailable = true
     }
-}
-
-extension Date {
-    func roundedToDay() -> Date {
-            Calendar.current.startOfDay(for: self)
-        }
 }

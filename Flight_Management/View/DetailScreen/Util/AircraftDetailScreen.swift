@@ -76,7 +76,7 @@ struct AircraftDetailScreen: View {
                             title: "Flying Hours",
                             value: String(
                                 format: "%.1f",
-                                aircraft.totalTripHour
+                                aircraft.totalTripHours
                             ),
                             subtitle: "  ",
                             icon: "clock",

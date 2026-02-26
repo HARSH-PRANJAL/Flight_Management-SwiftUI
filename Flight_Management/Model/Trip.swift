@@ -61,9 +61,10 @@ class Trip {
             return arrivalTime
         } else if isCancelled {
             // if flight is cancelled midway between airport A and B
-            if nodeStatuses.last!.actualArrivalTime == nil {
-                if let totalTime = nodeStatuses[nodeStatuses.count - 1]
-                    .actualDepartureTime
+            if nodeStatuses.last?.actualArrivalTime != nil {
+                if nodeStatuses.count > 1,
+                    let totalTime = nodeStatuses[nodeStatuses.count - 2]
+                        .actualDepartureTime
                 {
                     return totalTime
                 } else {
@@ -71,7 +72,7 @@ class Trip {
                 }
             } else {
                 // if flight is cancelled after landing on airport B
-                return nodeStatuses.last!.actualArrivalTime!
+                return nodeStatuses.last?.actualArrivalTime ?? arrivalTime
             }
         }
 
@@ -174,9 +175,9 @@ extension Trip {
             )
         )
 
-        aircraft.currentTrip = self
+        aircraft.startTrip(self)
         for staff in staffs {
-            staff.currentTrip = self
+            staff.startTrip(self)
         }
 
         scheduleNextAirport()
@@ -186,7 +187,7 @@ extension Trip {
 
 // MARK: Cancel Trip
 extension Trip {
-    /// Cancel trip (before start or midway). Updates staff and aircraft last/current/next trip state.
+    // Cancel trip (before start or midway). Updates staff and aircraft last/current/next trip state.
     func cancel() {
         guard !isCancelled, !isCompleted else { return }
 
@@ -198,6 +199,7 @@ extension Trip {
         }
         if hasStarted {
             aircraft.lastCompletedTrip = self
+            aircraft.addTripHours(for: self)
         }
         aircraft.updateNextScheduledTrip(after: self)
 
@@ -208,6 +210,7 @@ extension Trip {
             }
             if hasStarted {
                 staff.lastCompletedTrip = self
+                staff.addTripHours(for: self)
             }
             staff.updateNextScheduledTrip(after: self)
         }
@@ -237,47 +240,37 @@ class TripNodeStatus {
 
     // total delay from the source of the trip
     func totalDelayMinutes(tripStartTime: Date) -> Int {
-        let calendar = Calendar.current
 
         guard actualArrivalTime != nil || actualDepartureTime != nil else {
             return 0
         }
 
-        // actualArrivalTime will be nit for only source node
+        // Source node (no arrival yet)
         if actualArrivalTime == nil {
-            // trip is started from source
-            guard let departure = actualDepartureTime,
-                let minutes = calendar.dateComponents(
-                    [.minute],
-                    from: departure,
-                    to: tripStartTime
-                ).minute
-            else {
+
+            guard let actualDeparture = actualDepartureTime else {
                 return 0
             }
 
-            return minutes
-        } else {
-            guard let arrival = actualArrivalTime else {
-                return 0
-            }
+            let plannedDeparture = tripStartTime
 
-            let scheduledArrivalTime = tripStartTime.addingTimeInterval(
-                TimeInterval(routeNode.plannedArrivalOffsetMinutes)
-            )
+            let delay = actualDeparture.timeIntervalSince(plannedDeparture)
 
-            guard
-                let minutes = calendar.dateComponents(
-                    [.minute],
-                    from: arrival,
-                    to: scheduledArrivalTime
-                ).minute
-            else {
-                return 0
-            }
-
-            return minutes
+            return max(0, Int(delay / 60))
         }
+
+        // Other nodes
+        guard let actualArrival = actualArrivalTime else {
+            return 0
+        }
+
+        let plannedArrival = tripStartTime.addingTimeInterval(
+            TimeInterval(routeNode.plannedArrivalOffsetMinutes * 60)
+        )
+
+        let delay = actualArrival.timeIntervalSince(plannedArrival)
+
+        return max(0, Int(delay / 60))
     }
 
 }
