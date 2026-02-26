@@ -13,23 +13,27 @@ struct CardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.headline)
+                        .minimumScaleFactor(0.7)
                     Text(value)
                         .font(.title3)
                         .fontWeight(.semibold)
+                        .minimumScaleFactor(0.7)
                 }
                 Spacer()
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(iconColor)
+                    .minimumScaleFactor(0.7)
             }
-
+            
             if !subtitle.isEmpty {
                 Text(subtitle)
                     .font(.subheadline)
+                    .minimumScaleFactor(0.7)
             }
         }
         .padding()
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: 200)
         .background(cardTheme())
     }
 }
