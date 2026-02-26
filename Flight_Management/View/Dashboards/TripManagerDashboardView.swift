@@ -12,36 +12,79 @@ struct TripManagerDashboardView: View {
         [Aircraft]
     @Query var routes: [Route]
 
+    @State var showingTripList: Bool = false
+
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
             ScrollView {
                 VStack(spacing: 20) {
                     tripDetailCards
-
-                    VStack(spacing: 12) {
-                        VStack(alignment: .leading) {
-                            Text("Daily Trip Status")
-                                .font(.headline)
-                            Text("Overview of all trips today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        DonutChartView(
-                            data: tripsSummary,
-                            defaultTitle: "Total trips"
-                        )
-                        .frame(maxHeight: 500)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            cardTheme()
-                        )
+                    
+                    VStack(alignment: .leading) {
+                        Text("Daily Trip Status")
+                            .font(.headline)
+                        Text("Overview of all trips today")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    DonutChartView(
+                        data: tripsSummary,
+                        defaultTitle: "Total trips"
+                    )
+                    .frame(maxHeight: 500)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        cardTheme()
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Upcoming Trips")
+                            .font(.headline)
+                        Text("Next 24 hours")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        UpcomingTripsScrollView(trips: upcomingTrips)
+                        if upcomingTrips.count > 3 {
+                            HStack {
+                                Spacer()
+                                Button("View more") {
+                                    showingTripList = true
+                                }
+                                .font(.subheadline)
+                                .tint(Color(.systemBlue))
+                            }
+                        }
+                    }
+
+                    Spacer(minLength: 24)
                 }
                 .padding(.horizontal, 16)
+            }
+            .scrollIndicators(.hidden)
+            .sheet(isPresented: $showingTripList) {
+                NavigationStack {
+                    TripListView(
+                        externalTrips: upcomingTrips,
+                        navigationTitle: "Trips in next 24 hr",
+                        requiredFilters: [.scheduled, .cancelled]
+                    )
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button {
+                                showingTripList = false
+                            } label: {
+                                Image(systemName: "xmark")
+                            }
+
+                        }
+                    }
+                }
             }
         }
     }
@@ -146,6 +189,22 @@ extension TripManagerDashboardView {
 
 // MARK: Util
 extension TripManagerDashboardView {
+    private var upcomingTrips: [Trip] {
+
+        let calendar = Calendar.current
+        let now = Date()
+        let currentHour =
+            calendar.dateInterval(of: .hour, for: now)?.start ?? now
+
+        let next24Hours =
+            calendar.date(byAdding: .hour, value: 24, to: currentHour)
+            ?? currentHour
+        return trips.filter {
+            $0.scheduledDepartureTime >= now
+                && $0.scheduledDepartureTime <= next24Hours
+        }
+    }
+
     private var todayTrips: [Trip] {
         let calendar = Calendar.current
         return trips.filter {
