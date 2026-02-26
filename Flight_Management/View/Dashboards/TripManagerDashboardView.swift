@@ -232,6 +232,8 @@ extension TripManagerDashboardView {
             .count
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
+        let completed = todayTrips.filter { $0.currentStatus == .completed }
+            .count
         return [
             (
                 category: "On-Time", count: onTime,
@@ -248,6 +250,10 @@ extension TripManagerDashboardView {
             (
                 category: "Scheduled", count: scheduled,
                 color: Color.tripStatusColor(for: .scheduled)
+            ),
+            (
+                category: "Completed", count: completed,
+                color: Color.tripStatusColor(for: .completed)
             ),
         ]
     }
