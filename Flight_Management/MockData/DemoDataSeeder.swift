@@ -416,11 +416,13 @@ extension DemoDataSeeder {
         let aircrafts = aircraftData()
         let staff = await createStaff(batchIndex: 0)
         let routes = createRoutes()
+        let users = await createUser()
 
         for airport in airports { context.insert(airport) }
         for aircraft in aircrafts { context.insert(aircraft) }
         for staffMember in staff { context.insert(staffMember) }
         for route in routes { context.insert(route) }
+        for user in users { context.insert(user) }
         try? context.save()
 
         let trips = await createTrips(
@@ -619,6 +621,24 @@ extension DemoDataSeeder {
 
 // MARK: Data seeders
 extension DemoDataSeeder {
+
+    private func createUser() async -> [User] {
+        return [
+            User(
+                name: "Admin",
+                email: "admin@gmail.com",
+                password: "123456",
+                role: .admin
+            ),
+            User(
+                name: "Manager",
+                email: "manager@gmail.com",
+                password: "123456",
+                role: .tripManager
+            ),
+        ]
+    }
+
     // Staff per batch: 100 (30 pilot, 34 co-pilot, 36 cabin crew). Max 3 batches.
     private func createStaff(batchIndex: Int) async -> [Staff] {
 
@@ -643,7 +663,9 @@ extension DemoDataSeeder {
                 designation: .pilot,
                 yearRange: 1995...2000,
                 emailDomain: emailDomain,
-                assetName: (gender == .male ? maleImageNames.randomElement() : femaleImageNames.randomElement() ?? "default") ?? ""
+                assetName: (gender == .male
+                    ? maleImageNames.randomElement()
+                    : femaleImageNames.randomElement() ?? "default") ?? ""
             )
 
             staff.append(s)
@@ -663,7 +685,9 @@ extension DemoDataSeeder {
                 designation: .coPilot,
                 yearRange: 1995...2000,
                 emailDomain: emailDomain,
-                assetName: (gender == .male ? maleImageNames.randomElement() : femaleImageNames.randomElement() ?? "default") ?? ""
+                assetName: (gender == .male
+                    ? maleImageNames.randomElement()
+                    : femaleImageNames.randomElement() ?? "default") ?? ""
             )
 
             staff.append(s)
@@ -683,7 +707,9 @@ extension DemoDataSeeder {
                 designation: .cabinCrew,
                 yearRange: 1995...2000,
                 emailDomain: emailDomain,
-                assetName: (gender == .male ? maleImageNames.randomElement() : femaleImageNames.randomElement() ?? "default") ?? ""
+                assetName: (gender == .male
+                    ? maleImageNames.randomElement()
+                    : femaleImageNames.randomElement() ?? "default") ?? ""
             )
             staff.append(s)
         }
@@ -810,19 +836,25 @@ extension DemoDataSeeder {
                 }
 
                 let pilotsRequired = aircraft.minimumStaffRequired[.pilot] ?? 1
-                let coPilotsRequired = aircraft.minimumStaffRequired[.coPilot] ?? 0
-                let crewRequired = aircraft.minimumStaffRequired[.cabinCrew] ?? 1
+                let coPilotsRequired =
+                    aircraft.minimumStaffRequired[.coPilot] ?? 0
+                let crewRequired =
+                    aircraft.minimumStaffRequired[.cabinCrew] ?? 1
 
                 guard availablePilots.count >= pilotsRequired,
-                      availableCoPilots.count >= coPilotsRequired,
-                      availableCrew.count >= crewRequired
+                    availableCoPilots.count >= coPilotsRequired,
+                    availableCrew.count >= crewRequired
                 else {
                     continue
                 }
 
                 var assignedStaff: [Staff] = []
-                assignedStaff += availablePilots.shuffled().prefix(pilotsRequired)
-                assignedStaff += availableCoPilots.shuffled().prefix(coPilotsRequired)
+                assignedStaff += availablePilots.shuffled().prefix(
+                    pilotsRequired
+                )
+                assignedStaff += availableCoPilots.shuffled().prefix(
+                    coPilotsRequired
+                )
                 assignedStaff += availableCrew.shuffled().prefix(crewRequired)
 
                 let flightNumber = "FL-\(routeIndex)-\(tripIndex)"
