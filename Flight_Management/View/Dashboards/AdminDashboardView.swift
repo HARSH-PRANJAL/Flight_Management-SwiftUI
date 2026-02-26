@@ -77,13 +77,16 @@ struct AdminDashboardView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Upcoming Trips")
-                            .font(.headline)
-                        Text("Next 6 hours")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading){
+                            Text("Upcoming Trips")
+                                .font(.headline)
+                            Text("Next 6 hours")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
 
                         UpcomingTripsScrollView(trips: upcomingTrips)
+                            .padding(.horizontal, -16)
                         if upcomingTrips.count > 3 {
                             HStack {
                                 Spacer()
@@ -111,6 +114,7 @@ struct AdminDashboardView: View {
                     navigationTitle: "Trips in next 6 hours",
                     requiredFilters: [.scheduled, .cancelled]
                 )
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button {
@@ -155,6 +159,7 @@ extension AdminDashboardView {
             .count
         let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
             .count
+        let completed = todayTrips.filter { $0.isCompleted }.count
         return [
             (
                 category: "On-Time", count: onTime,
@@ -172,6 +177,10 @@ extension AdminDashboardView {
                 category: "Scheduled", count: scheduled,
                 color: Color.tripStatusColor(for: .scheduled)
             ),
+            (
+                category: "Completed", count: completed,
+                color: Color.tripStatusColor(for: .completed)
+            )
         ]
     }
 
