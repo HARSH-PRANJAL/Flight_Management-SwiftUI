@@ -65,8 +65,13 @@ struct RouteDetailView: View {
                 .fontWeight(.semibold)
                 .padding(.bottom, 4)
 
-            let origin = route.nodes.first?.airport.code ?? "—"
-            let dest = route.nodes.last?.airport.code ?? "—"
+            let origin =
+                route.nodes.first(where: { $0.sequence == 1 })?.airport.code
+                ?? "_"
+            let dest =
+                route.nodes.last(where: { $0.sequence == route.nodes.count })?
+                .airport.code
+                ?? "_"
             Text("\(origin) → \(dest)")
                 .font(.subheadline)
                 .foregroundStyle(Color(.secondaryLabel))
@@ -155,7 +160,8 @@ struct RouteDetailView: View {
                             Text(node.airport.fullName)
                                 .font(.headline)
                                 .foregroundStyle(Color(.label))
-                                .lineLimit(1)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
                                 .layoutPriority(1)
 
                             Text(node.airport.locationLabel)
