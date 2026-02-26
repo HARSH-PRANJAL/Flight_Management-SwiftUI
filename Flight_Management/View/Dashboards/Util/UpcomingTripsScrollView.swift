@@ -22,6 +22,7 @@ struct UpcomingTripsScrollView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.leading, 16)
+                    .padding(.bottom, 8)
                 }
                 if trips.isEmpty {
                     Text("No upcoming flights in next 6 hours")
