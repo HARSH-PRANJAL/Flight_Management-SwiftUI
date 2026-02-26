@@ -13,16 +13,15 @@ struct SplashView: View {
                     .environment(session)
             } else {
                 ZStack {
-                    Color(.systemBackground).ignoresSafeArea()
-                    VStack(spacing: 16) {
-                        Image("AppIconPreview")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 120, height: 120)
+                    Color(.systemBackground)
+                        .ignoresSafeArea()
 
-                        Text("Flight Management")
-                            .font(.title2)
-                            .bold()
+                    VStack(spacing: 16){
+                        LottieView(filename: "Airplane")
+                            .frame(width: 300, height: 300)
+                        Text("Flight Manager")
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundColor(.primary)
                     }
                 }
                 .task {
