@@ -12,6 +12,7 @@ struct StaffRegistrationContent: View {
     @FocusState private var focusedField: FormFocus?
     @State private var showConfirmCloseAlert = false
     @State private var currentDetent: PresentationDetent = .large
+    @State private var isRoleChanged: Bool = false
 
     var isPresented: Binding<Bool>?
 
@@ -76,10 +77,14 @@ struct StaffRegistrationContent: View {
                     Image(systemName: "xmark")
                 }
             }
-            
+
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {
-                    handleRegistration()
+                    if viewModel.originalSnapshot?.role != viewModel.role {
+                        isRoleChanged = true
+                    } else {
+                        handleRegistration()
+                    }
                 } label: {
                     Image(systemName: "checkmark")
                 }
@@ -104,9 +109,28 @@ struct StaffRegistrationContent: View {
                 "You have unsaved changes. Are you sure you want to discard them?"
             )
         }
+        .alert("Role of staff is changed.", isPresented: $isRoleChanged) {
+            Button("Update", role: .destructive) {
+                if markStaffUnavailable() {
+                    handleRegistration()
+                } else {
+                    notificationManager.showError(
+                        "Failed to update staff designation. Please try again later."
+                    )
+                    dismiss()
+                }
+            }
+            Button("Keep Editing", role: .cancel) {}
+        } message: {
+            Text(
+                "Staff designation is updated. This will also cancel current and scheduled trips of staff."
+            )
+        }
     }
+}
 
-    // MARK: - Form Field Sections
+// MARK: UI
+extension StaffRegistrationContent {
     private var nameFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -212,13 +236,14 @@ struct StaffRegistrationContent: View {
         .padding(.horizontal, 32)
         .padding(.top, 16)
     }
-    
+}
+
+// MARK: Util
+extension StaffRegistrationContent {
     private var isFormValid: Bool {
-        !viewModel.name.isEmpty &&
-        !viewModel.email.isEmpty &&
-        viewModel.gender != nil &&
-        viewModel.role != nil &&
-        viewModel.dob != Date()
+        !viewModel.name.isEmpty && !viewModel.email.isEmpty
+            && viewModel.gender != nil && viewModel.role != nil
+            && viewModel.dob != Date()
     }
 
     private func handleRegistration() {
@@ -294,6 +319,30 @@ struct StaffRegistrationContent: View {
                     "Failed to add staff. Please try again."
                 )
             }
+        }
+    }
+
+    private func markStaffUnavailable() -> Bool {
+        if let staff = viewModel.staffToEdit {
+            for trip in staff.scheduledTrips {
+                trip.cancel()
+            }
+            staff.currentTrip?.cancel()
+            
+            staff.markUnavailable()
+
+            do {
+                try context.save()
+                return true
+            } catch {
+                notificationManager.showError(
+                    "Failed to mark staff as unavailable"
+                )
+                staff.isMarkedUnavailable = false
+                return false
+            }
+        } else {
+            return false
         }
     }
 }
