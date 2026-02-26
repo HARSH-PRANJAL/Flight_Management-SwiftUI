@@ -13,6 +13,7 @@ struct AircraftRegistrationContent: View {
     @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
+    @FocusState private var isStaffInputFocused: Bool
     
     init(aircraft: Aircraft? = nil, isPresented: Binding<Bool>) {
         self.aircraft = aircraft
@@ -48,6 +49,9 @@ struct AircraftRegistrationContent: View {
         .scrollDismissesKeyboard(.immediately)
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
+        }
+        .onTapGesture {
+            isStaffInputFocused = false
         }
         .presentationDetents([.large, .height(650)], selection: $currentDetent)
         .presentationDragIndicator(.hidden)
@@ -194,6 +198,7 @@ extension AircraftRegistrationContent {
                             set: { viewModel.minimumStaffRequired[role] = $0 }
                         )
                     )
+                    .focused($isStaffInputFocused)
                     .font(.system(size: 17))
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.trailing)
@@ -242,6 +247,9 @@ extension AircraftRegistrationContent {
 // MARK: Util
 extension AircraftRegistrationContent {
     private func handleRegistration() {
+        
+        guard viewModel.validateAll() else { return }
+        
         if let aircraft = aircraft {
             // Update mode
             if viewModel.updateAircraft(aircraft, in: context) {
