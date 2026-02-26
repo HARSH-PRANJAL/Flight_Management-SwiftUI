@@ -22,7 +22,7 @@ struct AdminHome: View {
                 }
             }
 
-            Tab("Staff", systemImage: "person.3") {
+            Tab("Staff", systemImage: "person.2") {
                 NavigationStack {
                     StaffListView()
                         .toolbar {
