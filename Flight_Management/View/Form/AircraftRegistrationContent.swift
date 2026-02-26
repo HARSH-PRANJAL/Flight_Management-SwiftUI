@@ -14,105 +14,120 @@ struct AircraftRegistrationContent: View {
 
     @FocusState private var focusedField: FormFocus?
     @FocusState private var isStaffInputFocused: Bool
-    
+
     init(aircraft: Aircraft? = nil, isPresented: Binding<Bool>) {
         self.aircraft = aircraft
         self._isPresented = isPresented
         if let aircraft = aircraft {
-            _viewModel = State(initialValue: AircraftRegistrationFormViewModel(aircraft: aircraft))
+            _viewModel = State(
+                initialValue: AircraftRegistrationFormViewModel(
+                    aircraft: aircraft
+                )
+            )
         } else {
-            _viewModel = State(initialValue: AircraftRegistrationFormViewModel())
+            _viewModel = State(
+                initialValue: AircraftRegistrationFormViewModel()
+            )
         }
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                VStack(spacing: 20) {
-                    registrationNumberFieldSection
-                    typeFieldSection
-                    seatingCapacityFieldSection
-                    minimumStaffSection
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 20)
-
-                Spacer()
-                if aircraft == nil {
-                    disclaimerText
-                }
-            }
-            .navigationTitle(aircraft != nil ? "Update Aircraft" : "Add Aircraft")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.immediately)
-        .onAppear {
-            viewModel.originalSnapshot = viewModel.currentSnapshot()
-        }
-        .onTapGesture {
-            isStaffInputFocused = false
-        }
-        .presentationDetents([.large, .height(650)], selection: $currentDetent)
-        .presentationDragIndicator(.hidden)
-        .interactiveDismissDisabled(viewModel.isDirty)
-        .onChange(of: currentDetent) { oldValue, newValue in
-            guard newValue != oldValue else { return }
-            if newValue == .height(650) {
-                if viewModel.isDirty {
-                    showConfirmCloseAlert = true
-                    withAnimation(
-                        .spring(response: 0.38, dampingFraction: 0.85)
-                    ) {
-                        currentDetent = .large
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea(.all)
+            ScrollView {
+                VStack(spacing: 0) {
+                    VStack(spacing: 20) {
+                        registrationNumberFieldSection
+                        typeFieldSection
+                        seatingCapacityFieldSection
+                        minimumStaffSection
                     }
-                } else {
-                    isPresented = false
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+
+                    Spacer()
+                    if aircraft == nil {
+                        disclaimerText
+                    }
                 }
+                .navigationTitle(
+                    aircraft != nil ? "Update Aircraft" : "Add Aircraft"
+                )
+                .navigationBarTitleDisplayMode(.inline)
             }
-        }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(role: .close) {
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.immediately)
+            .onAppear {
+                viewModel.originalSnapshot = viewModel.currentSnapshot()
+            }
+            .onTapGesture {
+                isStaffInputFocused = false
+            }
+            .presentationDetents(
+                [.large, .height(650)],
+                selection: $currentDetent
+            )
+            .presentationDragIndicator(.hidden)
+            .interactiveDismissDisabled(viewModel.isDirty)
+            .onChange(of: currentDetent) { oldValue, newValue in
+                guard newValue != oldValue else { return }
+                if newValue == .height(650) {
                     if viewModel.isDirty {
                         showConfirmCloseAlert = true
+                        withAnimation(
+                            .spring(response: 0.38, dampingFraction: 0.85)
+                        ) {
+                            currentDetent = .large
+                        }
                     } else {
                         isPresented = false
                     }
-                } label: {
-                    Image(systemName: "xmark")
                 }
             }
-            
-            ToolbarItem(placement: .confirmationAction) {
-                Button(role: .confirm) {
-                    handleRegistration()
-                } label: {
-                    Image(systemName: "checkmark")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        if viewModel.isDirty {
+                            showConfirmCloseAlert = true
+                        } else {
+                            isPresented = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
                 }
-                .disabled(!viewModel.isDirty)
-                .symbolRenderingMode(.palette)
-                .foregroundStyle(
-                    viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .confirm) {
+                        handleRegistration()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(!viewModel.isDirty)
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(
+                        viewModel.isDirty
+                            ? Color(.systemBlue) : Color(.systemGray3)
+                    )
+                }
+            }
+            .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
+                Button("Discard", role: .destructive) {
+                    isPresented = false
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text(
+                    "You have unsaved changes. Are you sure you want to discard them?"
                 )
             }
-        }
-        .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
-            Button("Discard", role: .destructive) {
-                isPresented = false
-            }
-            Button("Keep Editing", role: .cancel) {}
-        } message: {
-            Text(
-                "You have unsaved changes. Are you sure you want to discard them?"
-            )
         }
     }
 }
 
 // MARK: UI
 extension AircraftRegistrationContent {
-    
+
     private var registrationNumberFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -131,11 +146,11 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.registrationNumber) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .registrationNumber)
             }
-            
+
             FormErrorMessage(error: viewModel.fieldErrors[.registrationNumber])
         }
     }
-    
+
     private var typeFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -152,11 +167,11 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.type) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .type)
             }
-            
+
             FormErrorMessage(error: viewModel.fieldErrors[.type])
         }
     }
-    
+
     private var seatingCapacityFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             FormInputField(
@@ -174,23 +189,23 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.seatingCapacity) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .seatingCapacity)
             }
-            
+
             FormErrorMessage(error: viewModel.fieldErrors[.seatingCapacity])
         }
     }
-    
+
     private var minimumStaffSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Minimum Staff Required")
                 .formFieldLabel()
-            
+
             ForEach(StaffRole.allCases, id: \.self) { role in
                 HStack {
                     Text(role.rawValue)
                         .font(.system(size: 16))
                         .foregroundColor(Color(.label))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    
+
                     TextField(
                         "0",
                         text: Binding(
@@ -218,13 +233,13 @@ extension AircraftRegistrationContent {
                     }
                 }
             }
-            
+
             if let error = viewModel.fieldErrors[.minimumStaffRequired] {
                 FormErrorMessage(error: error)
             }
         }
     }
-    
+
     private var disclaimerText: some View {
         Text(
             "Aircraft will be added to the system and available for trip assignment."
@@ -236,20 +251,19 @@ extension AircraftRegistrationContent {
         .padding(.top, 16)
         .padding(.bottom, 30)
     }
-    
+
     private var isFormValid: Bool {
-        !viewModel.registrationNumber.isEmpty &&
-        !viewModel.type.isEmpty &&
-        !viewModel.seatingCapacity.isEmpty
+        !viewModel.registrationNumber.isEmpty && !viewModel.type.isEmpty
+            && !viewModel.seatingCapacity.isEmpty
     }
 }
 
 // MARK: Util
 extension AircraftRegistrationContent {
     private func handleRegistration() {
-        
+
         guard viewModel.validateAll() else { return }
-        
+
         if let aircraft = aircraft {
             // Update mode
             if viewModel.updateAircraft(aircraft, in: context) {
@@ -263,7 +277,9 @@ extension AircraftRegistrationContent {
         } else {
             // Create mode
             if viewModel.saveAircraft(to: context) {
-                notificationManager.showSuccess("Aircraft registered successfully")
+                notificationManager.showSuccess(
+                    "Aircraft registered successfully"
+                )
                 isPresented = false
             } else {
                 notificationManager.showError(

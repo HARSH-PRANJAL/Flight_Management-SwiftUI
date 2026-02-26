@@ -13,7 +13,7 @@ struct TripRegistrationForm: View {
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground).ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
             TripRegistrationContent(viewModel: viewModel, isPresented: isPresented)
         }
         .onAppear {

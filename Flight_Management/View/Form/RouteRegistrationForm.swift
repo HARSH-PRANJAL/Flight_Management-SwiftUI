@@ -13,7 +13,7 @@ struct RouteRegistrationForm: View {
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground).ignoresSafeArea(.all)
+            Color(.systemBackground).ignoresSafeArea(.all)
             RouteRegistrationContent(viewModel: viewModel, isPresented: isPresented)
                 .onAppear {
                     viewModel.originalSnapshot = viewModel.currentSnapshot()

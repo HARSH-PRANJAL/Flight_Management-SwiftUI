@@ -19,7 +19,7 @@ struct UserRegistrationForm: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea(.all)
+                Color(.systemBackground).ignoresSafeArea(.all)
                 ScrollView {
                     VStack(spacing: 16) {
                         ProfilePhotoField(
