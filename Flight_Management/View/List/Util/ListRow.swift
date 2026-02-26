@@ -140,8 +140,10 @@ extension ListRow {
     }
 
     init(route: Route) {
-        let origin = route.nodes.first?.airport.code ?? "_"
-        let dest = route.nodes.last?.airport.code ?? "_"
+        let origin = route.nodes.first(where: { $0.sequence == 1 })?.airport.code
+        ?? "_"
+        let dest = route.nodes.last(where: { $0.sequence == route.nodes.count })?.airport.code
+        ?? "_"
         let meta =
             route.nodes.isEmpty
             ? "\(route.trips.count) trips"
