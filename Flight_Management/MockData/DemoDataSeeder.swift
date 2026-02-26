@@ -447,11 +447,22 @@ extension DemoDataSeeder {
 
     func startAutoUpdates(in context: ModelContext) {
         self.modelContext = context
-        // Timer for flight progression every 5 seconds
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true)
-        { [weak self] _ in
-            self?.simulateFlightProgression(in: context)
+
+        // Invalidate any previous timer before creating a new one
+        updateTimer?.invalidate()
+
+        // Run immediately on start
+        simulateFlightProgression(in: context)
+
+        // Then repeat every 30 seconds on the main run loop
+        // so it continues running even when the app is in the foreground
+        // navigating between views (timer is held by the singleton, not a view)
+        let timer = Timer(timeInterval: 20, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.simulateFlightProgression(in: context)
         }
+        RunLoop.main.add(timer, forMode: .common)
+        updateTimer = timer
     }
 
     func stopAutoUpdates() {
@@ -464,20 +475,17 @@ extension DemoDataSeeder {
         modelContext = nil
     }
 
-    // MARK: - Flight Simulator
     private func simulateFlightProgression(in context: ModelContext) {
         let currentTime = Date()
 
         do {
             for trip in allTrips {
-                // Check if trip should start
                 if trip.nodeStatuses.isEmpty {
+                    // Trip hasn't started yet — depart on time
                     if currentTime >= trip.scheduledDepartureTime {
-                        trip.startTrip(departureTime: currentTime)
-                    } else if currentTime
-                        >= trip.scheduledDepartureTime.addingTimeInterval(60)
-                    {
-                        trip.cancel()
+                        trip.startTrip(
+                            departureTime: trip.scheduledDepartureTime
+                        )
                     }
                 } else {
                     progressTrip(trip, currentTime: currentTime)
@@ -489,51 +497,81 @@ extension DemoDataSeeder {
             print("Error during flight simulation: \(error)")
         }
     }
+    
+    public func resolveExpiredTrips(in context: ModelContext) async {
+        let now = Date()
+
+        let descriptor = FetchDescriptor<Trip>(
+            predicate: #Predicate { !$0.isCompleted && !$0.isCancelled }
+        )
+
+        guard let trips = try? context.fetch(descriptor) else { return }
+
+        for trip in trips {
+            if trip.estimatedArrivalTime <= now {
+                trip.isCompleted = true
+
+                // Keep aircraft and staff state consistent
+                trip.aircraft.updateLastAndNextScheduledTrip(
+                    completedTrip: trip
+                )
+                for staff in trip.staffs {
+                    staff.updateLastAndNextScheduledTrip(completedTrip: trip)
+                }
+            }
+        }
+
+        try? context.save()
+    }
 
     private func progressTrip(_ trip: Trip, currentTime: Date) {
         guard !trip.isCancelled && !trip.isCompleted else { return }
 
-        let lastNodeStatus = trip.nodeStatuses.last
+        // Catch-up loop: process as many segments as the clock allows in one tick.
+        // This handles the case where the app was backgrounded or the simulator
+        // skipped a tick — all overdue arrivals/departures are resolved at once.
+        while !trip.isCompleted {
+            guard let activeNode = trip.activeNodeStatus else { break }
 
-        if let lastNode = lastNodeStatus {
-            // Check if we need to schedule arrival
-            if lastNode.actualArrivalTime == nil {
-                // Calculate planned arrival time based on the route node's offset
-                let plannedArrivalTime = trip.scheduledDepartureTime
+            // ── Phase 1: Arrive at the current target airport ─────────────────
+            if activeNode.actualArrivalTime == nil {
+                // Arrival time is deterministic: scheduled departure + the node's
+                // planned offset. No random jitter — the offset already encodes
+                // the full journey time from the source airport.
+                let expectedArrival = trip.scheduledDepartureTime
                     .addingTimeInterval(
                         TimeInterval(
-                            lastNode.routeNode.plannedArrivalOffsetMinutes * 60
+                            activeNode.routeNode.plannedArrivalOffsetMinutes
+                                * 60
                         )
                     )
 
-                if currentTime >= plannedArrivalTime {
-                    trip.scheduleCurrentAirportArrival(arrivalTime: currentTime)
-
-                    // Check if this is not the last airport
-                    if trip.currentAirportSequence < trip.route.nodes.count {
-                        // Schedule departure after turnaround time (30 minutes)
-                        let departureTime = currentTime
-                        trip.scheduleCurrentAirportDeparture(
-                            departureTime: departureTime
-                        )
-                    }
+                guard currentTime >= expectedArrival else {
+                    break  // Still en-route; check again on next timer tick
                 }
-            } else if lastNode.actualDepartureTime == nil {
-                // Check if we need to schedule departure
-                // Departure should happen after arrival + turnaround time
-                if let arrivalTime = lastNode.actualArrivalTime {
-                    let plannedDepartureTime = arrivalTime
 
-                    if currentTime >= plannedDepartureTime {
-                        // Check if this is not the last airport
-                        if trip.currentAirportSequence < trip.route.nodes.count
-                        {
-                            trip.scheduleCurrentAirportDeparture(
-                                departureTime: currentTime
-                            )
-                        }
-                    }
-                }
+                trip.scheduleCurrentAirportArrival(arrivalTime: expectedArrival)
+
+                if trip.isCompleted { break }
+                // Fall through to Phase 2 in the same iteration
+            }
+
+            // ── Phase 2: Depart from the intermediate airport ─────────────────
+            // No turnaround time: depart the moment we arrive.
+            if activeNode.actualArrivalTime != nil
+                && activeNode.actualDepartureTime == nil
+            {
+                // Only depart if there is a next airport to fly to
+                guard trip.currentAirportSequence < trip.route.nodes.count
+                else { break }
+
+                let departureTime = activeNode.actualArrivalTime!  // immediate, no turnaround
+                trip.scheduleCurrentAirportDeparture(
+                    departureTime: departureTime
+                )
+                // scheduleCurrentAirportDeparture increments currentAirportSequence
+                // and appends the next TripNodeStatus, so the next activeNodeStatus
+                // lookup will correctly target the new pending node.
             }
         }
     }

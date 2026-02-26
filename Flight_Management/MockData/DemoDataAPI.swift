@@ -1,7 +1,6 @@
 import Foundation
 import SwiftData
 
-/// Simple helpers to use the DemoDataSeeder from the app.
 public enum DemoDataAPI {
     /// Seed demo data if not already seeded
     public static func seedIfNeeded(in context: ModelContext) async {
@@ -32,5 +31,9 @@ public enum DemoDataAPI {
     /// Stop flight simulator
     public static func stopFlightSimulator() {
         DemoDataSeeder.shared.stopAutoUpdates()
+    }
+    
+    public static func resolveExpiredTrips(in context: ModelContext) async {
+        await DemoDataSeeder.shared.resolveExpiredTrips(in: context)
     }
 }

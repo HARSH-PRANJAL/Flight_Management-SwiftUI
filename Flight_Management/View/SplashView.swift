@@ -24,22 +24,21 @@ struct SplashView: View {
                             .font(.title2)
                             .bold()
                     }
-                    .padding(16)
-                }
-                .onAppear {
-                    DemoDataAPI.startAutoUpdates(in: context)
                 }
                 .task {
                     let start = Date()
 
                     await DemoDataAPI.seedIfNeeded(in: context)
 
+                    await DemoDataAPI.resolveExpiredTrips(in: context)
+                    DemoDataAPI.startAutoUpdates(in: context)
+
                     let duration = Date().timeIntervalSince(start)
                     print("Seeding took \(duration) seconds")
                     if duration < 0.5 {
-                        try? await Task.sleep(for: .seconds(1.0 - duration))
+                        try? await Task.sleep(for: .seconds(2))
                     }
-                    
+
                     await MainActor.run {
                         withAnimation(.easeOut) {
                             showContent = true
