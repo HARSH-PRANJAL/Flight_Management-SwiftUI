@@ -49,6 +49,7 @@ struct TripManagerDashboardView: View {
                             .foregroundColor(.secondary)
 
                         UpcomingTripsScrollView(trips: upcomingTrips)
+                            .padding(.horizontal, -16)
                         if upcomingTrips.count > 3 {
                             HStack {
                                 Spacer()
