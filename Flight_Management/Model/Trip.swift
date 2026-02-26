@@ -34,63 +34,66 @@ class Trip {
         return .onTime
     }
 
+    // The TripNodeStatus for the airport the trip is currently flying toward.
+    // Uses routeNode.sequence to find the correct entry, because SwiftData does
+    // NOT guarantee @Relationship array order after persistence — .last is unsafe.
+    var activeNodeStatus: TripNodeStatus? {
+        nodeStatuses.first { $0.routeNode.sequence == currentAirportSequence }
+    }
+
+    // The most recently acted-upon TripNodeStatus (highest sequence seen so far).
+    // Used for delay calculations. Max-by avoids SwiftData ordering issues.
+    private var latestNodeStatus: TripNodeStatus? {
+        nodeStatuses.max { $0.routeNode.sequence < $1.routeNode.sequence }
+    }
+
     // delay for the entire trip completed so far
     var totalDelayedMinutes: Int {
-        if nodeStatuses.isEmpty {
-            return 0
-        } else {
-            return nodeStatuses.last!.totalDelayMinutes(
-                tripStartTime: scheduledDepartureTime
-            )
-        }
+        guard let latest = latestNodeStatus else { return 0 }
+        return latest.totalDelayMinutes(tripStartTime: scheduledDepartureTime)
     }
 
     // estimated arrival time (cancellation and delay were considered)
     var estimatedArrivalTime: Date {
         let arrivalTime = scheduledDepartureTime.addingTimeInterval(
-            TimeInterval(
-                route.totalPlannedDurationMinutes * 60
-            )
+            TimeInterval(route.totalPlannedDurationMinutes * 60)
         )
 
         if isCancelled && nodeStatuses.isEmpty {
-            // if trip is cancelled before even starting
+            // trip cancelled before starting
             return scheduledDepartureTime
         } else if nodeStatuses.isEmpty {
-            // if trip is not started yet
+            // trip not started yet
             return arrivalTime
         } else if isCancelled {
-            // if flight is cancelled midway between airport A and B
-            if nodeStatuses.last?.actualArrivalTime != nil {
-                if nodeStatuses.count > 1,
-                    let totalTime = nodeStatuses[nodeStatuses.count - 2]
-                        .actualDepartureTime
-                {
-                    return totalTime
+            // Sort by sequence so we reliably get the last visited node
+            // regardless of SwiftData's relationship array ordering
+            let sorted = nodeStatuses.sorted { $0.routeNode.sequence < $1.routeNode.sequence }
+            if let last = sorted.last, last.actualArrivalTime != nil {
+                // cancelled after landing at an intermediate airport
+                if sorted.count > 1, let dep = sorted[sorted.count - 2].actualDepartureTime {
+                    return dep
                 } else {
                     return arrivalTime
                 }
             } else {
-                // if flight is cancelled after landing on airport B
-                return nodeStatuses.last?.actualArrivalTime ?? arrivalTime
+                // cancelled while in flight
+                return sorted.last?.actualArrivalTime ?? arrivalTime
             }
         }
 
-        // trip is ongoing and is delayed (delay can be of 0 mins)
-        return arrivalTime.addingTimeInterval(
-            TimeInterval(
-                totalDelayedMinutes * 60
-            )
-        )
+        // trip is ongoing
+        return arrivalTime.addingTimeInterval(TimeInterval(totalDelayedMinutes * 60))
     }
 
     // route node for the current airport (1-based sequence)
+    // NOTE: route.nodes must be sorted by sequence before indexing because
+    // SwiftData does not guarantee relationship array order after persistence.
     var plannedRouteNode: RouteNode {
-        guard currentAirportSequence <= route.nodes.count, !route.nodes.isEmpty
-        else {
-            return route.nodes.last!
-        }
-        return route.nodes[currentAirportSequence - 1]
+        let sorted = route.nodes.sorted { $0.sequence < $1.sequence }
+        guard !sorted.isEmpty else { return route.nodes.last! }
+        let index = min(currentAirportSequence - 1, sorted.count - 1)
+        return sorted[index]
     }
 
     init(
@@ -132,17 +135,17 @@ extension Trip {
         }
 
         // can not arrive on source trip node
-        if !nodeStatuses.isEmpty {
-            nodeStatuses.last!.actualArrivalTime = arrivalTime
+        guard let active = activeNodeStatus else { return }
 
-            // trip is completed and aircraft is arrived at the last airport of route
-            if currentAirportSequence == route.nodes.count {
-                aircraft.updateLastAndNextScheduledTrip(completedTrip: self)
-                for staff in staffs {
-                    staff.updateLastAndNextScheduledTrip(completedTrip: self)
-                }
-                isCompleted = true
+        active.actualArrivalTime = arrivalTime
+
+        // trip is completed and aircraft is arrived at the last airport of route
+        if currentAirportSequence == route.nodes.count {
+            aircraft.updateLastAndNextScheduledTrip(completedTrip: self)
+            for staff in staffs {
+                staff.updateLastAndNextScheduledTrip(completedTrip: self)
             }
+            isCompleted = true
         }
     }
 
@@ -154,9 +157,9 @@ extension Trip {
         if nodeStatuses.isEmpty {
             startTrip(departureTime: departureTime)
         } else {
-            // takeoff from airport A and prepare airport B
-            if !isCompleted {
-                nodeStatuses.last!.actualDepartureTime = departureTime
+            // takeoff from current airport and prepare the next one
+            if !isCompleted, let active = activeNodeStatus {
+                active.actualDepartureTime = departureTime
                 // airport B will be pushed as current node
                 scheduleNextAirport()
             }
