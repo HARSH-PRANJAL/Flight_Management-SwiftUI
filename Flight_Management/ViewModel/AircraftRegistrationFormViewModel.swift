@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @Observable
 final class AircraftRegistrationFormViewModel {
@@ -10,7 +10,7 @@ final class AircraftRegistrationFormViewModel {
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
-    
+
     var originalSnapshot: Snapshot?
     struct Snapshot: Equatable {
         let registrationNumber: String
@@ -18,12 +18,12 @@ final class AircraftRegistrationFormViewModel {
         let seatingCapacity: String
         let minimumStaffRequired: [StaffRole: String]
     }
-    
+
     var isDirty: Bool {
         guard let original = originalSnapshot else { return false }
         return currentSnapshot() != original
     }
-    
+
     func currentSnapshot() -> Snapshot {
         return Snapshot(
             registrationNumber: registrationNumber,
@@ -38,14 +38,16 @@ final class AircraftRegistrationFormViewModel {
             minimumStaffRequired[role] = ""
         }
     }
-    
+
     init(aircraft: Aircraft) {
         self.registrationNumber = aircraft.registrationNumber
         self.type = aircraft.type
         self.seatingCapacity = String(aircraft.seatingCapacity)
-        
+
         for role in StaffRole.allCases {
-            self.minimumStaffRequired[role] = String(aircraft.minimumStaffRequired[role] ?? 0)
+            self.minimumStaffRequired[role] = String(
+                aircraft.minimumStaffRequired[role] ?? 0
+            )
         }
     }
 
@@ -63,30 +65,34 @@ final class AircraftRegistrationFormViewModel {
 // MARK: - Validators
 extension AircraftRegistrationFormViewModel {
     func validateRegistrationNumber() -> Bool {
-        let trimmed = registrationNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+        let trimmed = registrationNumber.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
         if trimmed.isEmpty {
-            fieldErrors[.registrationNumber] = "Registration number cannot be empty."
+            fieldErrors[.registrationNumber] =
+                "Registration number cannot be empty."
             return false
         }
-        
+
         if trimmed.count < 3 {
-            fieldErrors[.registrationNumber] = "Registration number must be at least 3 characters."
+            fieldErrors[.registrationNumber] =
+                "Registration number must be at least 3 characters."
             return false
         }
-        
+
         registrationNumber = trimmed
         return true
     }
 
     func validateType() -> Bool {
         let trimmed = type.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         if trimmed.isEmpty {
             fieldErrors[.type] = "Aircraft type cannot be empty."
             return false
         }
-        
+
         type = trimmed
         return true
     }
@@ -96,52 +102,61 @@ extension AircraftRegistrationFormViewModel {
             fieldErrors[.seatingCapacity] = "Enter a valid seating capacity."
             return false
         }
-        
+
         return true
     }
 
     func validateMinimumStaffRequired() -> Bool {
-        for role in StaffRole.allCases {
-            if let count = Int(minimumStaffRequired[role] ?? ""), count < 0 {
-                fieldErrors[.minimumStaffRequired] = "Staff count cannot be negative."
-                return false
-            }
+        let totalCount: Int = minimumStaffRequired.reduce(0) {
+            $0 + (Int($1.value) ?? 0)
+        }
+
+        if Int(minimumStaffRequired[.pilot] ?? "0") ?? 0 == 0
+            && Int(minimumStaffRequired[.coPilot] ?? "0") ?? 0 == 0
+        {
+            fieldErrors[.minimumStaffRequired] =
+                "At least one pilot or co-pilot must be required."
+            return false
+        }
+        if totalCount == 0 {
+            fieldErrors[.minimumStaffRequired] = "Provide operational staff count."
+            return false
         }
         return true
     }
 
     func validateAll() -> Bool {
         var isValid = true
-        
+
         isValid = validateRegistrationNumber() && isValid
         isValid = validateType() && isValid
         isValid = validateSeatingCapacity() && isValid
         isValid = validateMinimumStaffRequired() && isValid
-        
+
         return isValid
     }
 
     func saveAircraft(to context: ModelContext) -> Bool {
-        guard validateAll() else { return false }
-        
         let capacity = Int(seatingCapacity) ?? 0
         var staffDict: [StaffRole: Int] = [:]
-        
+
         for role in StaffRole.allCases {
             if let count = Int(minimumStaffRequired[role] ?? "0") {
                 staffDict[role] = max(0, count)
             }
         }
-        
+
         let aircraft = Aircraft(
-            registrationNumber: registrationNumber.trimmingCharacters(in: .whitespacesAndNewlines),
+            registrationNumber: registrationNumber.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ),
             type: type.trimmingCharacters(in: .whitespacesAndNewlines),
             seatingCapacity: capacity,
             minimumStaffRequired: staffDict
         )
-        
+
         context.insert(aircraft)
-        
+
         do {
             try context.save()
             submissionState = .success
@@ -151,14 +166,15 @@ extension AircraftRegistrationFormViewModel {
             return false
         }
     }
-    
-    func updateAircraft(_ aircraft: Aircraft, in context: ModelContext) -> Bool {
-        guard validateAll() else { return false }
-        
-        aircraft.registrationNumber = registrationNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    func updateAircraft(_ aircraft: Aircraft, in context: ModelContext) -> Bool
+    {
+        aircraft.registrationNumber = registrationNumber.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
         aircraft.type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         aircraft.seatingCapacity = Int(seatingCapacity) ?? 0
-        
+
         var staffDict: [StaffRole: Int] = [:]
         for role in StaffRole.allCases {
             if let count = Int(minimumStaffRequired[role] ?? "0") {
@@ -166,7 +182,7 @@ extension AircraftRegistrationFormViewModel {
             }
         }
         aircraft.minimumStaffRequired = staffDict
-        
+
         do {
             try context.save()
             submissionState = .success
