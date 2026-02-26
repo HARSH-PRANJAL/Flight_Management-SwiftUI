@@ -62,14 +62,13 @@ struct StaffDetailView: View {
                 )
             }
         }
-
         .sheet(isPresented: $showReplaceStaffSheet) {
             ReplaceStaffSheet(
                 currentStaff: staff,
                 availableStaffList: availableReplacementStaff,
                 onReplacement: { replacement in
                     selectedReplacementStaff = replacement
-                    handleReplacementSelected()
+                    showReplacementConfirmationAlert = true
                 }
             )
         }
@@ -100,7 +99,6 @@ struct StaffDetailView: View {
                 )
             }
         }
-
         // Alert: Replacement found - confirm assignment
         .alert(
             "Assign Replacement",
@@ -117,7 +115,6 @@ struct StaffDetailView: View {
                 )
             }
         }
-
         // Alert: No replacement available
         .alert("No Replacement Available", isPresented: $showNoReplacementAlert)
         {
@@ -133,7 +130,10 @@ struct StaffDetailView: View {
             )
         }
     }
+}
 
+// MARK: Util
+extension StaffDetailView {
     private func handleAdminAction() {
         if staff.isMarkedUnavailable {
             markStaffAvailable()
@@ -161,7 +161,7 @@ struct StaffDetailView: View {
             let fetched = try modelContext.fetch(descriptor)
 
             availableReplacementStaff = fetched.filter {
-                $0.designation == designation && $0.currentTrip == nil
+                $0.designation == designation && $0.isAvailable(from: staff.currentTrip?.scheduledDepartureTime ?? Date(), to: staff.currentTrip?.estimatedArrivalTime ?? Date())
             }
 
             if availableReplacementStaff.isEmpty {
@@ -175,10 +175,6 @@ struct StaffDetailView: View {
                 "Failed to find replacement staff: \(error.localizedDescription)"
             )
         }
-    }
-
-    private func handleReplacementSelected() {
-        showReplacementConfirmationAlert = true
     }
 
     private func proceedWithReplacement() {
