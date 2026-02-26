@@ -8,7 +8,8 @@ extension Color {
     static let delayed      = Color("StatusDelayed")
     static let cancelled    = Color("StatusCancelled")
     static let completed    = Color("StatusCompleted")
-    
+    static let available    = Color("StatusAvailable")
+    static let onDuty       = Color("StatusOnDuty")
     static func tripStatusColor(for status: TripStatus) -> Color {
         switch status {
         case .scheduled:  return .scheduled
@@ -21,8 +22,8 @@ extension Color {
     
     static func staffStatusColor(for status: StaffAvailabilityStatus) -> Color {
         switch status {
-        case .available:   return .onTime
-        case .onDuty:      return .completed
+        case .available:   return .available
+        case .onDuty:      return .onDuty
         case .unavailable: return .cancelled
         }
     }
@@ -30,9 +31,9 @@ extension Color {
     static func aircraftStatusColor(for status: AircraftStatus) -> Color {
         switch status {
         case .available:
-            return .onTime
+            return .available
         case .assigned:
-            return .completed
+            return .onDuty
         }
     }
 }
