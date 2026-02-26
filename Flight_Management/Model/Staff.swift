@@ -89,6 +89,10 @@ class Staff {
     // True if the staff has no overlapping trip (scheduled or in progress) in the window.
     func isAvailable(from: Date, to: Date) -> Bool {
 
+        if isMarkedUnavailable {
+            return false
+        }
+        
         return !trips.contains(where: { trip in
 
             guard !trip.isCancelled && !trip.isCompleted else { return false }
