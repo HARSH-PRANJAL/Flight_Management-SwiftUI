@@ -23,24 +23,18 @@ struct StaffListView: View {
                 if displayedStaffs.isEmpty {
                     fallbackBackground
                 } else {
-                    List {
-                        ForEach(displayedStaffs, id: \.id) { staff in
-                            NavigationLink(
-                                destination: StaffDetailView(staff: staff)
-                            ) {
-                                ListRow(staff: staff)
-                            }
-                            .onAppear {
-                                if staff.id == displayedStaffs.last?.id {
-                                    Task {
-                                        await viewModel.loadMore(
-                                            context: context,
-                                            filter: selectedFilter,
-                                            searchText: searchText
-                                        )
-                                    }
+                    Group {
+                        if externalStaffs.isEmpty {
+                            list
+                                .refreshable {
+                                    await viewModel.loadInitial(
+                                        context: context,
+                                        filter: selectedFilter,
+                                        searchText: searchText
+                                    )
                                 }
-                            }
+                        } else {
+                            list
                         }
                     }
                     .scrollDismissesKeyboard(.immediately)
@@ -79,6 +73,33 @@ struct StaffListView: View {
                         filter: selectedFilter,
                         searchText: newSearch
                     )
+                }
+            }
+        }
+    }
+}
+
+// MARK: List
+extension StaffListView {
+    var list: some View {
+        List {
+            ForEach(displayedStaffs, id: \.id) { staff in
+                NavigationLink(
+                    destination: StaffDetailView(staff: staff)
+                ) {
+                    ListRow(staff: staff)
+                }
+                .onAppear {
+                    guard externalStaffs.isEmpty else { return }
+                    if staff.id == displayedStaffs.last?.id {
+                        Task {
+                            await viewModel.loadMore(
+                                context: context,
+                                filter: selectedFilter,
+                                searchText: searchText
+                            )
+                        }
+                    }
                 }
             }
         }
