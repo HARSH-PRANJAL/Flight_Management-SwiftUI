@@ -8,6 +8,15 @@ struct AircraftDetailScreen: View {
 
     @State private var selectedTab: DetailTab = .detail
     @Binding var isEditPagePresented: Bool
+    @Binding var isScheduledTripsPresented: Bool
+
+    let formatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.minimumFractionDigits = 0
+        f.maximumFractionDigits = 1
+        f.minimumIntegerDigits = 1
+        return f
+    }()
 
     var body: some View {
         ZStack {
@@ -25,36 +34,22 @@ struct AircraftDetailScreen: View {
                     }
                 }
             }
+            .navigationTitle(aircraft.registrationNumber)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if !aircraft.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
                     }
                 }
-
-                if isManager && isAircraftAvailable {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: { isEditPagePresented = true }) {
-                            Image(systemName: "pencil")
-                        }
-                    }
-                }
             }
-            .gesture(
-                DragGesture(minimumDistance: 40)
-                    .onEnded { value in
-                        let horizontal = value.translation.width
-                        if horizontal > 100 {
-                            selectedTab = .detail
-                        }
-                        if horizontal < -100 {
-                            selectedTab = .tripHistory
-                        }
-                    }
-            )
         }
         .animation(.linear(duration: 0.5), value: selectedTab)
     }
+}
+
+// MARK: UI
+extension AircraftDetailScreen {
 
     var detailView: some View {
         ScrollView {
@@ -68,17 +63,19 @@ struct AircraftDetailScreen: View {
                         CardView(
                             title: "Scheduled",
                             value: "\(aircraft.scheduledTrips.count)",
-                            subtitle: "trips",
                             icon: "calendar",
                             iconColor: Color(.systemIndigo)
                         )
+                        .onTapGesture {
+                            if !aircraft.scheduledTrips.isEmpty {
+                                isScheduledTripsPresented.toggle()
+                            }
+                        }
                         CardView(
                             title: "Flying Hours",
-                            value: String(
-                                format: "%.1f",
-                                aircraft.totalTripHours
-                            ),
-                            subtitle: "  ",
+                            value: formatter.string(
+                                from: NSNumber(value: aircraft.totalTripHours)
+                            )?.appending(" hr") ?? "0 hr",
                             icon: "clock",
                             iconColor: Color(.systemBrown)
                         )
@@ -87,18 +84,28 @@ struct AircraftDetailScreen: View {
 
                 tripSectionCards
             }
-            .padding(.horizontal, 16)
+            .padding([.horizontal, .top], 16)
         }
         .scrollIndicators(.hidden)
+        .toolbar {
+            if isManager && isAircraftAvailable {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { isEditPagePresented = true }) {
+                        Image(systemName: "pencil")
+                    }
+                }
+            }
+        }
     }
 
     var tripHistoryContent: some View {
-        TripListView(externalTrips: aircraft.trips, navigationTitle: "")
+        TripList(
+            externalTrips: aircraft.trips,
+            navigationTitle: "\(aircraft.registrationNumber) trips",
+            requiredFilters: [.scheduled, .cancelled, .completed]
+        )
+        .padding(.top, -20)
     }
-}
-
-// MARK: UI
-extension AircraftDetailScreen {
 
     var tripSectionCards: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -171,11 +178,11 @@ extension AircraftDetailScreen {
                     value: "\(aircraft.seatingCapacity)"
                 )
                 .padding(.bottom, 12)
-                
+
                 Divider()
                     .opacity(0.75)
                     .padding(.bottom, 12)
-                
+
                 Text("Minimum Staff Required for operation")
                     .foregroundStyle(Color.gray)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -197,19 +204,5 @@ extension AircraftDetailScreen {
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(cardTheme())
-    }
-}
-
-#Preview {
-    NavigationStack {
-        AircraftDetailScreen(
-            aircraft: Aircraft(
-                registrationNumber: "N12345",
-                type: "Boeing 737",
-                seatingCapacity: 180,
-                minimumStaffRequired: [.pilot: 2, .cabinCrew: 4]
-            ),
-            isEditPagePresented: .constant(false)
-        )
     }
 }
