@@ -69,12 +69,13 @@ struct TripManagerDashboardView: View {
             .scrollIndicators(.hidden)
             .sheet(isPresented: $showingTripList) {
                 NavigationStack {
-                    TripListView(
+                    TripList(
                         externalTrips: upcomingTrips,
                         navigationTitle: "Trips in next 24 hr",
                         requiredFilters: [.scheduled, .cancelled]
                     )
                     .navigationBarTitleDisplayMode(.inline)
+                    .padding(.top, -20)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button {
