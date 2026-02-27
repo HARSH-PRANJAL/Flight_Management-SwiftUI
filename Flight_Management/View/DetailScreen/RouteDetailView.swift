@@ -128,7 +128,10 @@ struct RouteDetailView: View {
                     }
                 }
             }
-            .background(cardTheme())
+            .background(
+                Color(.tertiarySystemBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            )
         }
         .padding(.bottom, 16)
     }
