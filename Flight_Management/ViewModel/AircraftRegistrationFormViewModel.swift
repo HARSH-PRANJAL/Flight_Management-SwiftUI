@@ -7,6 +7,7 @@ final class AircraftRegistrationFormViewModel {
     var type: String = ""
     var seatingCapacity: String = ""
     var minimumStaffRequired: [StaffRole: String] = [:]
+    var isEditing: Bool = false
 
     var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
@@ -49,6 +50,7 @@ final class AircraftRegistrationFormViewModel {
                 aircraft.minimumStaffRequired[role] ?? 0
             )
         }
+        self.isEditing = true
     }
 
     func resetForm() {

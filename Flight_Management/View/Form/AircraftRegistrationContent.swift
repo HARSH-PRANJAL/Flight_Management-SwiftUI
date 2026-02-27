@@ -25,6 +25,7 @@ struct AircraftRegistrationContent: View {
                 )
             )
         } else {
+            
             _viewModel = State(
                 initialValue: AircraftRegistrationFormViewModel()
             )
@@ -40,7 +41,9 @@ struct AircraftRegistrationContent: View {
                         registrationNumberFieldSection
                         typeFieldSection
                         seatingCapacityFieldSection
-                        minimumStaffSection
+                        if !viewModel.isEditing {
+                            minimumStaffSection
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 20)
