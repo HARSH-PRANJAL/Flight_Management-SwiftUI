@@ -104,7 +104,10 @@ extension AircraftRegistrationFormViewModel {
             fieldErrors[.seatingCapacity] = "Enter a valid seating capacity."
             return false
         }
-
+        if capacity > 500 {
+            fieldErrors[.seatingCapacity] = "Number of seats cannot be more than 500."
+            return false
+        }
         return true
     }
 
@@ -113,15 +116,29 @@ extension AircraftRegistrationFormViewModel {
             $0 + (Int($1.value) ?? 0)
         }
 
-        if Int(minimumStaffRequired[.pilot] ?? "0") ?? 0 == 0
-            && Int(minimumStaffRequired[.coPilot] ?? "0") ?? 0 == 0
-        {
-            fieldErrors[.minimumStaffRequired] =
-                "At least one pilot or co-pilot must be required."
+        let pilotCount = Int(minimumStaffRequired[.pilot] ?? "0") ?? 0
+        let copilotCount = Int(minimumStaffRequired[.coPilot] ?? "0") ?? 0
+        let crewCount = Int(minimumStaffRequired[.cabinCrew] ?? "0") ?? 0
+
+        if pilotCount == 0 && copilotCount == 0 {
+            fieldErrors[.minimumStaffRequired] = "At least one pilot or co-pilot must be required."
             return false
         }
         if totalCount == 0 {
             fieldErrors[.minimumStaffRequired] = "Provide operational staff count."
+            return false
+        }
+        if pilotCount > 5 {
+            fieldErrors[.minimumStaffRequired] = "Number of pilots cannot be more than 5."
+            return false
+        }
+        if pilotCount + copilotCount > 5 {
+            let allowedCopilots = max(0, 5 - pilotCount)
+            fieldErrors[.minimumStaffRequired] = "Maximum allowed number of copilots is \(allowedCopilots)."
+            return false
+        }
+        if crewCount > 12 {
+            fieldErrors[.minimumStaffRequired] = "Number of crew members cannot be more than 12."
             return false
         }
         return true
