@@ -1,7 +1,8 @@
+import SwiftData
 import SwiftUI
 
 struct RouteDetailView: View {
-    let route: Route
+    var route: Route
 
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
@@ -18,24 +19,6 @@ struct RouteDetailView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     primaryCard
-
-                    HStack(spacing: 12) {
-                        CardView(
-                            title: "Trips",
-                            value: "\(route.trips.count)",
-                            subtitle: "",
-                            icon: "airplane.up.right",
-                            iconColor: Color(.systemBlue)
-                        )
-
-                        CardView(
-                            title: "Scheduled",
-                            value: "\(countScheduleTrips)",
-                            subtitle: "",
-                            icon: "calendar",
-                            iconColor: Color(.systemMint)
-                        )
-                    }
 
                     airportNodesCard
 
@@ -86,6 +69,15 @@ struct RouteDetailView: View {
                 DetailRowView(
                     label: "Duration",
                     value: "\(route.totalPlannedDurationMinutes) min"
+                )
+                DetailRowView(
+                    label: "Total trips",
+                    value: "\(route.trips.count)"
+                )
+                DetailRowView(
+                    label: "Scheduled trips",
+                    value:
+                        "\(route.trips.filter{$0.currentStatus == .scheduled}.count)"
                 )
             }
             .fixedSize(horizontal: false, vertical: true)
