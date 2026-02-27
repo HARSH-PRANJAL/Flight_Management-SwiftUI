@@ -109,12 +109,13 @@ struct AdminDashboardView: View {
         }
         .sheet(isPresented: $showingTripList) {
             NavigationStack {
-                TripListView(
+                TripList(
                     externalTrips: upcomingTrips,
                     navigationTitle: "Trips in next 6 hours",
                     requiredFilters: [.scheduled, .cancelled]
                 )
                 .navigationBarTitleDisplayMode(.inline)
+                .padding(.top, -20)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button {
