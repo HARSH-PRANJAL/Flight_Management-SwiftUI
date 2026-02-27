@@ -3,7 +3,7 @@ import SwiftUI
 struct CardView: View {
     let title: String
     let value: String
-    let subtitle: String
+    var subtitle: String? = nil
     let icon: String
     let iconColor: Color
 
@@ -25,8 +25,8 @@ struct CardView: View {
                     .foregroundColor(iconColor)
                     .minimumScaleFactor(0.7)
             }
-            
-            if !subtitle.isEmpty {
+
+            if let subtitle = self.subtitle {
                 Text(subtitle)
                     .font(.subheadline)
                     .minimumScaleFactor(0.7)
