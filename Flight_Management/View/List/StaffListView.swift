@@ -27,11 +27,13 @@ struct StaffListView: View {
                         if externalStaffs.isEmpty {
                             list
                                 .refreshable {
-                                    await viewModel.loadInitial(
-                                        context: context,
-                                        filter: selectedFilter,
-                                        searchText: searchText
-                                    )
+                                    Task {
+                                        await viewModel.loadInitial(
+                                            context: context,
+                                            filter: selectedFilter,
+                                            searchText: searchText
+                                        )
+                                    }
                                 }
                         } else {
                             list

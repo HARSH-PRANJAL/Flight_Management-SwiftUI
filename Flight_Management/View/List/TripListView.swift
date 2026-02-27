@@ -3,7 +3,7 @@ import SwiftUI
 
 struct TripListView: View {
 
-    var externalTrips: [Trip] = []
+    var externalTrips: [Trip]? = nil
     var navigationTitle: String = "Trip List"
     var requiredFilters: [TripStatus] = TripStatus.allCases
 
@@ -22,29 +22,17 @@ struct TripListView: View {
                 if displayedTrips.isEmpty {
                     fallbackBackground
                 } else {
-                    List {
-                        ForEach(displayedTrips, id: \.id) { trip in
-                            NavigationLink(
-                                destination: TripDetailView(trip: trip)
-                            ) {
-                                ListRow(trip: trip)
-                            }
-                            .onAppear {
-                                guard externalTrips.isEmpty else { return }
-                                if trip.id == displayedTrips.last?.id {
-                                    Task {
-                                        await viewModel.loadMore(
-                                            context: context,
-                                            filter: selectedFilter,
-                                            searchText: searchText
-                                        )
-                                    }
-                                }
-                            }
+                    list
+                        .scrollDismissesKeyboard(.immediately)
+                        .listStyle(.insetGrouped)
+                        .refreshable {
+                            if externalTrips != nil { return }
+                            await viewModel.loadInitial(
+                                context: context,
+                                filter: selectedFilter,
+                                searchText: searchText
+                            )
                         }
-                    }
-                    .scrollDismissesKeyboard(.immediately)
-                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle(navigationTitle)
@@ -58,7 +46,7 @@ struct TripListView: View {
             )
             .searchToolbarBehavior(.minimize)
             .task {
-                guard externalTrips.isEmpty else { return }
+                if externalTrips != nil { return }
                 await viewModel.loadInitial(
                     context: context,
                     filter: selectedFilter,
@@ -66,7 +54,7 @@ struct TripListView: View {
                 )
             }
             .onChange(of: selectedFilter) { _, newFilter in
-                guard externalTrips.isEmpty else { return }
+                if externalTrips != nil { return }
                 Task {
                     await viewModel.loadInitial(
                         context: context,
@@ -76,13 +64,39 @@ struct TripListView: View {
                 }
             }
             .onChange(of: searchText) { _, newSearch in
-                guard externalTrips.isEmpty else { return }
+                if externalTrips != nil { return }
                 Task {
                     await viewModel.loadInitial(
                         context: context,
                         filter: selectedFilter,
                         searchText: newSearch
                     )
+                }
+            }
+        }
+    }
+}
+
+extension TripListView {
+    var list: some View {
+        List {
+            ForEach(displayedTrips, id: \.id) { trip in
+                NavigationLink(
+                    destination: TripDetailView(trip: trip)
+                ) {
+                    ListRow(trip: trip)
+                }
+                .onAppear {
+                    if externalTrips != nil { return }
+                    if trip.id == displayedTrips.last?.id {
+                        Task {
+                            await viewModel.loadMore(
+                                context: context,
+                                filter: selectedFilter,
+                                searchText: searchText
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -177,10 +191,13 @@ extension TripListView {
     }
 
     var displayedTrips: [Trip] {
-        var filtered: [Trip] =
-            externalTrips.isEmpty
-            ? viewModel.items
-            : externalTrips
+        var filtered: [Trip]
+
+        if externalTrips != nil {
+            filtered = externalTrips!
+        } else {
+            filtered = viewModel.items
+        }
 
         // Apply in-memory filter on the currently loaded batch / external list
         if let status = selectedFilter {
@@ -218,6 +235,6 @@ extension TripListView {
 
 #Preview {
     NavigationStack {
-        TripListView(externalTrips: [])
+        TripListView(externalTrips: nil)
     }
 }

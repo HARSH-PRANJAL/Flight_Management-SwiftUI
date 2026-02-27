@@ -39,6 +39,14 @@ struct AircraftListView: View {
                 }
                 .scrollDismissesKeyboard(.immediately)
                 .listStyle(.insetGrouped)
+                .refreshable {
+                    Task {
+                        await viewModel.loadInitial(
+                            context: context,
+                            searchText: ""
+                        )
+                    }
+                }
             }
         }
         .navigationTitle("Aircraft List")
@@ -139,8 +147,9 @@ extension AircraftListView {
 
             if selectedSort == .registration {
                 let comparison =
-                    lhs.registrationNumber.lowercased()
-                    < rhs.registrationNumber.lowercased()
+                    lhs.registrationNumber
+                    .localizedStandardCompare(rhs.registrationNumber)
+                    == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison = lhs.seatingCapacity < rhs.seatingCapacity

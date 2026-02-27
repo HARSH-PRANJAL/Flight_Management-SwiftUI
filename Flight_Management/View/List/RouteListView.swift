@@ -19,7 +19,9 @@ struct RouteListView: View {
                 } else {
                     List {
                         ForEach(displayedRoutes, id: \.id) { route in
-                            NavigationLink(destination: RouteDetailView(route: route)) {
+                            NavigationLink(
+                                destination: RouteDetailView(route: route)
+                            ) {
                                 ListRow(route: route)
                             }
                             .onAppear {
@@ -36,6 +38,14 @@ struct RouteListView: View {
                     }
                     .scrollDismissesKeyboard(.immediately)
                     .listStyle(.insetGrouped)
+                    .refreshable {
+                        Task {
+                            await viewModel.loadInitial(
+                                context: context,
+                                searchText: ""
+                            )
+                        }
+                    }
                 }
             }
             .navigationTitle("Route List")
@@ -76,7 +86,9 @@ extension RouteListView {
                         Button {
                             if selectedSort == sort {
                                 // Toggle sort order if same option clicked
-                                selectedSortOrder = selectedSortOrder == .ascending ? .descending : .ascending
+                                selectedSortOrder =
+                                    selectedSortOrder == .ascending
+                                    ? .descending : .ascending
                             } else {
                                 // Select new sort option
                                 selectedSort = sort
