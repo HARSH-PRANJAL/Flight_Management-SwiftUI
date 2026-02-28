@@ -138,8 +138,9 @@ extension AircraftRegistrationContent {
                 placeholder: "e.g., N12345",
                 focus: .registrationNumber,
                 hasError: viewModel.fieldErrors[.registrationNumber] != nil,
+                maxLength: 8,
                 allowedCharacter: {
-                    $0.isLetter || $0.isNumber
+                    $0.isLetter || $0.isNumber || $0 == "-"
                 },
                 text: $viewModel.registrationNumber,
                 focusedField: $focusedField
@@ -161,6 +162,7 @@ extension AircraftRegistrationContent {
                 placeholder: "e.g., Boeing 737",
                 focus: .type,
                 hasError: viewModel.fieldErrors[.type] != nil,
+                maxLength: 50,
                 allowedCharacter: {
                     $0.isLetter || $0.isNumber || $0.isWhitespace
                 },
