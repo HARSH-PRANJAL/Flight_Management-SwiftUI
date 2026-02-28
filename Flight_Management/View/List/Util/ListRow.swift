@@ -4,7 +4,7 @@ struct ListRow: View, Identifiable {
     let id: UUID = UUID()
     let profileImage: Image?
     let title: String
-    let subtitle: String
+    var subtitle: String?
     let metadata: String?
     let statusBadge: StatusBadge?
     let associatedTrip: Trip?
@@ -13,7 +13,7 @@ struct ListRow: View, Identifiable {
     init(
         profileImage: Image?,
         title: String,
-        subtitle: String,
+        subtitle: String? = nil,
         metadata: String? = nil,
         status: StatusBadge? = nil,
         associatedTrip: Trip? = nil,
@@ -38,10 +38,12 @@ struct ListRow: View, Identifiable {
                     .foregroundStyle(Color(.label))
                     .lineLimit(1)
 
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.label))
-                    .lineLimit(1)
+                if let subtitle = self.subtitle {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.label))
+                        .lineLimit(1)
+                }
 
                 if let metadata, !metadata.isEmpty {
                     Text(metadata)
@@ -90,7 +92,7 @@ extension ListRow {
                 "Next: \(next.flightNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
         } else {
             meta = String(
-                format: "%.0fh total • \(staff.completedTrips.count) trips",
+                format: "%.0f hr logged in \(staff.completedTrips.count) trips",
                 staff.totalTripHours
             )
         }
@@ -113,6 +115,22 @@ extension ListRow {
             subtitle: aircraft.type,
             metadata: meta,
             status: .from(aircraftStatus: aircraft.currentStatus)
+        )
+    }
+
+    init(replacementStaff staff: Staff) {
+        let meta = String(
+            format: "%.0f hr logged in \(staff.completedTrips.count) trips",
+            staff.totalTripHours
+        )
+
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: nil,
+            metadata: meta,
+            status: nil,
+            showFallbackImage: true
         )
     }
 
@@ -140,10 +158,13 @@ extension ListRow {
     }
 
     init(route: Route) {
-        let origin = route.nodes.first(where: { $0.sequence == 1 })?.airport.code
-        ?? "_"
-        let dest = route.nodes.last(where: { $0.sequence == route.nodes.count })?.airport.code
-        ?? "_"
+        let origin =
+            route.nodes.first(where: { $0.sequence == 1 })?.airport.code
+            ?? "_"
+        let dest =
+            route.nodes.last(where: { $0.sequence == route.nodes.count })?
+            .airport.code
+            ?? "_"
         let meta =
             route.nodes.isEmpty
             ? "\(route.trips.count) trips"
