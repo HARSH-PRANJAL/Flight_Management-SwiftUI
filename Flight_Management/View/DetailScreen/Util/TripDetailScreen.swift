@@ -20,63 +20,73 @@ struct TripDetailScreen: View {
     }
 
     var detailView: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Section {
-                    primaryCard
-                }
-
-                if canCancelTrip {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
                     Section {
-                        Button {
-                            onCancelTapped?()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "xmark.circle")
-                                    .font(.body.weight(.semibold))
-                                Text("Cancel Trip")
-                                    .font(.body.weight(.semibold))
+                        primaryCard
+                    }
+
+                    if canCancelTrip {
+                        Section {
+                            Button {
+                                onCancelTapped?()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "xmark.circle")
+                                        .font(.body.weight(.semibold))
+                                    Text("Cancel Trip")
+                                        .font(.body.weight(.semibold))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
+                            .buttonStyle(.bordered)
+                            .tint(Color(.systemRed))
                         }
-                        .buttonStyle(.bordered)
-                        .tint(Color(.systemRed))
                     }
-                }
 
-                Section {
-                    HStack(spacing: 12) {
-                        CardView(
-                            title: "Duration",
-                            value:
-                                "\(trip.route.totalPlannedDurationMinutes) m",
-                            subtitle: "planned",
-                            icon: "clock",
-                            iconColor: Color(.systemBrown)
-                        )
-                        CardView(
-                            title: "Crew",
-                            value: "\(trip.staffs.count)",
-                            subtitle: "assigned",
-                            icon: "person.2",
-                            iconColor: Color(.systemIndigo)
-                        )
+                    Section {
+                        HStack(spacing: 12) {
+                            CardView(
+                                title: "Duration",
+                                value:
+                                    "\(trip.route.totalPlannedDurationMinutes) m",
+                                subtitle: "planned",
+                                icon: "clock",
+                                iconColor: Color(.systemBrown)
+                            )
+                            CardView(
+                                title: "Crew",
+                                value: "\(trip.staffs.count)",
+                                subtitle: "assigned",
+                                icon: "person.2",
+                                iconColor: Color(.systemIndigo)
+                            )
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.6)){
+                                    proxy.scrollTo("staffSection", anchor: .top)
+                                }
+                            }
+                        }
                     }
-                }
-                .padding(.bottom, 8)
+                    .padding(.bottom, 8)
 
-                ClickableSection(
-                    title: "Assigned Aircraft",
-                    icon: "airplane",
-                    iconColor: Color(.systemBlue),
-                    row: { ListRow(aircraft: trip.aircraft) },
-                    destination: { AircraftDetailView(aircraft: trip.aircraft) }
-                )
-                .padding(.bottom, 8)
+                    ClickableSection(
+                        title: "Assigned Aircraft",
+                        icon: "airplane",
+                        iconColor: Color(.systemBlue),
+                        row: { ListRow(aircraft: trip.aircraft) },
+                        destination: {
+                            AircraftDetailView(aircraft: trip.aircraft)
+                        }
+                    )
+                    .padding(.bottom, 8)
 
-                if !trip.staffs.isEmpty {
-                    assignedStaffList
+                    if !trip.staffs.isEmpty {
+                        assignedStaffList
+                            .id("staffSection")
+                    }
                 }
             }
         }
