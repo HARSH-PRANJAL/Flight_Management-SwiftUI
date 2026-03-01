@@ -10,6 +10,7 @@ class Aircraft {
     var trips: [Trip]
 
     var registrationNumber: String
+    var registrationNumberSearchKey: String
     var type: String
     var seatingCapacity: Int
     var minimumStaffRequired: [StaffRole: Int]
@@ -46,6 +47,9 @@ class Aircraft {
     ) {
         self.id = UUID()
         self.registrationNumber = registrationNumber
+        self.registrationNumberSearchKey = Aircraft.normalisedSearchKey(
+            from: registrationNumber
+        )
         self.type = type
         self.seatingCapacity = seatingCapacity
         self.minimumStaffRequired = minimumStaffRequired
@@ -107,4 +111,18 @@ class Aircraft {
         })
     }
 
+}
+
+extension Aircraft {
+    static func normalisedSearchKey(from value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "" }
+
+        let withoutWhitespace =
+            trimmed
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+
+        return withoutWhitespace.lowercased()
+    }
 }

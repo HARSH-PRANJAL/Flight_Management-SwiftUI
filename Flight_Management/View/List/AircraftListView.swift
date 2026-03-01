@@ -7,6 +7,7 @@ struct AircraftListView: View {
 
     @State private var viewModel = AircraftListViewModel()
 
+    @State private var selectedStatus: AircraftStatus? = nil
     @State private var selectedSort: AircraftSort = .registration
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
@@ -30,6 +31,7 @@ struct AircraftListView: View {
                                 Task {
                                     await viewModel.loadMore(
                                         context: context,
+                                        statusFilter: selectedStatus,
                                         searchText: searchText
                                     )
                                 }
@@ -43,6 +45,7 @@ struct AircraftListView: View {
                     Task {
                         await viewModel.loadInitial(
                             context: context,
+                            statusFilter: selectedStatus,
                             searchText: ""
                         )
                     }
@@ -68,6 +71,7 @@ struct AircraftListView: View {
         .task {
             await viewModel.loadInitial(
                 context: context,
+                statusFilter: selectedStatus,
                 searchText: searchText
             )
         }
@@ -75,6 +79,7 @@ struct AircraftListView: View {
             Task {
                 await viewModel.loadInitial(
                     context: context,
+                    statusFilter: selectedStatus,
                     searchText: newSearch
                 )
             }
@@ -95,6 +100,63 @@ extension AircraftListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                Section("Filter by") {
+                    Button {
+                        selectedStatus = nil
+                        Task {
+                            await viewModel.loadInitial(
+                                context: context,
+                                statusFilter: selectedStatus,
+                                searchText: searchText
+                            )
+                        }
+                    } label: {
+                        HStack {
+                            Text("All")
+                            if selectedStatus == nil {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    Button {
+                        selectedStatus = .available
+                        Task {
+                            await viewModel.loadInitial(
+                                context: context,
+                                statusFilter: selectedStatus,
+                                searchText: searchText
+                            )
+                        }
+                    } label: {
+                        HStack {
+                            Text("Available")
+                            if selectedStatus == .available {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                    Button {
+                        selectedStatus = .assigned
+                        Task {
+                            await viewModel.loadInitial(
+                                context: context,
+                                statusFilter: selectedStatus,
+                                searchText: searchText
+                            )
+                        }
+                    } label: {
+                        HStack {
+                            Text("Assigned")
+                            if selectedStatus == .assigned {
+                                Spacer()
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+
                 Section("Sort by") {
                     ForEach(AircraftSort.allCases, id: \.self) { sort in
                         Button {

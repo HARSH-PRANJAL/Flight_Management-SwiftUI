@@ -19,17 +19,20 @@ final class AircraftListViewModel {
 
     func loadInitial(
         context: ModelContext,
+        statusFilter: AircraftStatus?,
         searchText: String
     ) async {
         reset()
         await loadMore(
             context: context,
+            statusFilter: statusFilter,
             searchText: searchText
         )
     }
 
     func loadMore(
         context: ModelContext,
+        statusFilter: AircraftStatus?,
         searchText: String
     ) async {
         guard !isLoading, hasMore else { return }
@@ -45,7 +48,10 @@ final class AircraftListViewModel {
                 SortDescriptor(\Aircraft.registrationNumber, order: .forward)
             ]
 
-            if let predicate = makePredicate(searchText: searchText) {
+            if let predicate = makePredicate(
+                statusFilter: statusFilter,
+                searchText: searchText
+            ) {
                 descriptor.predicate = predicate
             }
 
@@ -61,15 +67,50 @@ final class AircraftListViewModel {
         }
     }
 
-    private func makePredicate(searchText: String) -> Predicate<Aircraft>? {
+    private func makePredicate(
+        statusFilter: AircraftStatus?,
+        searchText: String
+    ) -> Predicate<Aircraft>? {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalisedSearch = Aircraft.normalisedSearchKey(from: trimmed)
 
-        if trimmed.isEmpty {
+        if statusFilter == nil && normalisedSearch.isEmpty {
             return nil
         }
 
-        return #Predicate<Aircraft> {
-            $0.registrationNumber.contains(trimmed)
+        if let statusFilter {
+            switch statusFilter {
+            case .available:
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Aircraft> { aircraft in
+                        aircraft.currentTrip == nil
+                    }
+                } else {
+                    return #Predicate<Aircraft> { aircraft in
+                        aircraft.currentTrip == nil
+                            && aircraft.registrationNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                    }
+                }
+            case .assigned:
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Aircraft> { aircraft in
+                        aircraft.currentTrip != nil
+                    }
+                } else {
+                    return #Predicate<Aircraft> { aircraft in
+                        aircraft.currentTrip != nil
+                            && aircraft.registrationNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                    }
+                }
+            }
+        } else {
+            return #Predicate<Aircraft> { aircraft in
+                aircraft.registrationNumberSearchKey.contains(normalisedSearch)
+            }
         }
     }
 }
