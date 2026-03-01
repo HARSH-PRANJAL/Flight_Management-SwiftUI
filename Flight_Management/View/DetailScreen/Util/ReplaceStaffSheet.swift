@@ -33,12 +33,13 @@ struct ReplaceStaffSheet: View {
                                     onReplacement(staff)
                                     dismiss()
                                 }) {
-                                    ListRow(staff: staff)
+                                    ListRow(replacementStaff: staff)
                                 }
                             }
                         }
                         .listStyle(.insetGrouped)
                         .scrollDismissesKeyboard(.immediately)
+                        .padding(.top, -20)
                     }
                 }
                 .navigationTitle("Select Replacement Staff")
