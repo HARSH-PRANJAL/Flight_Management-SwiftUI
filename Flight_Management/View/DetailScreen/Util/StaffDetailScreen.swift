@@ -8,7 +8,18 @@ struct StaffDetailScreen: View {
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
     @State private var selectedTab: DetailTab = .detail
+    @Binding var isScheduledTripsPresented: Bool
     @Binding var isEditPageShowing: Bool
+
+    var tripHours: String {
+        let hours = staff.totalTripHours
+
+        if hours.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(Int(hours))
+        } else {
+            return String(format: "%.1f", hours)
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -26,6 +37,8 @@ struct StaffDetailScreen: View {
                     }
                 }
             }
+            .navigationTitle("\(staff.name)")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if !staff.trips.isEmpty {
@@ -74,7 +87,7 @@ struct StaffDetailScreen: View {
                                         ? "Mark Available" : "Mark Unavailable"
                                 )
                                 .font(.body.weight(.semibold))
-                            }                            
+                            }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
                         }
@@ -91,17 +104,20 @@ struct StaffDetailScreen: View {
                 Section {
                     HStack(spacing: 12) {
                         CardView(
-                            title: "Total Trips",
-                            value: "\(staff.trips.count)",
-                            subtitle: "",
+                            title: "Scheduled",
+                            value: "\(staff.scheduledTrips.count)",
                             icon: "airplane.up.right",
                             iconColor: Color(.systemBlue)
                         )
+                        .onTapGesture {
+                            if !staff.scheduledTrips.isEmpty {
+                                isScheduledTripsPresented.toggle()
+                            }
+                        }
                         CardView(
                             title: "Flying Hours",
                             value:
-                                "\(String(format: "%.1f", staff.totalTripHours)) hr",
-                            subtitle: "",
+                                "\(tripHours) hr",
                             icon: "clock",
                             iconColor: Color(.systemPurple)
                         )
@@ -111,6 +127,7 @@ struct StaffDetailScreen: View {
 
                 flightSectionsCard
             }
+            .padding(.top, 16)
         }
         .padding(.horizontal, 16)
         .scrollIndicators(.hidden)
@@ -126,7 +143,13 @@ struct StaffDetailScreen: View {
     }
 
     var tripContent: some View {
-        TripListView(externalTrips: staff.trips, navigationTitle: "", requiredFilters: [.completed, .scheduled, .cancelled])
+        TripList(
+            externalTrips: staff.trips,
+            navigationTitle: "\(staff.name) trips",
+            requiredFilters: [.completed, .cancelled, .scheduled]
+        )
+        .navigationBarTitleDisplayMode(.inline)
+        .padding(.top, -20)
     }
 }
 

@@ -10,6 +10,7 @@ struct StaffDetailView: View {
 
     @State var isEditPageShowing: Bool = false
     @State var showReplaceStaffSheet: Bool = false
+    @State var isScheduledTripsPresented: Bool = false
 
     // Alert states
     @State var showMarkUnavailableAlert: Bool = false
@@ -50,6 +51,7 @@ struct StaffDetailView: View {
                 staff: staff,
                 isAdmin: isAdmin,
                 onActionButtonTapped: isAdmin ? { handleAdminAction() } : nil,
+                isScheduledTripsPresented: $isScheduledTripsPresented,
                 isEditPageShowing: $isEditPageShowing
             ).frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -62,6 +64,26 @@ struct StaffDetailView: View {
                 )
             }
         }
+        .sheet(isPresented: $isScheduledTripsPresented) {
+            NavigationStack {
+                TripList(
+                    externalTrips: staff.scheduledTrips,
+                    navigationTitle: "Scheduled Trips",
+                    requiredFilters: []
+                )
+                .navigationBarTitleDisplayMode(.inline)
+                .padding(.top, -20)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            isScheduledTripsPresented.toggle()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showReplaceStaffSheet) {
             ReplaceStaffSheet(
                 currentStaff: staff,
@@ -72,8 +94,7 @@ struct StaffDetailView: View {
                 }
             )
         }
-        .alert("Mark Staff Unavailable", isPresented: $showMarkUnavailableAlert)
-        {
+        .alert("", isPresented: $showMarkUnavailableAlert) {
             Button("Cancel", role: .cancel) {}
             if isStaffOnDuty {
                 Button(
@@ -91,17 +112,18 @@ struct StaffDetailView: View {
         } message: {
             if isStaffOnDuty {
                 Text(
-                    "\(staff.name) is currently assigned to a trip. \(staff.scheduledTrips.count != 0 ? "Additionally, they have \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled." : "")\n\nWould you like to find a replacement for current trip (only)?"
+                    "\(staff.name) is currently assigned to a trip. \(staff.scheduledTrips.count != 0 ? "Additionally, they have \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled." : "")\n\nWould you like to find a replacement for current trip ?"
                 )
             } else {
                 Text(
-                    "\(staff.scheduledTrips.count != 0 ? "\(staff.name) has \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled." : "No future trips are scheduled for this staff.")\n\nMark as unavailable?"
+                    "\(staff.name) has \(staff.scheduledTrips.count) scheduled \(tripString) that will be canceled."
                 )
+
             }
         }
         // Alert: Replacement found - confirm assignment
         .alert(
-            "Assign Replacement",
+            "",
             isPresented: $showReplacementConfirmationAlert
         ) {
             Button("Assign", action: proceedWithReplacement)
@@ -126,7 +148,7 @@ struct StaffDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(
-                "No available staff with \(staff.designation.rawValue) designation found. All scheduled trips will be canceled."
+                "No available staff with designation \(staff.designation.rawValue) is found. All scheduled trips will be canceled."
             )
         }
     }
@@ -143,8 +165,12 @@ extension StaffDetailView {
     }
 
     private func initiateMarkUnavailable() {
-        scheduledTripsToCancel = staff.scheduledTrips
-        showMarkUnavailableAlert = true
+        if staff.scheduledTrips.isEmpty && staff.currentStatus != .onDuty{
+            markStaffUnavailable()
+        } else {
+            scheduledTripsToCancel = staff.scheduledTrips
+            showMarkUnavailableAlert = true
+        }
     }
 
     private func findReplacementStaff() {
