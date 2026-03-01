@@ -76,15 +76,11 @@ final class StaffListViewModel {
             searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if filter == nil && trimmed.isEmpty {
+        let normalisedSearch = Staff.normalisedSearchKey(from: trimmed)
+
+        if filter == nil && normalisedSearch.isEmpty {
             return nil
         }
-
-        let normalisedSearch =
-            trimmed
-            .lowercased()
-            .replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: "-", with: "")
 
         let designationSearch = StaffRole.allCases.first { role in
             role.rawValue
@@ -98,42 +94,68 @@ final class StaffListViewModel {
             switch filter {
 
             case .available:
-                return #Predicate<Staff> {
-                    !$0.isMarkedUnavailable && $0.currentTrip == nil
-                        && (trimmed.isEmpty || $0.name.contains(trimmed)
-                            || (designationSearch != nil
-                                && $0.designation == designationSearch!)
-                            || ($0.currentTrip?.flightNumber.contains(trimmed)
-                                ?? false))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Staff> {
+                        !$0.isMarkedUnavailable && $0.currentTrip == nil
+                    }
+                } else {
+                    return #Predicate<Staff> {
+                        !$0.isMarkedUnavailable && $0.currentTrip == nil
+                            && ($0.nameSearchKey.contains(normalisedSearch)
+                                || (designationSearch != nil
+                                    && $0.designation == designationSearch!)
+                                || ($0.currentTrip?
+                                    .flightNumberSearchKey
+                                    .contains(normalisedSearch)
+                                    ?? false))
+                    }
                 }
 
             case .onDuty:
-                return #Predicate<Staff> {
-                    !$0.isMarkedUnavailable && $0.currentTrip != nil
-                        && (trimmed.isEmpty || $0.name.contains(trimmed)
-                            || (designationSearch != nil
-                                && $0.designation == designationSearch!)
-                            || ($0.currentTrip?.flightNumber.contains(trimmed)
-                                ?? false))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Staff> {
+                        !$0.isMarkedUnavailable && $0.currentTrip != nil
+                    }
+                } else {
+                    return #Predicate<Staff> {
+                        !$0.isMarkedUnavailable && $0.currentTrip != nil
+                            && ($0.nameSearchKey.contains(normalisedSearch)
+                                || (designationSearch != nil
+                                    && $0.designation == designationSearch!)
+                                || ($0.currentTrip?
+                                    .flightNumberSearchKey
+                                    .contains(normalisedSearch)
+                                    ?? false))
+                    }
                 }
 
             case .unavailable:
-                return #Predicate<Staff> {
-                    $0.isMarkedUnavailable
-                        && (trimmed.isEmpty || $0.name.contains(trimmed)
-                            || (designationSearch != nil
-                                && $0.designation == designationSearch!)
-                            || ($0.currentTrip?.flightNumber.contains(trimmed)
-                                ?? false))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Staff> {
+                        $0.isMarkedUnavailable
+                    }
+                } else {
+                    return #Predicate<Staff> {
+                        $0.isMarkedUnavailable
+                            && ($0.nameSearchKey.contains(normalisedSearch)
+                                || (designationSearch != nil
+                                    && $0.designation == designationSearch!)
+                                || ($0.currentTrip?
+                                    .flightNumberSearchKey
+                                    .contains(normalisedSearch)
+                                    ?? false))
+                    }
                 }
             }
 
         } else {
             return #Predicate<Staff> {
-                $0.name.contains(trimmed)
+                $0.nameSearchKey.contains(normalisedSearch)
                     || (designationSearch != nil
                         && $0.designation == designationSearch!)
-                    || ($0.currentTrip?.flightNumber.contains(trimmed) ?? false)
+                    || ($0.currentTrip?
+                        .flightNumberSearchKey
+                        .contains(normalisedSearch) ?? false)
             }
         }
     }

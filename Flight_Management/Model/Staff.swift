@@ -10,6 +10,7 @@ class Staff {
     var trips: [Trip]
 
     var name: String
+    var nameSearchKey: String
     var gender: Gender
     var email: String
     var profileImage: Data?
@@ -68,6 +69,7 @@ class Staff {
     ) {
         self.id = UUID()
         self.name = name
+        self.nameSearchKey = Staff.normalisedSearchKey(from: name)
         self.designation = designation
         self.gender = gender
         self.email = email
@@ -138,5 +140,19 @@ class Staff {
         }
         self.currentTrip = nil
         self.isMarkedUnavailable = true
+    }
+}
+
+extension Staff {
+    static func normalisedSearchKey(from value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "" }
+
+        let withoutWhitespace =
+            trimmed
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+
+        return withoutWhitespace.lowercased()
     }
 }
