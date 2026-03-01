@@ -73,43 +73,68 @@ final class TripListViewModel {
     ) -> Predicate<Trip>? {
         let trimmed = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalisedSearch = Trip.normalisedSearchKey(from: trimmed)
 
-        if filter == nil && trimmed.isEmpty {
+        if filter == nil && normalisedSearch.isEmpty {
             return nil
         }
 
         if let filter {
             switch filter {
             case .cancelled:
-                return #Predicate<Trip> { trip in
-                    trip.isCancelled
-                        && (trimmed.isEmpty
-                            || trip.flightNumber.contains(trimmed)
-                            || trip.route.name.contains(trimmed))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Trip> { trip in
+                        trip.isCancelled
+                    }
+                } else {
+                    return #Predicate<Trip> { trip in
+                        trip.isCancelled
+                            && (trip.flightNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                                || trip.route.nameSearchKey.contains(
+                                    normalisedSearch
+                                ))
+                    }
                 }
             case .completed:
-                return #Predicate<Trip> { trip in
-                    trip.isCompleted && !trip.isCancelled
-                        && (trimmed.isEmpty
-                            || trip.flightNumber.contains(trimmed)
-                            || trip.route.name.contains(trimmed))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Trip> { trip in
+                        trip.isCompleted && !trip.isCancelled
+                    }
+                } else {
+                    return #Predicate<Trip> { trip in
+                        trip.isCompleted && !trip.isCancelled
+                            && (trip.flightNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                                || trip.route.nameSearchKey.contains(
+                                    normalisedSearch
+                                ))
+                    }
                 }
             case .scheduled, .onTime, .delayed:
-                // These require derived state (currentStatus/totalDelayedMinutes);
-                // constrain only by cancellation/completion flags here, and let
-                // the view refine by currentStatus on the loaded batch.
-                return #Predicate<Trip> { trip in
-                    !trip.isCancelled && !trip.isCompleted
-                        && (trimmed.isEmpty
-                            || trip.flightNumber.contains(trimmed)
-                            || trip.route.name.contains(trimmed))
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Trip> { trip in
+                        !trip.isCancelled && !trip.isCompleted
+                    }
+                } else {
+                    return #Predicate<Trip> { trip in
+                        !trip.isCancelled && !trip.isCompleted
+                            && (trip.flightNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                                || trip.route.nameSearchKey.contains(
+                                    normalisedSearch
+                                ))
+                    }
                 }
             }
         } else {
             // No status filter, only search
             return #Predicate<Trip> { trip in
-                trip.flightNumber.contains(trimmed)
-                    || trip.route.name.contains(trimmed)
+                trip.flightNumberSearchKey.contains(normalisedSearch)
+                    || trip.route.nameSearchKey.contains(normalisedSearch)
             }
         }
     }

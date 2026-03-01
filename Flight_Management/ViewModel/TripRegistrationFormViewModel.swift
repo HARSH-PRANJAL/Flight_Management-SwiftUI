@@ -74,10 +74,36 @@ final class TripRegistrationFormViewModel {
         fieldErrors.removeAll()
         var valid = true
 
-        if flightNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            fieldErrors["flightNumber"] = "Flight number is required"
+        let trimmedFlightNumber =
+            flightNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedFlightNumber.isEmpty {
+            fieldErrors["flightNumber"] = "Trip number is required"
             valid = false
+        } else {
+            if trimmedFlightNumber.count > 50 {
+                fieldErrors["flightNumber"] =
+                    "Trip number cannot be longer than 50 characters."
+                valid = false
+            }
+
+            let allowedCharacters =
+                CharacterSet.letters
+                .union(.decimalDigits)
+                .union(CharacterSet(charactersIn: "-"))
+
+            if !trimmedFlightNumber.unicodeScalars.allSatisfy(
+                allowedCharacters.contains
+            ) {
+                fieldErrors["flightNumber"] =
+                    "Trip number can only contain letters, numbers, and \"-\"."
+                valid = false
+            }
+
+            // Persist the trimmed version back if basic validation passed
+            if valid {
+                flightNumber = trimmedFlightNumber
+            }
         }
         if selectedRoute == nil {
             fieldErrors["route"] = "Route is required"

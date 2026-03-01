@@ -16,6 +16,7 @@ class Trip {
     var route: Route
     var scheduledDepartureTime: Date
     var flightNumber: String
+    var flightNumberSearchKey: String
     var isCancelled: Bool = false
     var isCompleted: Bool = false
     var currentAirportSequence: Int = 1  // sequence of the trip node to visit
@@ -35,14 +36,10 @@ class Trip {
     }
 
     // The TripNodeStatus for the airport the trip is currently flying toward.
-    // Uses routeNode.sequence to find the correct entry, because SwiftData does
-    // NOT guarantee @Relationship array order after persistence — .last is unsafe.
     var activeNodeStatus: TripNodeStatus? {
         nodeStatuses.first { $0.routeNode.sequence == currentAirportSequence }
     }
 
-    // The most recently acted-upon TripNodeStatus (highest sequence seen so far).
-    // Used for delay calculations. Max-by avoids SwiftData ordering issues.
     private var latestNodeStatus: TripNodeStatus? {
         nodeStatuses.max { $0.routeNode.sequence < $1.routeNode.sequence }
     }
@@ -87,8 +84,6 @@ class Trip {
     }
 
     // route node for the current airport (1-based sequence)
-    // NOTE: route.nodes must be sorted by sequence before indexing because
-    // SwiftData does not guarantee relationship array order after persistence.
     var plannedRouteNode: RouteNode {
         let sorted = route.nodes.sorted { $0.sequence < $1.sequence }
         guard !sorted.isEmpty else { return route.nodes.last! }
@@ -112,9 +107,25 @@ class Trip {
         self.route = route
         self.scheduledDepartureTime = scheduledDepartureTime
         self.flightNumber = flightNumber
+        self.flightNumberSearchKey = Trip.normalisedSearchKey(from: flightNumber)
         self.isCancelled = isCancelled
     }
 
+}
+
+// MARK: Util
+extension Trip {
+    static func normalisedSearchKey(from value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "" }
+
+        let withoutWhitespace =
+            trimmed
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+
+        return withoutWhitespace.lowercased()
+    }
 }
 
 // MARK: Trip Scheduling
