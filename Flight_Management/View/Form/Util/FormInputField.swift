@@ -6,7 +6,7 @@ struct FormInputField: View {
     let focus: FormFocus
     let hasError: Bool
 
-    var maxLength: Int? = 100
+    var maxLength: Int = 100
     var allowedCharacter: ((Character) -> Bool)? = nil
     var trimWhitespace: Bool = false
     var isDisabled: Bool = false
@@ -20,6 +20,7 @@ struct FormInputField: View {
                 .formFieldLabel()
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
+                .padding(.trailing, 16)
                 .autocorrectionDisabled()
                 .disabled(isDisabled)
                 .padding()
@@ -34,6 +35,17 @@ struct FormInputField: View {
                     let sanitised = sanitise(newValue)
                     if sanitised != newValue {
                         text = sanitised
+                    }
+                }
+                .overlay(alignment: .trailing) {
+                    if maxLength < 100 {
+                        Text("\(text.count)/\(maxLength)")
+                            .font(.caption2)
+                            .foregroundStyle(
+                                Double(text.count) * 0.9 < Double(maxLength)
+                                    ? Color.secondary : Color(.systemRed)
+                            )
+                            .padding(.trailing, 8)
                     }
                 }
         }
@@ -60,8 +72,8 @@ struct FormInputField: View {
             result = result.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
-        if let max = maxLength, result.count > max {
-            result = String(result.prefix(max))
+        if result.count > maxLength {
+            result = String(result.prefix(maxLength))
         }
 
         return result
@@ -79,8 +91,7 @@ struct FormInputField: View {
         hasError: false,
         maxLength: 10,
         allowedCharacter: { item in
-            item.isLetter ||
-            item.isNumber
+            item.isLetter || item.isNumber
         },
         text: $text,
         focusedField: $focusedField
