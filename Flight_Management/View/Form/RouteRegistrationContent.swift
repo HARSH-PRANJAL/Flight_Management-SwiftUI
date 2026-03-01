@@ -141,8 +141,9 @@ extension RouteRegistrationContent {
                 placeholder: "e.g., East Coast Loop",
                 focus: .routeName,
                 hasError: viewModel.fieldErrors[.routeName] != nil,
+                maxLength: 50,
                 allowedCharacter: {
-                    $0.isLetter || $0.isNumber || $0.isWhitespace
+                    $0.isLetter || $0.isWhitespace || $0 == "-"
                 },
                 text: $viewModel.routeName,
                 focusedField: $focusedField
