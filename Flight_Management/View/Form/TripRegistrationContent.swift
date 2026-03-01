@@ -237,8 +237,9 @@ extension TripRegistrationContent {
                 placeholder: "Enter trip number eg Trip - 001",
                 focus: .flightNumber,
                 hasError: viewModel.fieldErrors["flightNumber"] != nil,
+                maxLength: 50,
                 allowedCharacter: {
-                    $0.isLetter || $0.isNumber || $0.isWhitespace || $0 == "-"
+                    $0.isLetter || $0.isNumber || $0 == "-"
                 },
                 text: $viewModel.flightNumber,
                 focusedField: $focusedField
