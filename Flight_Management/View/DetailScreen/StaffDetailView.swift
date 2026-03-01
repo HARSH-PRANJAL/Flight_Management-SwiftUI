@@ -161,7 +161,12 @@ extension StaffDetailView {
             let fetched = try modelContext.fetch(descriptor)
 
             availableReplacementStaff = fetched.filter {
-                $0.designation == designation && $0.isAvailable(from: staff.currentTrip?.scheduledDepartureTime ?? Date(), to: staff.currentTrip?.estimatedArrivalTime ?? Date())
+                $0.designation == designation
+                    && $0.isAvailable(
+                        from: staff.currentTrip?.scheduledDepartureTime
+                            ?? Date(),
+                        to: staff.currentTrip?.estimatedArrivalTime ?? Date()
+                    )
             }
 
             if availableReplacementStaff.isEmpty {
