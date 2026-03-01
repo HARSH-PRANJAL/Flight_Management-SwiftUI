@@ -12,6 +12,7 @@ class Route {
     var trips: [Trip]
 
     var name: String
+    var nameSearchKey: String
 
     var totalPlannedDurationMinutes: Int {
         // Total duration is the arrival offset of the last node
@@ -23,6 +24,7 @@ class Route {
     init(name: String) {
         self.id = UUID()
         self.name = name
+        self.nameSearchKey = Route.normalisedSearchKey(from: name)
         self.nodes = []
         self.trips = []
     }
@@ -51,6 +53,20 @@ class Route {
             sequence: sequence
         )
         nodes.append(newNode)
+    }
+}
+
+extension Route {
+    static func normalisedSearchKey(from value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "" }
+
+        let withoutWhitespace =
+            trimmed
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
+
+        return withoutWhitespace.lowercased()
     }
 }
 

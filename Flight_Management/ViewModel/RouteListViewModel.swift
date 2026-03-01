@@ -64,12 +64,13 @@ final class RouteListViewModel {
     private func makePredicate(searchText: String) -> Predicate<Route>? {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if trimmed.isEmpty {
+        let normalisedSearch = Route.normalisedSearchKey(from: trimmed)
+        if normalisedSearch.isEmpty {
             return nil
         }
 
         return #Predicate<Route> {
-            $0.name.contains(trimmed)
+            $0.nameSearchKey.contains(normalisedSearch)
         }
     }
 }
