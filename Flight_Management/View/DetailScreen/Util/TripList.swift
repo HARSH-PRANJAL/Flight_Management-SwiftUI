@@ -48,6 +48,17 @@ extension TripList {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            Text("\(displayedTrips.count) trips")
+                .font(.footnote)
+                .foregroundStyle(.primary)
+                .scaledToFit()
+                .frame(minWidth: 65)
+                .frame(maxWidth: 100)
+                .padding(.vertical, 8)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular)
+        }
     }
 }
 
