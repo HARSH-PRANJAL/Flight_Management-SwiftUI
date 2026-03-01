@@ -104,6 +104,7 @@ extension AircraftDetailScreen {
             navigationTitle: "\(aircraft.registrationNumber) trips",
             requiredFilters: [.scheduled, .cancelled, .completed]
         )
+        .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
     }
 
