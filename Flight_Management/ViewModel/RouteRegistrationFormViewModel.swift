@@ -63,11 +63,37 @@ final class RouteRegistrationFormViewModel {
 
 // MARK: - Validators
 extension RouteRegistrationFormViewModel {
+    func validateJourneyTime(journeyTimeMinutes: Int) -> Bool {
+        if journeyTimeMinutes > 120 {
+            fieldErrors[.journeyTime] =
+                "Maximum allowed journey time between two airports is 120 minutes."
+            return false
+        }
+        return true
+    }
+    
     func validateRouteName() -> Bool {
         let trimmed = routeName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
             fieldErrors[.routeName] = "Route name cannot be empty."
+            return false
+        }
+
+        if trimmed.count > 50 {
+            fieldErrors[.routeName] =
+                "Route name cannot be longer than 50 characters."
+            return false
+        }
+
+        let allowedCharacters =
+            CharacterSet.letters
+            .union(.whitespaces)
+            .union(CharacterSet(charactersIn: "-"))
+
+        if !trimmed.unicodeScalars.allSatisfy(allowedCharacters.contains) {
+            fieldErrors[.routeName] =
+                "Route name can only contain letters, spaces, and \"-\"."
             return false
         }
 
@@ -99,6 +125,12 @@ extension RouteRegistrationFormViewModel {
                 else {
                     fieldErrors[.journeyTime] =
                         "Journey time for leg \(index + 1) must be greater than 0 minutes."
+                    return false
+                }
+
+                if !validateJourneyTime(journeyTimeMinutes: journeyTime) {
+                    fieldErrors[.journeyTime] =
+                        "Journey time for leg \(index + 1) must not exceed 120 minutes."
                     return false
                 }
             }
