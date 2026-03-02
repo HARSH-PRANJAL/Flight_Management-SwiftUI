@@ -32,6 +32,9 @@ struct TripRegistrationContent: View {
                     && viewModel.hasAvailableAircraft
                 {
                     aircraftPicker
+                }
+
+                if viewModel.selectedAircraft != nil {
                     crewSelectors
                 }
 
@@ -189,7 +192,7 @@ extension TripRegistrationContent {
             $0.name.localizedCaseInsensitiveCompare($1.name)
                 == .orderedAscending
         }
-        
+
         VStack(alignment: .leading, spacing: 4) {
             Text("Route").formFieldLabel()
 
@@ -246,9 +249,22 @@ extension TripRegistrationContent {
             Text("Crew").formFieldLabel()
 
             HStack(spacing: 12) {
-                crewButton(.pilot, "Pilot")
-                crewButton(.coPilot, "Co-Pilot")
-                crewButton(.cabinCrew, "Crew")
+
+                if viewModel.selectedAircraft?.minimumStaffRequired[.pilot]
+                    ?? 0 > 0
+                {
+                    crewButton(.pilot, "Pilot")
+                }
+                if viewModel.selectedAircraft?.minimumStaffRequired[
+                    .coPilot
+                ] ?? 0 > 0 {
+                    crewButton(.coPilot, "Co-Pilot")
+                }
+                if viewModel.selectedAircraft?.minimumStaffRequired[
+                    .cabinCrew
+                ] ?? 0 > 0 {
+                    crewButton(.cabinCrew, "Crew")
+                }
             }
         }
     }
