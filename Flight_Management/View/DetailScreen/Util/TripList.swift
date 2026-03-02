@@ -31,7 +31,7 @@ struct TripList: View {
             .searchable(
                 text: $searchText,
                 placement: .toolbar,
-                prompt: "Search by trip number"
+                prompt: "Search by trip number or route name"
             )
             .searchToolbarBehavior(.minimize)
         }
