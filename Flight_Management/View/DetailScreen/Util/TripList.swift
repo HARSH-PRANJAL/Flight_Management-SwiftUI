@@ -48,18 +48,19 @@ extension TripList {
                     ListRow(trip: trip)
                 }
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            if isCountRequired {
+
+            if displayedTrips.count > 5 && isCountRequired {
                 Text("\(displayedTrips.count) trips")
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundStyle(.primary)
                     .scaledToFit()
-                    .frame(minWidth: 65)
-                    .frame(maxWidth: 100)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: 50,
+                        alignment: .center
+                    )
                     .padding(.vertical, 8)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .glassEffect(.regular)
             }
         }
     }
