@@ -20,7 +20,7 @@ struct FormInputField: View {
                 .formFieldLabel()
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
-                .padding(.trailing, 16)
+                .padding(.trailing, maxLength < 100 ? 20 : 0)
                 .autocorrectionDisabled()
                 .disabled(isDisabled)
                 .padding()
@@ -42,11 +42,15 @@ struct FormInputField: View {
                         Text("\(text.count)/\(maxLength)")
                             .font(.caption2)
                             .foregroundStyle(
-                                Double(text.count) * 0.9 < Double(maxLength)
+                                Double(text.count) < Double(maxLength) * 0.9
                                     ? Color.secondary : Color(.systemRed)
                             )
                             .padding(.trailing, 8)
                     }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    focusedField = focus
                 }
         }
     }
