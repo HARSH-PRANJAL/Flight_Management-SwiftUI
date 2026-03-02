@@ -16,112 +16,154 @@ struct UserRegistrationForm: View {
 
     @FocusState private var focusState: FormFocus?
 
+    // Ordered field anchors — the next field's id is scrolled into view on focus
+    private var focusScrollMap: [FormFocus: String] {
+        if viewModel.isEditMode {
+            return [
+                .name: "field_password",
+                .password: "field_confirmPassword",
+                .confirmPassword: "field_disclaimer",
+            ]
+        } else {
+            return [
+                .name: "field_email",
+                .email: "field_password",
+                .password: "field_confirmPassword",
+                .confirmPassword: "field_role",
+                .role: "field_disclaimer",
+            ]
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(.systemBackground).ignoresSafeArea(.all)
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ProfilePhotoField(
-                            selectedPhoto: $viewModel.selectedPhoto,
-                            profilePreview: $viewModel.profilePreview,
-                            onChangeAction: { item in
-                                await viewModel.processPhoto(item)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ProfilePhotoField(
+                                selectedPhoto: $viewModel.selectedPhoto,
+                                profilePreview: $viewModel.profilePreview,
+                                onChangeAction: { item in
+                                    await viewModel.processPhoto(item)
+                                }
+                            )
+
+                            userNameFieldSection
+                                .id("field_name")
+                            if viewModel.isEditMode == false {
+                                emailFieldSection
+                                    .id("field_email")
                             }
+                            passwordFieldSection
+                                .id("field_password")
+                            confirmPasswordFieldSection
+                                .id("field_confirmPassword")
+                            if viewModel.isEditMode == false {
+                                roleFieldSection
+                                    .id("field_role")
+                            }
+
+                        }
+                        .navigationTitle(
+                            viewModel.isEditMode ? "Update Profile" : "Add User"
                         )
-
-                        userNameFieldSection
-                        if viewModel.isEditMode == false {
-                            emailFieldSection
+                        .navigationBarTitleDisplayMode(.inline)
+                        .padding()
+                        Spacer()
+                        if !viewModel.isEditMode {
+                            disclaimerText
+                                .id("field_disclaimer")
                         }
-                        passwordFieldSection
-                        confirmPasswordFieldSection
-                        if viewModel.isEditMode == false {
-                            roleFieldSection
-                        }
-
                     }
-                    .navigationTitle(
-                        viewModel.isEditMode ? "Update Profile" : "Add User"
+                    .scrollIndicators(.hidden)
+                    .scrollDismissesKeyboard(.immediately)
+                    .onChange(of: focusState) { _, newFocus in
+                        guard let focus = newFocus,
+                            let targetID = focusScrollMap[focus]
+                        else { return }
+                        withAnimation(.easeOut(duration: 1)) {
+                            proxy.scrollTo(targetID, anchor: .bottom)
+                        }
+                    }
+                    .presentationDetents(
+                        [.large, .height(650)],
+                        selection: $currentDetent
                     )
-                    .navigationBarTitleDisplayMode(.inline)
-                    .padding()
-                    Spacer()
-                    if !viewModel.isEditMode {
-                        disclaimerText
-                    }
-                }
-                .scrollIndicators(.hidden)
-                .scrollDismissesKeyboard(.immediately)
-                .presentationDetents(
-                    [.large, .height(650)],
-                    selection: $currentDetent
-                )
-                .presentationDragIndicator(.hidden)
-                .interactiveDismissDisabled(viewModel.isDirty)
-                .onChange(of: currentDetent) { oldValue, newValue in
-                    guard newValue != oldValue else { return }
-                    if newValue == .height(650) {
-                        if viewModel.isDirty {
-                            showConfirmCloseAlert = true
-                            withAnimation(
-                                .spring(response: 0.38, dampingFraction: 0.85)
-                            ) {
-                                currentDetent = .large
-                            }
-                        } else {
-                            isPresented = false
-                        }
-                    }
-                }
-                .task {
-                    if session.isLoggedIn {
-                        user = await session.getUserFromDB(
-                            modelContext: context
-                        )
-                        if let user = user {
-                            viewModel.userToEdit = user
-                            viewModel.isEditMode = true
-                            await viewModel.loadUserData(user)
-                        }
-                    }
-                    viewModel.originalSnapshot = viewModel.currentSnapshot()
-                }
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(role: .close) {
+                    .presentationDragIndicator(.hidden)
+                    .interactiveDismissDisabled(viewModel.isDirty)
+                    .onChange(of: currentDetent) { oldValue, newValue in
+                        guard newValue != oldValue else { return }
+                        if newValue == .height(650) {
                             if viewModel.isDirty {
                                 showConfirmCloseAlert = true
+                                withAnimation(
+                                    .spring(
+                                        response: 0.38,
+                                        dampingFraction: 0.85
+                                    )
+                                ) {
+                                    currentDetent = .large
+                                }
                             } else {
                                 isPresented = false
                             }
-                        } label: {
-                            Image(systemName: "xmark")
                         }
                     }
-
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(role: .confirm) {
-                            if viewModel.validateAll() {
-                                if viewModel.isEditMode {
-                                    handleUpdateUser()
-                                } else {
-                                    handleRegister()
-                                }
+                    .task {
+                        if session.isLoggedIn {
+                            user = await session.getUserFromDB(
+                                modelContext: context
+                            )
+                            if let user = user {
+                                viewModel.userToEdit = user
+                                viewModel.isEditMode = true
+                                await viewModel.loadUserData(user)
                             }
-                        } label: {
-                            Image(systemName: "checkmark")
                         }
-                        .disabled(!viewModel.isDirty)
-                        .foregroundStyle(
-                            viewModel.isDirty
-                                ? Color(.systemBlue) : Color(.systemGray3)
-                        )
-                        .symbolRenderingMode(.palette)
+                        viewModel.originalSnapshot = viewModel.currentSnapshot()
                     }
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button(role: .close) {
+                                if viewModel.isDirty {
+                                    showConfirmCloseAlert = true
+                                } else {
+                                    isPresented = false
+                                }
+                            } label: {
+                                Image(systemName: "xmark")
+                            }
+                        }
+
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(role: .confirm) {
+                                if viewModel.validateAll() {
+                                    if viewModel.isEditMode {
+                                        handleUpdateUser()
+                                    } else {
+                                        handleRegister()
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "checkmark")
+                            }
+                            .disabled(!viewModel.isDirty)
+                            .foregroundStyle(
+                                viewModel.isDirty
+                                    ? Color(.systemBlue) : Color(.systemGray3)
+                            )
+                            .symbolRenderingMode(.palette)
+                        }
+                    }
+                }
+                .onAppear {
+                    focusState = .name
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.6), value: focusScrollMap)
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
             Button("Discard", role: .destructive) {
                 isPresented = false
