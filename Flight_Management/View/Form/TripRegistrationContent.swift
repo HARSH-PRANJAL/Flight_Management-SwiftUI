@@ -2,83 +2,112 @@ import SwiftData
 import SwiftUI
 
 struct TripRegistrationContent: View {
-    @State var viewModel: TripRegistrationFormViewModel
 
+    @State var viewModel: TripRegistrationFormViewModel
     var isPresented: Binding<Bool>?
+
     @State private var showConfirmCloseAlert = false
     @State private var showConfirmSaveAlert = false
     @State private var currentDetent: PresentationDetent = .large
+    @State private var activeSheet: ActiveSheet?
 
-    @Environment(\.modelContext) var context
-    @Environment(NotificationManager.self) var notificationManager
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) private var context
+    @Environment(NotificationManager.self) private var notificationManager
+    @Environment(\.dismiss) private var dismiss
 
-    @Query var routes: [Route]
-    @Query var aircrafts: [Aircraft]
-    @Query var staffs: [Staff]
+    @Query private var routes: [Route]
+    @Query private var aircrafts: [Aircraft]
+    @Query private var staffs: [Staff]
 
     @FocusState private var focusedField: FormFocus?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                tripNumber
+                tripNumberField
                 routePicker
                 datePicker
-                withAnimation(.easeOut(duration: 0.5)) {
-                    Group {
-                        if !availableStaffs.isEmpty
-                            && !availableAircraft.isEmpty
-                        {
-                            aircraftPicker
-                            crewSelectors
-                        }
-                    }
+
+                if !viewModel.availableStaffs.isEmpty
+                    && viewModel.hasAvailableAircraft
+                {
+                    aircraftPicker
+                    crewSelectors
                 }
 
                 if let err = viewModel.fieldErrors["staff"] {
-                    Text(err).foregroundColor(.red).font(.caption)
+                    Text(err)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
             }
             .padding(.horizontal)
 
-            Spacer()
+            Spacer(minLength: 20)
+
             disclaimerText
-                .navigationTitle("Schedule Trip")
-                .navigationBarTitleDisplayMode(.inline)
-                .padding(.vertical)
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
-        .presentationDetents(
-            [.large, .height(650)],
-            selection: $currentDetent
-        )
-        .presentationDragIndicator(.hidden)
+        .navigationTitle("Schedule Trip")
+        .navigationBarTitleDisplayMode(.inline)
+        .presentationDetents([.large, .height(650)], selection: $currentDetent)
         .interactiveDismissDisabled(viewModel.isDirty)
-        .onChange(of: currentDetent) { oldValue, newValue in
-            guard newValue != oldValue else { return }
+        .onChange(of: currentDetent) { _, newValue in
             if newValue == .height(650) {
                 if viewModel.isDirty {
                     showConfirmCloseAlert = true
-                    withAnimation(
-                        .spring(response: 0.38, dampingFraction: 0.85)
-                    ) {
-                        currentDetent = .large
-                    }
+                    currentDetent = .large
                 } else {
-                    isPresented?.wrappedValue = false
+                    close()
                 }
             }
+        }
+        .onChange(of: viewModel.selectedAircraft) { _, _ in
+            viewModel.selectedPilots = []
+            viewModel.selectedCoPilots = []
+            viewModel.selectedCrewMembers = []
+            viewModel.fieldErrors.removeValue(forKey: "aircraft")
+        }
+        .onChange(of: viewModel.selectedRoute) { _, _ in
+            viewModel.recomputeAvailability(
+                staffs: staffs,
+                aircrafts: aircrafts
+            )
+        }
+        .onChange(of: viewModel.scheduledDeparture) { _, _ in
+            viewModel.recomputeAvailability(
+                staffs: staffs,
+                aircrafts: aircrafts
+            )
         }
         .toolbar {
             closeToolbarButton
             submitToolbarButton
         }
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+
+            case .aircraft:
+                AircraftSelectorView(
+                    allAircraft: viewModel.availableAircraft,
+                    selectedAircraft: $viewModel.selectedAircraft
+                )
+
+            case .staff(let role):
+                StaffSelectorView(
+                    role: role,
+                    requiredCount: viewModel.selectedAircraft?
+                        .minimumStaffRequired[role] ?? 0,
+                    allStaff: viewModel.availableStaffs
+                        .filter { $0.designation == role },
+                    selectedStaff: selectedStaffBinding(for: role)
+                )
+            }
+        }
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
             Button("Discard", role: .destructive) {
-                isPresented?.wrappedValue = false
-                dismiss()
+                close()
             }
             Button("Keep Editing", role: .cancel) {}
         } message: {
@@ -106,12 +135,11 @@ extension TripRegistrationContent {
 
     var closeToolbarButton: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
-            Button(role: .close) {
+            Button {
                 if viewModel.isDirty {
                     showConfirmCloseAlert = true
                 } else {
-                    isPresented?.wrappedValue = false
-                    dismiss()
+                    close()
                 }
             } label: {
                 Image(systemName: "xmark")
@@ -132,370 +160,184 @@ extension TripRegistrationContent {
                 Image(systemName: "checkmark")
             }
             .disabled(!viewModel.isDirty)
-            .symbolRenderingMode(.palette)
             .foregroundStyle(
-                viewModel.isDirty ? Color(.systemBlue) : Color(.systemGray3)
+                viewModel.isDirty
+                    ? Color(.systemBlue)
+                    : Color(.systemGray3)
             )
         }
     }
 
-    @ViewBuilder
-    var aircraftPicker: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Aircraft").formFieldLabel()
-            Menu {
-                ForEach(availableAircraft, id: \.id) { aircraft in
-                    Button(aircraft.registrationNumber) {
-                        viewModel.selectedAircraft = aircraft
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(
-                        viewModel.selectedAircraft?.registrationNumber
-                            ?? "Select Aircraft"
-                    )
-                    .foregroundColor(
-                        viewModel.selectedAircraft == nil
-                            ? Color(.systemGray3) : Color.primary
-                    )
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color(.systemGray3))
-                }
-                .padding()
-                .background {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
-                        .strokeBorder(
-                            viewModel.fieldErrors.keys.contains("aircraft")
-                                ? Color(.systemRed) : Color(.systemGray2),
-                            lineWidth: 1
-                        )
-                }
-            }
-            .onChange(of: viewModel.selectedAircraft) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: "aircraft")
-            }
-
-            FormErrorMessage(error: viewModel.fieldErrors["aircraft"])
-        }
-    }
-
-    var crewSelectors: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Crew").formFieldLabel()
-            HStack(spacing: 12) {
-                pilotPicker
-                coPilotPicker
-                crewMemberPicker
-            }
-        }
+    private var tripNumberField: some View {
+        FormInputField(
+            label: "Trip Number",
+            placeholder: "Trip-001",
+            focus: .flightNumber,
+            hasError: viewModel.fieldErrors["flightNumber"] != nil,
+            maxLength: 50,
+            allowedCharacter: {
+                $0.isLetter || $0.isNumber || $0 == "-"
+            },
+            text: $viewModel.flightNumber,
+            focusedField: $focusedField
+        )
     }
 
     @ViewBuilder
-    var routePicker: some View {
+    private var routePicker: some View {
+        let sortedRoute = routes.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name)
+                == .orderedAscending
+        }
+        
         VStack(alignment: .leading, spacing: 4) {
             Text("Route").formFieldLabel()
+
             Menu {
-                ForEach(routes, id: \.id) { route in
+                ForEach(sortedRoute, id: \.id) { route in
                     Button(route.name) {
                         viewModel.selectedRoute = route
                     }
                 }
             } label: {
-                HStack {
-                    Text(
-                        viewModel.selectedRoute?.name ?? "Select route"
-                    )
-                    .foregroundColor(
-                        viewModel.selectedRoute == nil
-                            ? Color(.systemGray3) : Color.primary
-                    )
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(Color(.systemGray3))
-                }
-                .padding()
-                .background {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
-                        .strokeBorder(
-                            viewModel.fieldErrors.keys.contains("route")
-                                ? Color(.systemRed) : Color(.systemGray2),
-                            lineWidth: 1
-                        )
-                }
+                pickerLabel(
+                    viewModel.selectedRoute?.name ?? "Select Route",
+                    isEmpty: viewModel.selectedRoute == nil
+                )
             }
-            .onChange(of: viewModel.selectedRoute) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: "route")
-            }
-
-            FormErrorMessage(error: viewModel.fieldErrors["route"])
         }
     }
 
-    var tripNumber: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            FormInputField(
-                label: "Trip Number",
-                placeholder: "Enter trip number eg Trip - 001",
-                focus: .flightNumber,
-                hasError: viewModel.fieldErrors["flightNumber"] != nil,
-                maxLength: 50,
-                allowedCharacter: {
-                    $0.isLetter || $0.isNumber || $0 == "-"
-                },
-                text: $viewModel.flightNumber,
-                focusedField: $focusedField
-            )
-            .onChange(of: viewModel.flightNumber) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: "flightNumber")
-            }
-
-            FormErrorMessage(error: viewModel.fieldErrors["flightNumber"])
-        }
-    }
-
-    @ViewBuilder
-    var datePicker: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            FormDateField(
-                selectedDate: $viewModel.scheduledDeparture,
-                title: "Departure",
-                title2: "Departure date & time",
-                format: "dd/MM/yyyy h:mm",
-                hasError: false,
-                minDate: Date(),
-                maxDate: Calendar.current.date(
-                    byAdding: .year,
-                    value: 1,
-                    to: Date()
-                ) ?? Date.distantFuture,
-                datePickerComponents: [.date, .hourAndMinute]
-            )
-            .onChange(of: viewModel.scheduledDeparture) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: "departureDate")
-            }
-
-            FormErrorMessage(error: viewModel.fieldErrors["departureDate"])
-        }
-    }
-
-    @ViewBuilder
-    var pilotPicker: some View {
-        Menu {
-            ForEach(viewModel.selectedPilots, id: \.id) { staff in
-                Button(staff.name) {
-                    viewModel.removeStaff(staff, role: .pilot)
-                }
-            }
-            if !viewModel.selectedPilots.isEmpty
-                && !availableStaffByRole(.pilot).isEmpty
-            {
-                Divider()
-            }
-            ForEach(availableStaffByRole(.pilot), id: \.id) { staff in
-                if !viewModel.selectedPilots.contains(where: {
-                    $0.id == staff.id
-                }) {
-                    Button(staff.name) {
-                        viewModel.addStaff(staff, role: .pilot)
-                    }
-                }
-            }
-        } label: {
-            VStack(alignment: .center, spacing: 4) {
-                Text(
-                    Self.crewLabel(
-                        selected: viewModel.selectedPilots,
-                        emptyTitle: "Pilot"
-                    )
-                )
-                .font(.caption2)
-                .foregroundColor(
-                    viewModel.selectedPilots.isEmpty
-                        ? Color(.systemGray3) : Color.primary
-                )
-                .lineLimit(1)
-                Image(systemName: "person.fill")
-                    .font(.caption)
-                    .foregroundStyle(Color(.systemGray3))
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
-            }
-            .contentShape(Rectangle())
-        }
-    }
-
-    @ViewBuilder
-    var coPilotPicker: some View {
-        Menu {
-            ForEach(viewModel.selectedCoPilots, id: \.id) { staff in
-                Button(staff.name) {
-                    viewModel.removeStaff(staff, role: .coPilot)
-                }
-            }
-            if !viewModel.selectedCoPilots.isEmpty
-                && !availableStaffByRole(.coPilot).isEmpty
-            {
-                Divider()
-            }
-            ForEach(availableStaffByRole(.coPilot), id: \.id) { staff in
-                if !viewModel.selectedCoPilots.contains(where: {
-                    $0.id == staff.id
-                }) {
-                    Button(staff.name) {
-                        viewModel.addStaff(staff, role: .coPilot)
-                    }
-                }
-            }
-        } label: {
-            VStack(alignment: .center, spacing: 4) {
-                Text(
-                    Self.crewLabel(
-                        selected: viewModel.selectedCoPilots,
-                        emptyTitle: "Co-Pilot"
-                    )
-                )
-                .font(.caption2)
-                .foregroundColor(
-                    viewModel.selectedCoPilots.isEmpty
-                        ? Color(.systemGray3) : Color.primary
-                )
-                .lineLimit(1)
-                Image(systemName: "person.fill")
-                    .font(.caption)
-                    .foregroundStyle(Color(.systemGray3))
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
-            }
-            .contentShape(Rectangle())
-        }
-    }
-
-    @ViewBuilder
-    var crewMemberPicker: some View {
-        Menu {
-            ForEach(viewModel.selectedCrewMembers, id: \.id) { staff in
-                Button(staff.name) {
-                    viewModel.removeStaff(staff, role: .cabinCrew)
-                }
-            }
-            if !viewModel.selectedCrewMembers.isEmpty
-                && !availableStaffByRole(.cabinCrew).isEmpty
-            {
-                Divider()
-            }
-            ForEach(availableStaffByRole(.cabinCrew), id: \.id) { staff in
-                if !viewModel.selectedCrewMembers.contains(where: {
-                    $0.id == staff.id
-                }) {
-                    Button(staff.name) {
-                        viewModel.addStaff(staff, role: .cabinCrew)
-                    }
-                }
-            }
-        } label: {
-            VStack(alignment: .center, spacing: 4) {
-                Text(
-                    Self.crewLabel(
-                        selected: viewModel.selectedCrewMembers,
-                        emptyTitle: "Crew"
-                    )
-                )
-                .font(.caption2)
-                .foregroundColor(
-                    viewModel.selectedCrewMembers.isEmpty
-                        ? Color(.systemGray3) : Color.primary
-                )
-                .lineLimit(1)
-                Image(systemName: "person.fill")
-                    .font(.caption)
-                    .foregroundStyle(Color(.systemGray3))
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-                    .strokeBorder(Color(.systemGray3), lineWidth: 1)
-            }
-            .contentShape(Rectangle())
-        }
-        .transaction { $0.animation = nil }
-    }
-
-    private var disclaimerText: some View {
-        Text(
-            "Trip information will be recorded in the system for trip scheduling and staff assignment."
+    private var datePicker: some View {
+        FormDateField(
+            selectedDate: $viewModel.scheduledDeparture,
+            title: "Departure",
+            title2: "Departure date & time",
+            format: "dd/MM/yyyy h:mm",
+            hasError: false,
+            minDate: Date(),
+            maxDate: Calendar.current.date(
+                byAdding: .year,
+                value: 1,
+                to: Date()
+            ) ?? .distantFuture,
+            datePickerComponents: [.date, .hourAndMinute]
         )
-        .font(.system(size: 13))
-        .foregroundColor(Color(.systemGray))
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 32)
-        .padding(.top, 16)
+    }
+
+    private var aircraftPicker: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Aircraft").formFieldLabel()
+
+            Button {
+                activeSheet = .aircraft
+            } label: {
+                pickerLabel(
+                    viewModel.selectedAircraft?.registrationNumber
+                        ?? "Select Aircraft",
+                    isEmpty: viewModel.selectedAircraft == nil
+                )
+            }
+        }
+    }
+
+    private var crewSelectors: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Crew").formFieldLabel()
+
+            HStack(spacing: 12) {
+                crewButton(.pilot, "Pilot")
+                crewButton(.coPilot, "Co-Pilot")
+                crewButton(.cabinCrew, "Crew")
+            }
+        }
+    }
+
+    private func crewButton(_ role: StaffRole, _ title: String)
+        -> some View
+    {
+        Button {
+            activeSheet = .staff(role: role)
+        } label: {
+            pickerLabel(
+                Self.crewLabel(
+                    selected: selectedStaff(for: role),
+                    emptyTitle: title
+                ),
+                isEmpty: selectedStaff(for: role).isEmpty
+            )
+        }
     }
 }
 
 // MARK: Util
 extension TripRegistrationContent {
 
-    private static func crewLabel(selected: [Staff], emptyTitle: String)
-        -> String
+    private enum ActiveSheet: Identifiable {
+        case aircraft
+        case staff(role: StaffRole)
+
+        var id: String {
+            switch self {
+            case .aircraft: return "aircraft"
+            case .staff(let role): return "staff-\(role)"
+            }
+        }
+    }
+
+    private func pickerLabel(_ text: String, isEmpty: Bool)
+        -> some View
     {
+        HStack {
+            Text(text)
+                .foregroundColor(
+                    isEmpty ? Color(.systemGray3) : .primary
+                )
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(Color(.systemGray3))
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .strokeBorder(Color(.systemGray2), lineWidth: 1)
+        )
+    }
+
+    private func selectedStaff(for role: StaffRole) -> [Staff] {
+        switch role {
+        case .pilot: return viewModel.selectedPilots
+        case .coPilot: return viewModel.selectedCoPilots
+        case .cabinCrew: return viewModel.selectedCrewMembers
+        }
+    }
+
+    private func selectedStaffBinding(for role: StaffRole)
+        -> Binding<[Staff]>
+    {
+        switch role {
+        case .pilot:
+            return $viewModel.selectedPilots
+        case .coPilot:
+            return $viewModel.selectedCoPilots
+        case .cabinCrew:
+            return $viewModel.selectedCrewMembers
+        }
+    }
+
+    private static func crewLabel(
+        selected: [Staff],
+        emptyTitle: String
+    ) -> String {
         if selected.isEmpty { return emptyTitle }
         if selected.count == 1 { return selected[0].name }
         return "\(selected.count) \(emptyTitle)s"
     }
 
-    var tripEndDate: Date? {
-        guard let route = viewModel.selectedRoute else { return nil }
-        return viewModel.scheduledDeparture.addingTimeInterval(
-            TimeInterval(route.totalPlannedDurationMinutes * 60)
-        )
-    }
-
-    var availableStaffs: [Staff] {
-        guard let endDate = tripEndDate else { return [] }
-
-        return staffs.filter {
-            $0.isAvailable(from: viewModel.scheduledDeparture, to: endDate)
-        }
-    }
-
-    var availableStaffCountsByRole: [StaffRole: Int] {
-        [
-            .pilot: availableStaffByRole(.pilot).count,
-            .coPilot: availableStaffByRole(.coPilot).count,
-            .cabinCrew: availableStaffByRole(.cabinCrew).count,
-        ]
-    }
-
-    var availableAircraft: [Aircraft] {
-        guard let endDate = tripEndDate else { return [] }
-        let availableStaff = availableStaffCountsByRole
-        return aircrafts.filter { aircraft in
-            aircraft.isAvailable(
-                from: viewModel.scheduledDeparture,
-                to: endDate,
-                availableStaff: availableStaff
-            )
-        }
-    }
-
-    func availableStaffByRole(_ role: StaffRole) -> [Staff] {
-        return availableStaffs.filter { $0.designation == role }
+    private func close() {
+        isPresented?.wrappedValue = false
+        dismiss()
     }
 
     private func handleRegistration() {
@@ -509,36 +351,37 @@ extension TripRegistrationContent {
         guard let route = viewModel.selectedRoute,
             let aircraft = viewModel.selectedAircraft
         else { return }
+
         let selectedStaff = viewModel.allSelectedStaff
 
-        do {
-            // Create new trip
-            let newTrip = Trip(
-                staff: selectedStaff,
-                aircraft: aircraft,
-                nodeStatuses: [],
-                route: route,
-                scheduledDepartureTime: viewModel.scheduledDeparture,
-                flightNumber: viewModel.flightNumber,
-                isCancelled: false
-            )
+        let newTrip = Trip(
+            staff: selectedStaff,
+            aircraft: aircraft,
+            nodeStatuses: [],
+            route: route,
+            scheduledDepartureTime: viewModel.scheduledDeparture,
+            flightNumber: viewModel.flightNumber,
+            isCancelled: false
+        )
 
-            context.insert(newTrip)
-            aircraft.trips.append(newTrip)
-            for staff in selectedStaff {
-                staff.trips.append(newTrip)
-            }
+        context.insert(newTrip)
 
-            try context.save()
-            notificationManager.showSuccess("Trip scheduled successfully")
-            isPresented?.wrappedValue = false
-            dismiss()
-        } catch {
-            notificationManager.showError(
-                "Failed to schedule trip. Please try again."
-            )
-            print("Failed to save trip: \(error)")
-        }
+        aircraft.trips.append(newTrip)
+        selectedStaff.forEach { $0.trips.append(newTrip) }
+
+        try? context.save()
+
+        notificationManager.showSuccess("Trip scheduled successfully")
+        close()
     }
 
+    private var disclaimerText: some View {
+        Text(
+            "Trip information will be recorded for scheduling and staff assignment."
+        )
+        .font(.system(size: 13))
+        .foregroundColor(Color(.systemGray))
+        .multilineTextAlignment(.center)
+        .padding(.top, 16)
+    }
 }
