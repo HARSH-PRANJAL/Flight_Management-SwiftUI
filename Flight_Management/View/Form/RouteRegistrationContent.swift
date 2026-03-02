@@ -381,12 +381,6 @@ extension RouteRegistrationContent {
 }
 
 #Preview {
-    let airport = Airport(
-        code: "TST",
-        name: "Test Airport",
-        city: "XYZ",
-        country: "India"
-    )
     NavigationStack {
         RouteRegistrationContent(viewModel: RouteRegistrationFormViewModel())
             .modelContainer(for: [Route.self, Airport.self], inMemory: true)
