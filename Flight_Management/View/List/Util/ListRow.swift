@@ -106,7 +106,7 @@ extension ListRow {
         )
     }
 
-    init(aircraft: Aircraft) {
+    init(aircraft: Aircraft, badgeRequired: Bool = true) {
         let meta =
             "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
         self.init(
@@ -114,7 +114,7 @@ extension ListRow {
             title: aircraft.registrationNumber,
             subtitle: aircraft.type,
             metadata: meta,
-            status: .from(aircraftStatus: aircraft.currentStatus)
+            status: badgeRequired ? .from(aircraftStatus: aircraft.currentStatus) : nil
         )
     }
 
