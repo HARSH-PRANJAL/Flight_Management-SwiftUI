@@ -349,22 +349,19 @@ extension RouteRegistrationContent {
     }
 
     private func textBinding(for node: RouteNodeData) -> Binding<String> {
-        if viewModel.selectedNodes.contains(where: { $0.id == node.id }) {
-            return Binding(
-                get: {
-                    viewModel.selectedNodes.first(where: { $0.id == node.id })!
-                        .journeyTimeMinutes
-                },
-                set: { newValue in
-                    viewModel.updateJourneyTime(for: node, minutes: newValue)
+        Binding(
+            get: {
+                viewModel.selectedNodes
+                    .first(where: { $0.id == node.id })?
+                    .journeyTimeMinutes ?? ""
+            },
+            set: { newValue in
+                guard viewModel.selectedNodes.contains(where: { $0.id == node.id }) else {
+                    return
                 }
-            )
-        } else {
-            return Binding(
-                get: { "" },
-                set: { _ in }
-            )
-        }
+                viewModel.updateJourneyTime(for: node, minutes: newValue)
+            }
+        )
     }
 
     private func handleSave() {
