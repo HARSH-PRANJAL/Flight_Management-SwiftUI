@@ -42,7 +42,7 @@ struct TripListView: View {
             .searchable(
                 text: $searchText,
                 placement: .toolbar,
-                prompt: "Search by trip number"
+                prompt: "Search by trip number or route name"
             )
             .searchToolbarBehavior(.minimize)
             .task {
@@ -204,23 +204,14 @@ extension TripListView {
             filtered = filtered.filter { $0.currentStatus == status }
         }
 
-        if !searchText.isEmpty {
-            filtered = filtered.filter { trip in
-                let flightMatch = trip.flightNumber
-                    .localizedCaseInsensitiveContains(searchText)
-                let routeMatch = trip.route.name
-                    .localizedCaseInsensitiveContains(searchText)
-                return flightMatch || routeMatch
-            }
-        }
-
         let sorted = filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
             if selectedSort == .flightNumber {
                 let comparison =
-                    lhs.flightNumber.lowercased()
-                    < rhs.flightNumber.lowercased()
+                lhs.flightNumber
+                .localizedStandardCompare(rhs.flightNumber)
+                == .orderedAscending
                 return isAscending ? comparison : !comparison
             } else {
                 let comparison =
