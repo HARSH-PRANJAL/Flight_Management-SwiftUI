@@ -2,7 +2,21 @@ import SwiftData
 import SwiftUI
 
 struct AirportSearchDropdown: View {
-    @Query var allAirports: [Airport]
+    @Environment(\.modelContext) var context
+    var allAirports: [Airport] {
+        let code = self.searchText.uppercased()
+        let searchText = self.searchText.capitalized
+        let predicate = #Predicate<Airport> {
+            $0.name.contains(searchText) ||
+            $0.city.contains(searchText) ||
+            $0.code.contains(code)
+        }
+
+        let descriptor = FetchDescriptor<Airport>(predicate: predicate)
+        let result = try? context.fetch(descriptor)
+
+        return result ?? []
+    }
 
     let onAirportSelected: (Airport) -> Void
     let excludeAirports: [Airport]
