@@ -80,7 +80,7 @@ struct StaffRegistrationContent: View {
 
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {
-                    if viewModel.originalSnapshot?.role != viewModel.role {
+                    if viewModel.isEditMode && viewModel.originalSnapshot?.role != viewModel.role {
                         isRoleChanged = true
                     } else {
                         handleRegistration()
