@@ -52,19 +52,17 @@ struct TripDetailScreen: View {
                                 title: "Duration",
                                 value:
                                     "\(trip.route.totalPlannedDurationMinutes) m",
-                                subtitle: "planned",
                                 icon: "clock",
                                 iconColor: Color(.systemBrown)
                             )
                             CardView(
                                 title: "Crew",
                                 value: "\(trip.staffs.count)",
-                                subtitle: "assigned",
                                 icon: "person.2",
                                 iconColor: Color(.systemIndigo)
                             )
                             .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.6)){
+                                withAnimation(.easeInOut(duration: 0.6)) {
                                     proxy.scrollTo("staffSection", anchor: .top)
                                 }
                             }
