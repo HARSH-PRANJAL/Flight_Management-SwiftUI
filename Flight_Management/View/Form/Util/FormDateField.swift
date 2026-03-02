@@ -89,7 +89,7 @@ struct FormDateField: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button {
+                        Button(role: .confirm) {
                             showDatePicker = false
                         } label: {
                             Image(systemName: "checkmark")
