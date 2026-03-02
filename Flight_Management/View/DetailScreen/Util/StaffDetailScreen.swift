@@ -146,7 +146,8 @@ struct StaffDetailScreen: View {
         TripList(
             externalTrips: staff.trips,
             navigationTitle: "\(staff.name) trips",
-            requiredFilters: [.completed, .cancelled, .scheduled]
+            requiredFilters: [.completed, .cancelled, .scheduled],
+            isCountRequired: true
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)

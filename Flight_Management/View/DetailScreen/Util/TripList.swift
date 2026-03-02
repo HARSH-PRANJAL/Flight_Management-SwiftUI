@@ -6,6 +6,7 @@ struct TripList: View {
     var externalTrips: [Trip] = []
     var navigationTitle: String = "Trip List"
     var requiredFilters: [TripStatus] = TripStatus.allCases
+    var isCountRequired: Bool = false
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
@@ -49,15 +50,17 @@ extension TripList {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Text("\(displayedTrips.count) trips")
-                .font(.footnote)
-                .foregroundStyle(.primary)
-                .scaledToFit()
-                .frame(minWidth: 65)
-                .frame(maxWidth: 100)
-                .padding(.vertical, 8)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .glassEffect(.regular)
+            if isCountRequired {
+                Text("\(displayedTrips.count) trips")
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
+                    .scaledToFit()
+                    .frame(minWidth: 65)
+                    .frame(maxWidth: 100)
+                    .padding(.vertical, 8)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .glassEffect(.regular)
+            }
         }
     }
 }

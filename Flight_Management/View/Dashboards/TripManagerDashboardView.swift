@@ -71,7 +71,7 @@ struct TripManagerDashboardView: View {
                 NavigationStack {
                     TripList(
                         externalTrips: upcomingTrips,
-                        navigationTitle: "Trips in next 24 hr",
+                        navigationTitle: "Trips in next 24 hr (\(upcomingTrips.count))",
                         requiredFilters: [.scheduled, .cancelled]
                     )
                     .navigationBarTitleDisplayMode(.inline)

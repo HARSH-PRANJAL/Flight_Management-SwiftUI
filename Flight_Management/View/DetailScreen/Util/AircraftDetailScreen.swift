@@ -102,7 +102,8 @@ extension AircraftDetailScreen {
         TripList(
             externalTrips: aircraft.trips,
             navigationTitle: "\(aircraft.registrationNumber) trips",
-            requiredFilters: [.scheduled, .cancelled, .completed]
+            requiredFilters: [.scheduled, .cancelled, .completed],
+            isCountRequired: true
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
