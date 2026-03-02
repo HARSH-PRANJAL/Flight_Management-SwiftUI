@@ -25,105 +25,126 @@ struct AircraftRegistrationContent: View {
                 )
             )
         } else {
-            
             _viewModel = State(
                 initialValue: AircraftRegistrationFormViewModel()
             )
         }
     }
 
+    private var focusScrollMap: [FormFocus: String] {
+        [
+            .registrationNumber: "type",
+            .type: "seating",
+            .seatingCapacity: "staff",
+        ]
+    }
+
     var body: some View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea(.all)
-            ScrollView {
-                VStack(spacing: 0) {
-                    VStack(spacing: 20) {
-                        registrationNumberFieldSection
-                        typeFieldSection
-                        seatingCapacityFieldSection
-                        if !viewModel.isEditing {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 20) {
+                            registrationNumberFieldSection
+                                .id("regNum")
+                            typeFieldSection
+                                .id("type")
+                            seatingCapacityFieldSection
+                                .id("seating")
                             minimumStaffSection
+                                .id("staff")
                         }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 20)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 20)
 
-                    Spacer()
-                    if aircraft == nil {
-                        disclaimerText
-                    }
-                }
-                .navigationTitle(
-                    aircraft != nil ? "Update Aircraft" : "Add Aircraft"
-                )
-                .navigationBarTitleDisplayMode(.inline)
-            }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.immediately)
-            .onAppear {
-                viewModel.originalSnapshot = viewModel.currentSnapshot()
-            }
-            .onTapGesture {
-                isStaffInputFocused = false
-            }
-            .presentationDetents(
-                [.large, .height(650)],
-                selection: $currentDetent
-            )
-            .presentationDragIndicator(.hidden)
-            .interactiveDismissDisabled(viewModel.isDirty)
-            .onChange(of: currentDetent) { oldValue, newValue in
-                guard newValue != oldValue else { return }
-                if newValue == .height(650) {
-                    if viewModel.isDirty {
-                        showConfirmCloseAlert = true
-                        withAnimation(
-                            .spring(response: 0.38, dampingFraction: 0.85)
-                        ) {
-                            currentDetent = .large
+                        Spacer()
+                        if aircraft == nil {
+                            disclaimerText
                         }
-                    } else {
-                        isPresented = false
+                    }
+                    .navigationTitle(
+                        aircraft != nil ? "Update Aircraft" : "Add Aircraft"
+                    )
+                    .navigationBarTitleDisplayMode(.inline)
+                }
+                .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.immediately)
+                .onChange(of: focusedField) { _, newFocus in
+                    guard let focus = newFocus,
+                        let targetID = focusScrollMap[focus]
+                    else { return }
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        proxy.scrollTo(targetID, anchor: .bottom)
                     }
                 }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
+                .onAppear {
+                    focusedField = .registrationNumber
+                    viewModel.originalSnapshot = viewModel.currentSnapshot()
+                }
+                .onTapGesture {
+                    isStaffInputFocused = false
+                }
+                .presentationDetents(
+                    [.large, .height(650)],
+                    selection: $currentDetent
+                )
+                .presentationDragIndicator(.hidden)
+                .interactiveDismissDisabled(viewModel.isDirty)
+                .onChange(of: currentDetent) { oldValue, newValue in
+                    guard newValue != oldValue else { return }
+                    if newValue == .height(650) {
                         if viewModel.isDirty {
                             showConfirmCloseAlert = true
+                            withAnimation(
+                                .spring(response: 0.38, dampingFraction: 0.85)
+                            ) {
+                                currentDetent = .large
+                            }
                         } else {
                             isPresented = false
                         }
-                    } label: {
-                        Image(systemName: "xmark")
                     }
                 }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(role: .confirm) {
-                        handleRegistration()
-                    } label: {
-                        Image(systemName: "checkmark")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .close) {
+                            if viewModel.isDirty {
+                                showConfirmCloseAlert = true
+                            } else {
+                                isPresented = false
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
                     }
-                    .disabled(!viewModel.isDirty)
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(
-                        viewModel.isDirty
-                            ? Color(.systemBlue) : Color(.systemGray3)
+
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(role: .confirm) {
+                            handleRegistration()
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                        .disabled(!viewModel.isDirty)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(
+                            viewModel.isDirty
+                                ? Color(.systemBlue) : Color(.systemGray3)
+                        )
+                    }
+                }
+                .alert("Discard Changes?", isPresented: $showConfirmCloseAlert)
+                {
+                    Button("Discard", role: .destructive) {
+                        isPresented = false
+                    }
+                    Button("Keep Editing", role: .cancel) {}
+                } message: {
+                    Text(
+                        "You have unsaved changes. Are you sure you want to discard them?"
                     )
                 }
-            }
-            .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
-                Button("Discard", role: .destructive) {
-                    isPresented = false
-                }
-                Button("Keep Editing", role: .cancel) {}
-            } message: {
-                Text(
-                    "You have unsaved changes. Are you sure you want to discard them?"
-                )
-            }
+            }  // ScrollViewReader
         }
     }
 }
