@@ -50,19 +50,27 @@ struct ClickableSection<Row: View, Destination: View>: View {
 }
 
 struct PressableRowStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+
+        let backgroundColor: Color
+        let pressedColor: Color
+
+        if colorScheme == .dark {
+            backgroundColor = Color(.secondarySystemBackground)
+            pressedColor = Color(.systemGray4)
+        } else {
+            backgroundColor = Color(.tertiarySystemBackground)
+            pressedColor = Color(.systemGray5)
+        }
+
+        return configuration.label
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        configuration.isPressed
-                            ? Color(.systemGray5)
-                            : Color(.tertiarySystemBackground)
-                    )
+                    .fill(configuration.isPressed ? pressedColor : backgroundColor)
             )
-            .animation(
-                .easeInOut(duration: 0.02),
-                value: configuration.isPressed
-            )
+            .animation(.easeOut(duration: 0.02),
+                       value: configuration.isPressed)
     }
 }

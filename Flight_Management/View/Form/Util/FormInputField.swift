@@ -20,7 +20,7 @@ struct FormInputField: View {
                 .formFieldLabel()
             TextField(placeholder, text: $text)
                 .font(.system(size: 17))
-                .padding(.trailing, 25)
+                .padding(.trailing, maxLength < 100 ? 25 : 0)
                 .autocorrectionDisabled()
                 .disabled(isDisabled)
                 .padding()
@@ -47,6 +47,10 @@ struct FormInputField: View {
                             )
                             .padding(.trailing, 8)
                     }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    focusedField = focus
                 }
         }
     }

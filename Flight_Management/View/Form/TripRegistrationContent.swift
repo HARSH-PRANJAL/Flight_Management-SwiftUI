@@ -142,6 +142,7 @@ extension TripRegistrationContent {
     @ViewBuilder
     var aircraftPicker: some View {
         VStack(alignment: .leading, spacing: 4) {
+            Text("Aircraft").formFieldLabel()
             Menu {
                 ForEach(availableAircraft, id: \.id) { aircraft in
                     Button(aircraft.registrationNumber) {
@@ -182,16 +183,20 @@ extension TripRegistrationContent {
     }
 
     var crewSelectors: some View {
-        HStack(spacing: 12) {
-            pilotPicker
-            coPilotPicker
-            crewMemberPicker
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Crew").formFieldLabel()
+            HStack(spacing: 12) {
+                pilotPicker
+                coPilotPicker
+                crewMemberPicker
+            }
         }
     }
 
     @ViewBuilder
     var routePicker: some View {
         VStack(alignment: .leading, spacing: 4) {
+            Text("Route").formFieldLabel()
             Menu {
                 ForEach(routes, id: \.id) { route in
                     Button(route.name) {
