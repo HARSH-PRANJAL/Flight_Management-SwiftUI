@@ -18,7 +18,7 @@ struct AdminDashboardView: View {
                         CardView(
                             title: "On-Time Performance",
                             value: "\(onTimePercentage)%",
-                            subtitle: "Flights today",
+                            subtitle: "Today",
                             icon: "clock.fill",
                             iconColor: Color(.systemGreen).opacity(0.75)
                         )
@@ -101,7 +101,6 @@ struct AdminDashboardView: View {
 
                     Spacer(minLength: 24)
                 }
-                .padding(.top, 16)
                 .padding(.horizontal, 16)
             }
             .navigationTitle("Admin")
