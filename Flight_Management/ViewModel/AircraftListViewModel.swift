@@ -75,7 +75,9 @@ final class AircraftListViewModel {
         let normalisedSearch = Aircraft.normalisedSearchKey(from: trimmed)
 
         if statusFilter == nil && normalisedSearch.isEmpty {
-            return nil
+            return #Predicate<Aircraft> { aircraft in
+                !aircraft.isDecommissioned
+            }
         }
 
         if let statusFilter {
@@ -84,6 +86,7 @@ final class AircraftListViewModel {
                 if normalisedSearch.isEmpty {
                     return #Predicate<Aircraft> { aircraft in
                         aircraft.currentTrip == nil
+                        && !aircraft.isDecommissioned
                     }
                 } else {
                     return #Predicate<Aircraft> { aircraft in
@@ -91,12 +94,14 @@ final class AircraftListViewModel {
                             && aircraft.registrationNumberSearchKey.contains(
                                 normalisedSearch
                             )
+                        && !aircraft.isDecommissioned
                     }
                 }
             case .assigned:
                 if normalisedSearch.isEmpty {
                     return #Predicate<Aircraft> { aircraft in
                         aircraft.currentTrip != nil
+                        && !aircraft.isDecommissioned
                     }
                 } else {
                     return #Predicate<Aircraft> { aircraft in
@@ -104,12 +109,22 @@ final class AircraftListViewModel {
                             && aircraft.registrationNumberSearchKey.contains(
                                 normalisedSearch
                             )
+                        && !aircraft.isDecommissioned
                     }
+                }
+
+            default:
+                return #Predicate<Aircraft> { aircraft in
+                    aircraft.registrationNumberSearchKey.contains(
+                        normalisedSearch
+                    )
+                    && !aircraft.isDecommissioned
                 }
             }
         } else {
             return #Predicate<Aircraft> { aircraft in
                 aircraft.registrationNumberSearchKey.contains(normalisedSearch)
+                && !aircraft.isDecommissioned
             }
         }
     }

@@ -18,6 +18,7 @@ class Aircraft {
     var nextScheduledTrip: Trip? = nil
     var currentTrip: Trip? = nil
     var totalTripHours: Double
+    var isDecommissioned: Bool = false
 
     var totalTripsOperated: Int {
         return trips.filter({
@@ -32,6 +33,9 @@ class Aircraft {
     }
 
     var currentStatus: AircraftStatus {
+        if isDecommissioned && currentTrip == nil {
+            return .deCommissioned
+        }
         if currentTrip != nil {
             return .assigned
         } else {

@@ -33,6 +33,7 @@ enum StaffAvailabilityStatus: String, Codable, CaseIterable {
 enum AircraftStatus: String, Codable {
     case available = "Available"
     case assigned = "Assigned"
+    case deCommissioned = "De-commissioned"
 }
 
 enum Gender: String, Codable, CaseIterable {

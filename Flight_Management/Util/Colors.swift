@@ -34,6 +34,8 @@ extension Color {
             return .available
         case .assigned:
             return .onDuty
+        case .deCommissioned:
+            return .cancelled
         }
     }
 }
