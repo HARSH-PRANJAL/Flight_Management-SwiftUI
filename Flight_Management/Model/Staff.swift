@@ -5,6 +5,8 @@ import SwiftUI
 class Staff {
     @Attribute(.unique)
     var id: UUID
+    @Attribute(.unique)
+    var email: String
 
     @Relationship(deleteRule: .cascade)
     var trips: [Trip]
@@ -12,7 +14,6 @@ class Staff {
     var name: String
     var nameSearchKey: String
     var gender: Gender
-    var email: String
     var profileImage: Data?
     var profileBgColor: ColorData
     var designation: StaffRole

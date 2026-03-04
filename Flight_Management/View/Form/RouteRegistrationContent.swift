@@ -15,7 +15,6 @@ struct RouteRegistrationContent: View {
     @Environment(NotificationManager.self) var notificationManager
 
     @FocusState private var focusedField: FormFocus?
-    @FocusState private var timeFieldFocus: FieldFocus?
 
     var body: some View {
         ScrollView {
@@ -35,9 +34,6 @@ struct RouteRegistrationContent: View {
                 "Add Route"
             )
             .navigationBarTitleDisplayMode(.inline)
-            .onTapGesture {
-                timeFieldFocus = nil
-            }
             .onAppear {
                 if viewModel.routeName.isEmpty {
                     focusedField = .routeName
@@ -90,7 +86,7 @@ struct RouteRegistrationContent: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button(role: .confirm) {
-                        if viewModel.validateAll() {
+                        if self.validateAll() {
                             showConfirmSaveAlert = true
                         }
                     } label: {
@@ -210,13 +206,6 @@ extension RouteRegistrationContent {
                                             )
                                             .keyboardType(.numberPad)
                                             .multilineTextAlignment(.trailing)
-                                            .focused(
-                                                $timeFieldFocus,
-                                                equals: .field(id: node.id)
-                                            )
-                                            .onTapGesture {
-                                                timeFieldFocus = nil
-                                            }
                                             .padding(.vertical, 8)
                                             .padding(.horizontal, 8)
                                             .frame(minWidth: 50)
@@ -340,12 +329,39 @@ extension RouteRegistrationContent {
 
 // MARK: Util
 extension RouteRegistrationContent {
-    enum FieldFocus: Hashable {
-        case field(id: UUID)
+
+    func validateAll() -> Bool {
+        if !isNameUnique() {
+            viewModel.fieldErrors[.routeName] =
+                "A route with this name already exists."
+            return false
+        }
+        
+        var isValid = true
+
+        isValid = viewModel.validateRouteName() && isValid
+        isValid = viewModel.validateAirports() && isValid
+        isValid = viewModel.validateJourneyTimes() && isValid
+
+        return isValid
     }
 
-    private var isFormValid: Bool {
-        !viewModel.routeName.isEmpty && viewModel.selectedNodes.count >= 2
+    private func isNameUnique() -> Bool {
+        if viewModel.routeName.isEmpty {
+            return true
+        }
+
+        let routeName = Route.normalisedSearchKey(from: viewModel.routeName)
+        let descriptor = FetchDescriptor<Route>(
+            predicate: #Predicate<Route> { $0.nameSearchKey == routeName }
+        )
+
+        do {
+            let result = try context.fetch(descriptor)
+            return result.isEmpty
+        } catch {
+            return true
+        }
     }
 
     private func textBinding(for node: RouteNodeData) -> Binding<String> {
@@ -356,7 +372,10 @@ extension RouteRegistrationContent {
                     .journeyTimeMinutes ?? ""
             },
             set: { newValue in
-                guard viewModel.selectedNodes.contains(where: { $0.id == node.id }) else {
+                guard
+                    viewModel.selectedNodes.contains(where: { $0.id == node.id }
+                    )
+                else {
                     return
                 }
                 viewModel.updateJourneyTime(for: node, minutes: newValue)

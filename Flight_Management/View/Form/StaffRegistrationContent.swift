@@ -80,7 +80,9 @@ struct StaffRegistrationContent: View {
 
             ToolbarItem(placement: .confirmationAction) {
                 Button(role: .confirm) {
-                    if viewModel.isEditMode && viewModel.originalSnapshot?.role != viewModel.role {
+                    if viewModel.isEditMode
+                        && viewModel.originalSnapshot?.role != viewModel.role
+                    {
                         isRoleChanged = true
                     } else {
                         handleRegistration()
@@ -240,10 +242,20 @@ extension StaffRegistrationContent {
 
 // MARK: Util
 extension StaffRegistrationContent {
-    private var isFormValid: Bool {
-        !viewModel.name.isEmpty && !viewModel.email.isEmpty
-            && viewModel.gender != nil && viewModel.role != nil
-            && viewModel.dob != Date()
+    private func isUniqueEmail() -> Bool {
+        if viewModel.email.isEmpty { return true }
+        
+        let email = viewModel.email
+        let descriptor = FetchDescriptor<Staff>(
+            predicate: #Predicate<Staff> { $0.email == email }
+        )
+
+        do {
+            let result = try context.fetch(descriptor)
+            return result.isEmpty
+        } catch {
+            return true
+        }
     }
 
     private func handleRegistration() {
@@ -255,6 +267,10 @@ extension StaffRegistrationContent {
         }
         if !viewModel.validateEmail() {
             isValid = false
+        }
+        if !isUniqueEmail() {
+            isValid = false
+            viewModel.fieldErrors[.email] = "Email is already taken."
         }
         if !viewModel.validateGender() {
             isValid = false
@@ -328,7 +344,7 @@ extension StaffRegistrationContent {
                 trip.cancel()
             }
             staff.currentTrip?.cancel()
-            
+
             staff.markUnavailable()
 
             do {

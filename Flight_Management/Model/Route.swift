@@ -5,14 +5,16 @@ import SwiftData
 class Route {
     @Attribute(.unique)
     var id: UUID
+    @Attribute(.unique)
+    var name: String
 
     @Relationship(deleteRule: .cascade)
     var nodes: [RouteNode]
     @Relationship(deleteRule: .cascade, inverse: \Trip.route)
     var trips: [Trip]
 
-    var name: String
     var nameSearchKey: String
+    var isActive: Bool = true
 
     var totalPlannedDurationMinutes: Int {
         // Total duration is the arrival offset of the last node

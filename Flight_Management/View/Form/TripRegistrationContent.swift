@@ -15,8 +15,9 @@ struct TripRegistrationContent: View {
     @Environment(NotificationManager.self) private var notificationManager
     @Environment(\.dismiss) private var dismiss
 
-    @Query private var routes: [Route]
-    @Query private var aircrafts: [Aircraft]
+    @Query(filter: #Predicate<Route> { $0.isActive }, sort: \.name)
+    private var routes: [Route]
+    @Query(filter: #Predicate<Aircraft> { !$0.isDecommissioned }) private var aircrafts: [Aircraft]
     @Query private var staffs: [Staff]
 
     @FocusState private var focusedField: FormFocus?

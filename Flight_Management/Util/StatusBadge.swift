@@ -57,6 +57,11 @@ struct StatusBadge {
                 label: "Assigned",
                 backgroundColor: bgColor
             )
+        case .deCommissioned:
+            return StatusBadge(
+                label: "Decommissioned",
+                backgroundColor: bgColor
+            )
         }
     }
 

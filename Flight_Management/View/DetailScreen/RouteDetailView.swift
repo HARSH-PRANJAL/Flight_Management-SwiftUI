@@ -6,6 +6,7 @@ struct RouteDetailView: View {
 
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.modelContext) var context
 
     var isAdmin: Bool {
         session.user?.role == UserRole.admin.rawValue
@@ -19,7 +20,9 @@ struct RouteDetailView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     primaryCard
-
+                    if isAdmin {
+                        actionButton
+                    }
                     airportNodesCard
 
                     if !currentTrip.isEmpty {
@@ -31,6 +34,28 @@ struct RouteDetailView: View {
             }
         }
         .toolbar(.hidden, for: .tabBar)
+    }
+}
+
+// MARK: UI
+extension RouteDetailView {
+    var actionButton: some View {
+        Button {
+            onTapAction()
+        } label: {
+            HStack(spacing: 8) {
+                Image(
+                    systemName: !route.isActive ? "mappin.and.ellipse" : "trash"
+                )
+                Text(!route.isActive ? "Restore route" : "Delete route")
+            }
+            .font(.body.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.bordered)
+        .tint(!route.isActive ? Color(.systemGreen) : Color(.systemRed))
+        .padding(.bottom, 8)
     }
 
     var primaryCard: some View {
@@ -192,6 +217,34 @@ struct RouteDetailView: View {
 
 // MARK: Util
 extension RouteDetailView {
+
+    var routeNameForNotification: String {
+        if route.name.count > 20 {
+            let firstWord = route.name.split(separator: " ").first ?? ""
+            return String(
+                firstWord.count <= 20
+                    ? "\(firstWord)" : route.name.suffix(20).appending("...")
+            )
+        } else {
+            return route.name
+        }
+    }
+
+    func onTapAction() {
+        let wasDeleted = route.isActive
+        route.isActive.toggle()
+
+        do {
+            try context.save()
+            notificationManager.showSuccess(
+                "\(routeNameForNotification) is \(!wasDeleted ? "restored." : "deleted.")"
+            )
+        } catch {
+            notificationManager.showError(
+                "Failed to \(!wasDeleted ? "restore" : "delete") \(routeNameForNotification)."
+            )
+        }
+    }
 
     var sequencedRouteNodes: [RouteNode] {
         return route.nodes.sorted(by: { $0.sequence < $1.sequence })

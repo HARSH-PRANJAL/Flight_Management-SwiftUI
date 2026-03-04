@@ -2,13 +2,19 @@ import SwiftData
 import SwiftUI
 
 struct AircraftDetailScreen: View {
+
+    @Environment(\.modelContext) var context
+    @Environment(NotificationManager.self) var notificationManager
+
     let aircraft: Aircraft
     var isManager: Bool = false
     var isAircraftAvailable: Bool { aircraft.currentStatus == .available }
 
     @State private var selectedTab: DetailTab = .detail
+    @State private var scheduledTrips: [Trip] = []
     @Binding var isEditPagePresented: Bool
     @Binding var isScheduledTripsPresented: Bool
+    @State private var showDecommissionAlert: Bool = false
 
     let formatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -17,6 +23,14 @@ struct AircraftDetailScreen: View {
         f.minimumIntegerDigits = 1
         return f
     }()
+
+    var tripString: String {
+        if scheduledTrips.count > 1 {
+            return "trips"
+        } else {
+            return "trip"
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -43,8 +57,42 @@ struct AircraftDetailScreen: View {
                     }
                 }
             }
+            .alert("", isPresented: $showDecommissionAlert) {
+
+                Button("Decommission", role: .destructive) {
+                    decommissionAircraft()
+                }
+
+                Button("Cancel", role: .cancel) {}
+
+            } message: {
+                if scheduledTrips.count > 0 {
+                    Text(
+                        """
+                        Decommissioning will result in the immediate cancellation of \(scheduledTrips.count) upcoming \(tripString). 
+
+                        Once decommissioned, it will be permanently removed from service.
+                        """
+                    )
+                    .multilineTextAlignment(.leading)
+                } else {
+                    Text(
+                        """
+                        Are you sure you want to decommission this aircraft?
+
+                        Once decommissioned, it will be permanently removed from service.
+                        """
+                    )
+                    .multilineTextAlignment(.leading)
+                }
+            }
         }
         .animation(.linear(duration: 0.5), value: selectedTab)
+        .onAppear {
+            if scheduledTrips.isEmpty {
+                scheduledTrips = aircraft.scheduledTrips
+            }
+        }
     }
 }
 
@@ -88,11 +136,9 @@ extension AircraftDetailScreen {
         }
         .scrollIndicators(.hidden)
         .toolbar {
-            if isManager && isAircraftAvailable {
+            if isManager && isAircraftAvailable && !aircraft.isDecommissioned {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { isEditPagePresented = true }) {
-                        Image(systemName: "pencil")
-                    }
+                    toolbarMenu
                 }
             }
         }
@@ -206,5 +252,50 @@ extension AircraftDetailScreen {
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(cardTheme())
+    }
+
+    var toolbarMenu: some View {
+        Menu {
+            Button {
+                isEditPagePresented = true
+            } label: {
+                Label("Edit reg number", systemImage: "pencil")
+            }
+
+            Button(role: .destructive) {
+                showDecommissionAlert = true
+            } label: {
+                Label("Decommission", systemImage: "trash")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+    }
+}
+
+// MARK: Util
+extension AircraftDetailScreen {
+    private func decommissionAircraft() {
+        cancelAllScheduledTripsWithCurrentTrip()
+        aircraft.isDecommissioned = true
+
+        do {
+            try context.save()
+            notificationManager.showSuccess(
+                "\(aircraft.registrationNumber) has been decommissioned."
+            )
+        } catch {
+            notificationManager.showSuccess(
+                "Failed to be decommission. Please try again."
+            )
+        }
+    }
+
+    private func cancelAllScheduledTripsWithCurrentTrip() {
+        for trip in scheduledTrips {
+            trip.cancel()
+        }
     }
 }

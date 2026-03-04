@@ -33,6 +33,7 @@ enum StaffAvailabilityStatus: String, Codable, CaseIterable {
 enum AircraftStatus: String, Codable {
     case available = "Available"
     case assigned = "Assigned"
+    case deCommissioned = "De-commissioned"
 }
 
 enum Gender: String, Codable, CaseIterable {
@@ -83,4 +84,9 @@ enum NotificationType: Equatable {
     case success(message: String)
     case error(message: String)
     case none
+}
+
+enum RouteStatus: String, CaseIterable {
+    case inactive = "Inactive"
+    case active = "Active"
 }
