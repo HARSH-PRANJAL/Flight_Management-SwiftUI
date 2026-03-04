@@ -84,3 +84,8 @@ enum NotificationType: Equatable {
     case error(message: String)
     case none
 }
+
+enum RouteStatus: String, CaseIterable {
+    case inactive = "Inactive"
+    case active = "Active"
+}

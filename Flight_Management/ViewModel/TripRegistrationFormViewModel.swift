@@ -79,6 +79,7 @@ final class TripRegistrationFormViewModel {
     var allSelectedStaff: [Staff] {
         selectedPilots + selectedCoPilots + selectedCrewMembers
     }
+    
     func validate(minRequired: [StaffRole: Int]) -> Bool {
 
         fieldErrors.removeAll()

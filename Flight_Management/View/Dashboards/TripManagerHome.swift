@@ -26,7 +26,7 @@ struct TripManagerHome: View {
 
             Tab("Routes", systemImage: "map") {
                 NavigationStack {
-                    RouteListView()
+                    RouteListView(requiredFilters: [], selectedFilter: .active)
                 }
             }
 

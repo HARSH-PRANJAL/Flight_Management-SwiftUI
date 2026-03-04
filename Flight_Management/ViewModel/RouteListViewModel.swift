@@ -19,17 +19,20 @@ final class RouteListViewModel {
 
     func loadInitial(
         context: ModelContext,
+        filter: RouteStatus?,
         searchText: String
     ) async {
         reset()
         await loadMore(
             context: context,
+            filter: filter,
             searchText: searchText
         )
     }
 
     func loadMore(
         context: ModelContext,
+        filter: RouteStatus?,
         searchText: String
     ) async {
         guard !isLoading, hasMore else { return }
@@ -45,7 +48,10 @@ final class RouteListViewModel {
                 SortDescriptor(\Route.name, order: .forward)
             ]
 
-            if let predicate = makePredicate(searchText: searchText) {
+            if let predicate = makePredicate(
+                filter: filter,
+                searchText: searchText
+            ) {
                 descriptor.predicate = predicate
             }
 
@@ -61,16 +67,43 @@ final class RouteListViewModel {
         }
     }
 
-    private func makePredicate(searchText: String) -> Predicate<Route>? {
+    private func makePredicate(filter: RouteStatus?, searchText: String)
+        -> Predicate<Route>?
+    {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let normalisedSearch = Route.normalisedSearchKey(from: trimmed)
-        if normalisedSearch.isEmpty {
+        if filter == nil && normalisedSearch.isEmpty {
             return nil
         }
 
-        return #Predicate<Route> {
-            $0.nameSearchKey.contains(normalisedSearch)
+        if let filter {
+            switch filter {
+            case .inactive:
+                if !normalisedSearch.isEmpty {
+                    return #Predicate<Route> {
+                        $0.nameSearchKey.contains(normalisedSearch) && !$0.isActive
+                    }
+                } else {
+                    return #Predicate<Route> {
+                        !$0.isActive
+                    }
+                }
+            case .active:
+                if !normalisedSearch.isEmpty {
+                    return #Predicate<Route> {
+                        $0.nameSearchKey.contains(normalisedSearch) && $0.isActive
+                    }
+                } else {
+                    return #Predicate<Route> {
+                        $0.isActive
+                    }
+                }
+            }
+        } else {
+            return #Predicate<Route> {
+                $0.nameSearchKey.contains(normalisedSearch)
+            }
         }
     }
 }

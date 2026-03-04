@@ -2,13 +2,15 @@ import SwiftData
 import SwiftUI
 
 struct RouteListView: View {
-
+    
+    var requiredFilters: [RouteStatus] = RouteStatus.allCases
+    
     @Environment(\.modelContext) private var context
-
     @State private var viewModel = RouteListViewModel()
 
     @State private var selectedSort: RouteSort = .name
     @State private var selectedSortOrder: SortOrder = .ascending
+    @State var selectedFilter: RouteStatus? = nil
     @State private var searchText: String = ""
 
     var body: some View {
@@ -29,6 +31,7 @@ struct RouteListView: View {
                                     Task {
                                         await viewModel.loadMore(
                                             context: context,
+                                            filter: selectedFilter,
                                             searchText: searchText
                                         )
                                     }
@@ -42,6 +45,7 @@ struct RouteListView: View {
                         Task {
                             await viewModel.loadInitial(
                                 context: context,
+                                filter: selectedFilter,
                                 searchText: ""
                             )
                         }
@@ -60,13 +64,24 @@ struct RouteListView: View {
             .task {
                 await viewModel.loadInitial(
                     context: context,
+                    filter: selectedFilter,
                     searchText: searchText
                 )
+            }
+            .onChange(of: selectedFilter) { _, newFilter in
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: newFilter,
+                        searchText: searchText
+                    )
+                }
             }
             .onChange(of: searchText) { _, newSearch in
                 Task {
                     await viewModel.loadInitial(
                         context: context,
+                        filter: selectedFilter,
                         searchText: newSearch
                     )
                 }
@@ -81,6 +96,39 @@ extension RouteListView {
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                if !requiredFilters.isEmpty {
+                    Section("Filter by") {
+                        VStack(spacing: 0) {
+                            Button {
+                                selectedFilter = nil
+                            } label: {
+                                HStack {
+                                    Text("All")
+                                    if selectedFilter == nil {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                            ForEach(
+                                requiredFilters,
+                                id: \.self
+                            ) { filter in
+                                Button {
+                                    selectedFilter = filter
+                                } label: {
+                                    HStack {
+                                        Text(filter.rawValue)
+                                        if selectedFilter == filter {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 Section("Sort by") {
                     ForEach(RouteSort.allCases, id: \.self) { sort in
                         Button {
