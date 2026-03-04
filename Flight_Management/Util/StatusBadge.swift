@@ -8,14 +8,14 @@ struct StatusCapsuleView: View {
     var body: some View {
         HStack {
             Circle()
-                .fill(statusBadge.backgroundColor.opacity(20))
+                .fill(statusBadge.backgroundColor.opacity(1))
                 .frame(maxWidth: 10, maxHeight: 10)
                 .padding(.leading, onlyIndicator ? 0 : 10)
 
             if !onlyIndicator {
                 Text(statusBadge.label)
                     .fontWeight(.semibold)
-                    .foregroundStyle(statusBadge.backgroundColor.opacity(20))
+                    .foregroundStyle(statusBadge.backgroundColor.opacity(1))
                     .padding([.trailing, .vertical], 10)
             }
         }
