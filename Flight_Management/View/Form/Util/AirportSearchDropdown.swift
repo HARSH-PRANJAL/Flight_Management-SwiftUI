@@ -7,9 +7,8 @@ struct AirportSearchDropdown: View {
         let code = self.searchText.uppercased()
         let searchText = self.searchText.capitalized
         let predicate = #Predicate<Airport> {
-            $0.name.contains(searchText) ||
-            $0.city.contains(searchText) ||
-            $0.code.contains(code)
+            $0.name.contains(searchText) || $0.city.contains(searchText)
+                || $0.code.contains(code)
         }
 
         let descriptor = FetchDescriptor<Airport>(predicate: predicate)
@@ -81,7 +80,10 @@ struct AirportSearchDropdown: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(airport.code)
                                             .font(
-                                                .system(size: 16, weight: .semibold)
+                                                .system(
+                                                    size: 16,
+                                                    weight: .semibold
+                                                )
                                             )
                                             .foregroundColor(Color(.label))
 
@@ -117,7 +119,7 @@ struct AirportSearchDropdown: View {
             // No results
             if isExpanded && filteredAirports.isEmpty && !searchText.isEmpty {
                 VStack(spacing: 8) {
-                    Image(systemName: "airplane.slash")
+                    Image(systemName: "xmark.circle.badge.airplane")
                         .font(.system(size: 24))
                         .foregroundColor(Color(.systemGray3))
 
