@@ -139,16 +139,6 @@ extension RouteRegistrationFormViewModel {
         return true
     }
 
-    func validateAll() -> Bool {
-        var isValid = true
-
-        isValid = validateRouteName() && isValid
-        isValid = validateAirports() && isValid
-        isValid = validateJourneyTimes() && isValid
-
-        return isValid
-    }
-
     func addAirport(_ airport: Airport) {
         if !selectedNodes.contains(where: { $0.airport.code == airport.code }) {
             selectedNodes.append(RouteNodeData(airport: airport))
@@ -189,7 +179,6 @@ extension RouteRegistrationFormViewModel {
     }
 
     func saveRoute(to context: ModelContext) -> Bool {
-        guard validateAll() else { return false }
         let route = Route(
             name: routeName.trimmingCharacters(in: .whitespacesAndNewlines)
         )
