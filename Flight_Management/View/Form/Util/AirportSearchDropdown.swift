@@ -33,12 +33,7 @@ struct AirportSearchDropdown: View {
             return []
         }
 
-        return filtered.filter { airport in
-            airport.code.localizedCaseInsensitiveContains(searchText)
-                || airport.name.localizedCaseInsensitiveContains(searchText)
-                || airport.city.localizedCaseInsensitiveContains(searchText)
-        }
-        .sorted { $0.code < $1.code }
+        return filtered.sorted { $0.code < $1.code }
     }
 
     var body: some View {
