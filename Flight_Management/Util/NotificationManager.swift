@@ -39,10 +39,6 @@ final class NotificationManager {
         }
     }
     
-    private func playSuccessSound() {
-        audioEngine.playErrorSound()
-    }
-    
     private func playErrorSound() {
         audioEngine.playErrorSound()
     }

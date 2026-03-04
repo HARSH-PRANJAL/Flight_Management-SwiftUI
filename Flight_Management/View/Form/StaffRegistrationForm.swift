@@ -20,7 +20,7 @@ struct StaffRegistrationForm: View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea(.all)
             StaffRegistrationContent(viewModel: viewModel, isPresented: isPresented)
-                .navigationBarTitle(viewModel.isEditMode ? "Updated Staff" : "Add Staff")
+                .navigationTitle(viewModel.isEditMode ? "Updated Staff" : "Add Staff")
                 .navigationBarTitleDisplayMode(.inline)
         }
         .scrollDismissesKeyboard(.interactively)

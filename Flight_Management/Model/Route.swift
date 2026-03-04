@@ -20,7 +20,8 @@ class Route {
         // Total duration is the arrival offset of the last node
         // which includes all journey times and turn-around times
         if nodes.count == 0 { return 0 }
-        return nodes.max{ $0.sequence < $1.sequence }?.plannedArrivalOffsetMinutes ?? 0
+        return nodes.max { $0.sequence < $1.sequence }?
+            .plannedArrivalOffsetMinutes ?? 0
     }
 
     init(name: String) {
@@ -38,17 +39,18 @@ class Route {
     ) {
         let sequence = nodes.count + 1
         let arrivalOffset: Int
-        
-        if nodes.isEmpty {
+
+        if let lastNode = nodes.last {
+            // For subsequent nodes: previous offset + journey time + turn around time
+            arrivalOffset =
+                lastNode.plannedArrivalOffsetMinutes + journeyTimeMinutes
+                + turnAroundTimeMinutes
+        } else {
             // First node always has 0 arrival offset (departure point)
             // journeyTimeMinutes is ignored for first node
             arrivalOffset = 0
-        } else {
-            // For subsequent nodes: previous offset + journey time + turn around time
-            let previousOffset = nodes.last!.plannedArrivalOffsetMinutes
-            arrivalOffset = previousOffset + journeyTimeMinutes + turnAroundTimeMinutes
         }
-        
+
         let newNode = RouteNode(
             plannedArrivalOffsetMinutes: arrivalOffset,
             airport: airport,

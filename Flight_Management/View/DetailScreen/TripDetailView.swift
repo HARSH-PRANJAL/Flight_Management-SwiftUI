@@ -64,7 +64,9 @@ struct TripDetailView: View {
         trip.cancel()
         do {
             try modelContext.save()
-        } catch {}
+        } catch {
+            print("Error in cancelling trip: \(error)")
+        }
         successMessage =
             "Trip \(trip.flightNumber) has been cancelled successfully."
         showSuccessMessage = true

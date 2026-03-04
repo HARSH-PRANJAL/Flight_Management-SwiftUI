@@ -52,7 +52,7 @@ struct DetailView: View {
 
     var actionButton: some View {
         Button {
-            onActionButtonTapped!()
+            onActionButtonTapped?()
         } label: {
             Text(actionButtonTitle)
                 .font(.body.weight(.semibold))

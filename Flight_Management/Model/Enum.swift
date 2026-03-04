@@ -36,6 +36,11 @@ enum AircraftStatus: String, Codable {
     case deCommissioned = "De-commissioned"
 }
 
+enum RouteStatus: String, CaseIterable {
+    case inactive = "Inactive"
+    case active = "Active"
+}
+
 enum Gender: String, Codable, CaseIterable {
     case male, female, other
 
@@ -57,6 +62,11 @@ enum RouteSort: String, CaseIterable {
 enum TripSort: String, CaseIterable {
     case flightNumber = "Flight Number"
     case departure = "Departure Time"
+}
+
+enum AircraftSort: String, CaseIterable {
+    case registration = "Registration Number"
+    case seatingCapacity = "Seating Capacity"
 }
 
 enum FieldError: Hashable {
@@ -86,7 +96,3 @@ enum NotificationType: Equatable {
     case none
 }
 
-enum RouteStatus: String, CaseIterable {
-    case inactive = "Inactive"
-    case active = "Active"
-}

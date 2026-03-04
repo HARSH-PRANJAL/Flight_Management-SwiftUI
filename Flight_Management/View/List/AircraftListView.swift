@@ -223,12 +223,6 @@ extension AircraftListView {
     }
 }
 
-// MARK: Sorting Enum
-enum AircraftSort: String, CaseIterable {
-    case registration = "Registration Number"
-    case seatingCapacity = "Seating Capacity"
-}
-
 #Preview {
     NavigationStack {
         AircraftListView()
