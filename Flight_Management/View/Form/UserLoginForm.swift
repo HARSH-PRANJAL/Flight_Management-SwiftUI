@@ -59,10 +59,10 @@ struct UserLoginForm: View {
 
                     Button(action: handleLogin) {
                         Text("Login")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.title3)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .padding()
+                            .padding(.vertical, 10)
                             .background(
                                 email == "" || password == ""
                                     ? Color(.systemBlue).opacity(0.7)
