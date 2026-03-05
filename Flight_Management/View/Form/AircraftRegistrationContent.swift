@@ -5,6 +5,7 @@ struct AircraftRegistrationContent: View {
     var aircraft: Aircraft? = nil
     @State var viewModel: AircraftRegistrationFormViewModel
     @State private var showConfirmCloseAlert = false
+    @State private var showStaffChangeAlert = false
     @State private var currentDetent: PresentationDetent = .large
 
     @Binding var isPresented: Bool
@@ -37,6 +38,21 @@ struct AircraftRegistrationContent: View {
             .type: "seating",
             .seatingCapacity: "staff",
         ]
+    }
+
+    private var tripsAffectedByStaffChange: [Trip] {
+        guard let aircraft else { return [] }
+        return aircraft.scheduledTrips
+    }
+
+    private var hasStaffRequirementChanged: Bool {
+        guard let aircraft else { return false }
+        for role in StaffRole.allCases {
+            let saved = aircraft.minimumStaffRequired[role] ?? 0
+            let edited = Int(viewModel.minimumStaffRequired[role] ?? "") ?? 0
+            if saved != edited { return true }
+        }
+        return false
     }
 
     var body: some View {
@@ -142,6 +158,18 @@ struct AircraftRegistrationContent: View {
                 } message: {
                     Text(
                         "You have unsaved changes. Are you sure you want to discard them?"
+                    )
+                }
+                .alert("", isPresented: $showStaffChangeAlert) {
+                    Button("Update", role: .destructive) {
+                        cancelAffectedTripsAndUpdate()
+                    }
+                    Button("Keep Editing", role: .cancel) {}
+                } message: {
+                    let count = tripsAffectedByStaffChange.count
+                    let tripWord = count == 1 ? "trip" : "trips"
+                    Text(
+                        "Changing the minimum staff requirements will cancel \(count) scheduled \(tripWord) that no longer meet the new staffing criteria."
                     )
                 }
             }
@@ -286,32 +314,42 @@ extension AircraftRegistrationContent {
 
 // MARK: Util
 extension AircraftRegistrationContent {
-    private func handleRegistration() {
 
+    private func handleRegistration() {
         guard viewModel.validateAll() else { return }
 
-        if let aircraft = aircraft {
-            // Update mode
-            if viewModel.updateAircraft(aircraft, in: context) {
-                notificationManager.showSuccess("Aircraft updated successfully")
-                isPresented = false
+        if let _ = aircraft {
+            if hasStaffRequirementChanged && !tripsAffectedByStaffChange.isEmpty {
+                showStaffChangeAlert = true
             } else {
-                notificationManager.showError(
-                    "Failed to update aircraft. Please try again."
-                )
+                performUpdate()
             }
         } else {
-            // Create mode
             if viewModel.saveAircraft(to: context) {
-                notificationManager.showSuccess(
-                    "Aircraft registered successfully"
-                )
+                notificationManager.showSuccess("Aircraft registered successfully")
                 isPresented = false
             } else {
                 notificationManager.showError(
                     "Failed to register aircraft. Please try again."
                 )
             }
+        }
+    }
+
+    private func cancelAffectedTripsAndUpdate() {
+        tripsAffectedByStaffChange.forEach { $0.cancel() }
+        performUpdate()
+    }
+
+    private func performUpdate() {
+        guard let aircraft else { return }
+        if viewModel.updateAircraft(aircraft, in: context) {
+            notificationManager.showSuccess("Aircraft updated successfully")
+            isPresented = false
+        } else {
+            notificationManager.showError(
+                "Failed to update aircraft. Please try again."
+            )
         }
     }
 }

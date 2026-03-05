@@ -101,7 +101,7 @@ extension AircraftRegistrationFormViewModel {
 
     func validateSeatingCapacity() -> Bool {
         guard let capacity = Int(seatingCapacity), capacity > 0 else {
-            fieldErrors[.seatingCapacity] = "Enter a valid seating capacity."
+            fieldErrors[.seatingCapacity] = "Enter seating capacity."
             return false
         }
         if capacity > 500 {
