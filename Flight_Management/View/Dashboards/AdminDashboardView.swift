@@ -3,10 +3,27 @@ import SwiftData
 import SwiftUI
 
 struct AdminDashboardView: View {
-    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
-        [Trip]
-    @Query(sort: \Staff.name, order: .forward) var staffs: [Staff]
+    @Query private var todayTrips: [Trip]
+    @Query private var upcomingTrips: [Trip]
+    @Query private var availableStaff: [Staff]
+    @Query private var onDutyStaff: [Staff]
+    @Query private var unavailableStaff: [Staff]
+
     @State private var showingTripList: Bool = false
+
+    init() {
+        _todayTrips = Query(
+            filter: DashboardDB.todayTripsPredicate(),
+            sort: \Trip.scheduledDepartureTime
+        )
+        _upcomingTrips = Query(
+            filter: DashboardDB.upcomingTripsPredicate(withinHours: 6),
+            sort: \Trip.scheduledDepartureTime
+        )
+        _availableStaff = Query(filter: DashboardDB.availableStaffPredicate)
+        _onDutyStaff = Query(filter: DashboardDB.onDutyStaffPredicate)
+        _unavailableStaff = Query(filter: DashboardDB.unavailableStaffPredicate)
+    }
 
     var body: some View {
         ZStack {
@@ -56,9 +73,9 @@ struct AdminDashboardView: View {
 
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
-                            Text("Crew Status Overview")
+                            Text("Crew Status")
                                 .font(.headline)
-                            Text("Today's Availability")
+                            Text("Overall availability today")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -66,7 +83,7 @@ struct AdminDashboardView: View {
 
                         DonutChartView(
                             data: crewStatusCounts,
-                            defaultTitle: "Total staff"
+                            defaultTitle: "Total crew"
                         )
                         .frame(maxHeight: 500)
                         .frame(maxWidth: .infinity)
@@ -110,7 +127,8 @@ struct AdminDashboardView: View {
             NavigationStack {
                 TripList(
                     externalTrips: upcomingTrips,
-                    navigationTitle: "Trips in next 6 hours (\(upcomingTrips.count))",
+                    navigationTitle:
+                        "Trips in next 6 hours (\(upcomingTrips.count))",
                     requiredFilters: [.scheduled, .cancelled]
                 )
                 .navigationBarTitleDisplayMode(.inline)
@@ -122,7 +140,6 @@ struct AdminDashboardView: View {
                         } label: {
                             Image(systemName: "xmark")
                         }
-
                     }
                 }
             }
@@ -130,14 +147,8 @@ struct AdminDashboardView: View {
     }
 }
 
-// MARK: Data for display
+// MARK: - Data for display
 extension AdminDashboardView {
-    private var todayTrips: [Trip] {
-        let calendar = Calendar.current
-        return trips.filter {
-            calendar.isDateInToday($0.scheduledDepartureTime)
-        }
-    }
 
     private var onTimePercentage: Int {
         let total = todayTrips.filter {
@@ -180,43 +191,26 @@ extension AdminDashboardView {
             (
                 category: "Completed", count: completed,
                 color: Color.tripStatusColor(for: .completed)
-            )
+            ),
         ]
     }
 
     private var crewStatusCounts: [(String, Int, Color)] {
-        let available = staffs.filter { $0.currentStatus == .available }.count
-        let onDuty = staffs.filter { $0.currentStatus == .onDuty }.count
-        let unavailable = staffs.filter { $0.currentStatus == .unavailable }
-            .count
         return [
             (
-                category: "Available", count: available,
+                category: "Available", count: availableStaff.count,
                 color: Color.staffStatusColor(for: .available)
             ),
             (
-                category: "On Duty", count: onDuty,
+                category: "On Duty", count: onDutyStaff.count,
                 color: Color.staffStatusColor(for: .onDuty)
             ),
             (
-                category: "Unavailable", count: unavailable,
+                category: "Unavailable", count: unavailableStaff.count,
                 color: Color.staffStatusColor(for: .unavailable)
             ),
         ]
     }
-
-    private var upcomingTrips: [Trip] {
-        let now = Date()
-        let until =
-            Calendar.current.date(byAdding: .hour, value: 6, to: now) ?? now
-        return trips.filter {
-            !$0.isCompleted
-                && $0.scheduledDepartureTime >= now
-                && $0.scheduledDepartureTime <= until
-        }
-        .sorted { $0.scheduledDepartureTime < $1.scheduledDepartureTime }
-    }
-
 }
 
 struct AdminDashboardView_Previews: PreviewProvider {

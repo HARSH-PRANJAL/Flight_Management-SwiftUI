@@ -5,14 +5,21 @@ struct TripManagerDashboardView: View {
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
 
-    @Query(sort: \Trip.scheduledDepartureTime, order: .forward) var trips:
-        [Trip]
-    @Query(sort: \Staff.name, order: .forward) var staffs: [Staff]
-    @Query(sort: \Aircraft.registrationNumber, order: .forward) var aircrafts:
-        [Aircraft]
-    @Query var routes: [Route]
+    @Query private var todayTrips: [Trip]
+    @Query private var upcomingTrips: [Trip]
 
     @State var showingTripList: Bool = false
+
+    init() {
+        _todayTrips = Query(
+            filter: DashboardDB.todayTripsPredicate(),
+            sort: \Trip.scheduledDepartureTime
+        )
+        _upcomingTrips = Query(
+            filter: DashboardDB.upcomingTripsPredicate(withinHours: 24),
+            sort: \Trip.scheduledDepartureTime
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -20,7 +27,7 @@ struct TripManagerDashboardView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     tripDetailCards
-                    
+
                     VStack(alignment: .leading) {
                         Text("Daily Trip Status")
                             .font(.headline)
@@ -50,6 +57,7 @@ struct TripManagerDashboardView: View {
 
                         UpcomingTripsScrollView(trips: upcomingTrips)
                             .padding(.horizontal, -16)
+
                         if upcomingTrips.count > 3 {
                             HStack {
                                 Spacer()
@@ -71,7 +79,8 @@ struct TripManagerDashboardView: View {
                 NavigationStack {
                     TripList(
                         externalTrips: upcomingTrips,
-                        navigationTitle: "Trips in next 24 hr (\(upcomingTrips.count))",
+                        navigationTitle:
+                            "Trips in next 24 hr (\(upcomingTrips.count))",
                         requiredFilters: [.scheduled, .cancelled]
                     )
                     .navigationBarTitleDisplayMode(.inline)
@@ -83,7 +92,6 @@ struct TripManagerDashboardView: View {
                             } label: {
                                 Image(systemName: "xmark")
                             }
-
                         }
                     }
                 }
@@ -92,7 +100,7 @@ struct TripManagerDashboardView: View {
     }
 }
 
-// MARK: UI
+// MARK: - UI
 extension TripManagerDashboardView {
 
     var tripDetailCards: some View {
@@ -114,111 +122,16 @@ extension TripManagerDashboardView {
             )
         }
     }
-
-    @ViewBuilder
-    var activeStaffCards: some View {
-        VStack(spacing: 12) {
-            VStack(alignment: .leading) {
-                Text("Active Crew")
-                    .font(.headline)
-                Text("Currently on duty")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                VStack {
-                    HStack(spacing: 12) {
-                        ForEach(activeCrew, id: \.id) { staff in
-                            NavigationLink(
-                                destination: StaffDetailView(staff: staff)
-                            ) {
-                                ListRow(staff: staff)
-                                    .frame(width: 200)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color(.systemBackground))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-                .background(cardTheme())
-            }
-            .frame(height: 220)
-        }
-    }
-
-    @ViewBuilder
-    var ongoingTrips: some View {
-        VStack(spacing: 12) {
-            VStack(alignment: .leading) {
-                Text("Trips for today")
-                    .font(.headline)
-                Text("Ongoing or scheduled")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                VStack {
-                    HStack(spacing: 12) {
-                        ForEach(todayTrips, id: \.id) { trip in
-                            NavigationLink(
-                                destination: TripDetailView(
-                                    trip: trip
-                                )
-                            ) {
-                                ListRow(trip: trip)
-                                    .frame(width: 200)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-                .background(cardTheme())
-            }
-            .frame(height: 220)
-        }
-    }
 }
 
-// MARK: Util
+// MARK: - Data for display
 extension TripManagerDashboardView {
-    private var upcomingTrips: [Trip] {
-
-        let calendar = Calendar.current
-        let now = Date()
-        let currentHour =
-            calendar.dateInterval(of: .hour, for: now)?.start ?? now
-
-        let next24Hours =
-            calendar.date(byAdding: .hour, value: 24, to: currentHour)
-            ?? currentHour
-        return trips.filter {
-            $0.scheduledDepartureTime >= now
-                && $0.scheduledDepartureTime <= next24Hours
-        }
-    }
-
-    private var todayTrips: [Trip] {
-        let calendar = Calendar.current
-        return trips.filter {
-            calendar.isDateInToday($0.scheduledDepartureTime)
-        }
-    }
 
     private var onTimePercentage: Int {
-        let total = todayTrips.filter { $0.currentStatus == .onTime || $0.currentStatus == .delayed }.count
-
+        let total = todayTrips.filter {
+            $0.currentStatus == .onTime || $0.currentStatus == .delayed
+        }.count
         if total <= 0 { return 0 }
-
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         return Int((Double(onTime) / Double(total)) * 100)
     }
@@ -258,10 +171,6 @@ extension TripManagerDashboardView {
                 color: Color.tripStatusColor(for: .completed)
             ),
         ]
-    }
-
-    private var activeCrew: [Staff] {
-        return staffs.filter { $0.currentStatus == .onDuty }
     }
 }
 
