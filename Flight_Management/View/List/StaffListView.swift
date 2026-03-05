@@ -27,13 +27,14 @@ struct StaffListView: View {
                         if externalStaffs.isEmpty {
                             list
                                 .refreshable {
-                                    Task {
-                                        await viewModel.loadInitial(
-                                            context: context,
-                                            filter: selectedFilter,
-                                            searchText: searchText
-                                        )
-                                    }
+                                    await viewModel.loadInitial(
+                                        context: context,
+                                        filter: selectedFilter,
+                                        searchText: searchText,
+                                        sort: selectedSort,
+                                        sortOrder: selectedSortOrder
+                                    )
+                                    await loadUntilVisible()
                                 }
                         } else {
                             list
@@ -53,28 +54,66 @@ struct StaffListView: View {
             )
             .searchToolbarBehavior(.minimize)
             .task {
+                guard externalStaffs.isEmpty else { return }
                 await viewModel.loadInitial(
                     context: context,
                     filter: selectedFilter,
-                    searchText: searchText
+                    searchText: searchText,
+                    sort: selectedSort,
+                    sortOrder: selectedSortOrder
                 )
+                await loadUntilVisible()
             }
             .onChange(of: selectedFilter) { _, newFilter in
+                guard externalStaffs.isEmpty else { return }
                 Task {
                     await viewModel.loadInitial(
                         context: context,
                         filter: newFilter,
-                        searchText: searchText
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
                 }
             }
             .onChange(of: searchText) { _, newSearch in
+                guard externalStaffs.isEmpty else { return }
                 Task {
                     await viewModel.loadInitial(
                         context: context,
                         filter: selectedFilter,
-                        searchText: newSearch
+                        searchText: newSearch,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
+                }
+            }
+            .onChange(of: selectedSort) { _, _ in
+                guard externalStaffs.isEmpty else { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
+                    )
+                    await loadUntilVisible()
+                }
+            }
+            .onChange(of: selectedSortOrder) { _, _ in
+                guard externalStaffs.isEmpty else { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
+                    )
+                    await loadUntilVisible()
                 }
             }
         }
@@ -98,7 +137,9 @@ extension StaffListView {
                             await viewModel.loadMore(
                                 context: context,
                                 filter: selectedFilter,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                     }
@@ -194,28 +235,37 @@ extension StaffListView {
         }
     }
 
+    private func loadUntilVisible() async {
+        while displayedStaffs.isEmpty && viewModel.hasMore
+            && !viewModel.isLoading
+        {
+            await viewModel.loadMore(
+                context: context,
+                filter: selectedFilter,
+                searchText: searchText,
+                sort: selectedSort,
+                sortOrder: selectedSortOrder
+            )
+        }
+    }
+
     var displayedStaffs: [Staff] {
-        var filtered: [Staff] =
-            externalStaffs.isEmpty
-            ? viewModel.items
-            : externalStaffs
-
-        filtered = filtered.sorted { lhs, rhs in
-            let isAscending = selectedSortOrder == .ascending
-
-            if selectedSort == .name {
-                let comparison =
-                    lhs.name.localizedStandardCompare(rhs.name)
-                    == .orderedAscending
-                return isAscending ? comparison : !comparison
-            } else {
-                let comparison =
-                    lhs.totalTripHours < rhs.totalTripHours
-                return isAscending ? comparison : !comparison
+        guard externalStaffs.isEmpty else {
+            return externalStaffs.sorted { lhs, rhs in
+                let asc = selectedSortOrder == .ascending
+                if selectedSort == .name {
+                    let cmp =
+                        lhs.name.localizedStandardCompare(rhs.name)
+                        == .orderedAscending
+                    return asc ? cmp : !cmp
+                } else {
+                    return asc
+                        ? lhs.totalTripHours < rhs.totalTripHours
+                        : lhs.totalTripHours > rhs.totalTripHours
+                }
             }
         }
-
-        return filtered
+        return viewModel.items
     }
 }
 

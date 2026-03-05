@@ -20,20 +20,26 @@ final class StaffListViewModel {
     func loadInitial(
         context: ModelContext,
         filter: StaffAvailabilityStatus?,
-        searchText: String
+        searchText: String,
+        sort: StaffSort = .name,
+        sortOrder: SortOrder = .ascending
     ) async {
         reset()
         await loadMore(
             context: context,
             filter: filter,
-            searchText: searchText
+            searchText: searchText,
+            sort: sort,
+            sortOrder: sortOrder
         )
     }
 
     func loadMore(
         context: ModelContext,
         filter: StaffAvailabilityStatus?,
-        searchText: String
+        searchText: String,
+        sort: StaffSort = .name,
+        sortOrder: SortOrder = .ascending
     ) async {
         guard !isLoading, hasMore else { return }
 
@@ -44,9 +50,17 @@ final class StaffListViewModel {
             var descriptor = FetchDescriptor<Staff>()
             descriptor.fetchLimit = batchSize
             descriptor.fetchOffset = offset
-            descriptor.sortBy = [
-                SortDescriptor(\Staff.name, order: .forward)
-            ]
+
+            let order: Foundation.SortOrder =
+                sortOrder == .ascending ? .forward : .reverse
+            switch sort {
+            case .name:
+                descriptor.sortBy = [SortDescriptor(\Staff.name, order: order)]
+            case .experience:
+                descriptor.sortBy = [
+                    SortDescriptor(\Staff.totalTripHours, order: order)
+                ]
+            }
 
             if let predicate = makePredicate(
                 filter: filter,
