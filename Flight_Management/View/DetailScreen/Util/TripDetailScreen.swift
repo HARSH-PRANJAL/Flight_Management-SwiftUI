@@ -133,7 +133,7 @@ struct TripDetailScreen: View {
                 .foregroundStyle(Color(.systemCyan))
                 .padding(.bottom, 16)
 
-            Text(trip.flightNumber)
+            Text(trip.tripNumber)
                 .font(.title)
                 .fontWeight(.semibold)
                 .padding(.bottom, 4)

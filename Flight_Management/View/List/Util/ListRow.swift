@@ -86,10 +86,10 @@ extension ListRow {
     init(staff: Staff) {
         let meta: String?
         if let trip = staff.currentTrip {
-            meta = "Current: \(trip.flightNumber)"
+            meta = "Current: \(trip.tripNumber)"
         } else if let next = staff.nextScheduledTrip {
             meta =
-                "Next: \(next.flightNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
+                "Next: \(next.tripNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
         } else {
             meta = String(
                 format: "%.0f hr logged in \(staff.completedTrips.count) trips",
@@ -158,7 +158,7 @@ extension ListRow {
             "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
         self.init(
             profileImage: nil,
-            title: trip.flightNumber,
+            title: trip.tripNumber,
             subtitle: formatDate(
                 trip.scheduledDepartureTime,
                 format: "dd MMM, HH:mm"

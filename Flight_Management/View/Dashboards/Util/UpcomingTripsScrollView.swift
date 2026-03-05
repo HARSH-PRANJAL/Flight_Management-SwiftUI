@@ -9,7 +9,7 @@ struct UpcomingTripsScrollView: View {
                 ForEach(trips, id: \.id) { trip in
                     NavigationLink(destination: TripDetailView(trip: trip)) {
                         CardView(
-                            title: trip.flightNumber,
+                            title: trip.tripNumber,
                             value: formatDate(
                                 trip.scheduledDepartureTime,
                                 format: "h:mm a"

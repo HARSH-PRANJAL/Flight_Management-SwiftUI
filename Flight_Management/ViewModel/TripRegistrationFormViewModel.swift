@@ -4,7 +4,7 @@ import SwiftUI
 
 @Observable
 final class TripRegistrationFormViewModel {
-    var flightNumber: String = ""
+    var tripNumber: String = ""
     var scheduledDeparture: Date = Date()
     var selectedRoute: Route?
     var selectedAircraft: Aircraft?
@@ -46,7 +46,7 @@ final class TripRegistrationFormViewModel {
     init(trip: Trip) {
         self.isEditMode = true
         self.tripToEdit = trip
-        self.flightNumber = trip.flightNumber
+        self.tripNumber = trip.tripNumber
         self.scheduledDeparture = trip.scheduledDepartureTime
         self.selectedRoute = trip.route
         self.selectedAircraft = trip.aircraft
@@ -57,7 +57,7 @@ final class TripRegistrationFormViewModel {
 
     func currentSnapshot() -> Snapshot {
         Snapshot(
-            flightNumber: flightNumber,
+            flightNumber: tripNumber,
             scheduledDeparture: scheduledDeparture,
             selectedRouteId: selectedRoute?.id,
             selectedAircraftId: selectedAircraft?.id,
@@ -102,13 +102,13 @@ final class TripRegistrationFormViewModel {
         fieldErrors.removeAll()
         var valid = true
 
-        let trimmed = flightNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = tripNumber.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
-            fieldErrors[.flightNumber] = "Trip number is required."
+            fieldErrors[.tripNumber] = "Trip number is required."
             valid = false
         } else if trimmed.count > 50 {
-            fieldErrors[.flightNumber] = "Trip number cannot exceed 50 characters."
+            fieldErrors[.tripNumber] = "Trip number cannot exceed 50 characters."
             valid = false
         } else {
             let allowed =
@@ -117,12 +117,12 @@ final class TripRegistrationFormViewModel {
                 .union(CharacterSet(charactersIn: "-"))
 
             if !trimmed.unicodeScalars.allSatisfy(allowed.contains) {
-                fieldErrors[.flightNumber] = "Only letters, numbers and '-' allowed."
+                fieldErrors[.tripNumber] = "Only letters, numbers and '-' allowed."
                 valid = false
             }
         }
 
-        if valid { flightNumber = trimmed }
+        if valid { tripNumber = trimmed }
 
         if selectedRoute == nil {
             fieldErrors[.route] = "Route is required."

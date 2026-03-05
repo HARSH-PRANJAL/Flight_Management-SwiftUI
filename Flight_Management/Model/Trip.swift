@@ -15,8 +15,8 @@ class Trip {
 
     var route: Route
     var scheduledDepartureTime: Date
-    var flightNumber: String
-    var flightNumberSearchKey: String
+    var tripNumber: String
+    var tripNumberSearchKey: String
     var isCancelled: Bool = false
     var isCompleted: Bool = false
     var currentAirportSequence: Int = 1  // sequence of the trip node to visit
@@ -97,7 +97,7 @@ class Trip {
         nodeStatuses: [TripNodeStatus],
         route: Route,
         scheduledDepartureTime: Date,
-        flightNumber: String,
+        tripNumber: String,
         isCancelled: Bool = false
     ) {
         self.id = UUID()
@@ -106,8 +106,8 @@ class Trip {
         self.nodeStatuses = []
         self.route = route
         self.scheduledDepartureTime = scheduledDepartureTime
-        self.flightNumber = flightNumber
-        self.flightNumberSearchKey = Trip.normalisedSearchKey(from: flightNumber)
+        self.tripNumber = tripNumber
+        self.tripNumberSearchKey = Trip.normalisedSearchKey(from: tripNumber)
         self.isCancelled = isCancelled
     }
 
@@ -288,3 +288,4 @@ class TripNodeStatus {
     }
 
 }
+

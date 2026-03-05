@@ -265,7 +265,7 @@ extension TripListView {
         }
         if !searchText.isEmpty {
             filtered = filtered.filter { trip in
-                trip.flightNumber.localizedCaseInsensitiveContains(searchText)
+                trip.tripNumber.localizedCaseInsensitiveContains(searchText)
                     || trip.route.name.localizedCaseInsensitiveContains(
                         searchText
                     )

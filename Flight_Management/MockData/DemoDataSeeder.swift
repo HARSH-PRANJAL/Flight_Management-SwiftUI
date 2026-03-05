@@ -903,7 +903,7 @@ extension DemoDataSeeder {
                     nodeStatuses: [],
                     route: route,
                     scheduledDepartureTime: scheduledTime,
-                    flightNumber: flightNumber,
+                    tripNumber: flightNumber,
                     isCancelled: false
                 )
 

@@ -101,7 +101,7 @@ final class TripListViewModel {
                 } else {
                     return #Predicate<Trip> { trip in
                         trip.isCancelled
-                            && (trip.flightNumberSearchKey.contains(
+                            && (trip.tripNumberSearchKey.contains(
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
@@ -117,7 +117,7 @@ final class TripListViewModel {
                 } else {
                     return #Predicate<Trip> { trip in
                         trip.isCompleted && !trip.isCancelled
-                            && (trip.flightNumberSearchKey.contains(
+                            && (trip.tripNumberSearchKey.contains(
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
@@ -133,7 +133,7 @@ final class TripListViewModel {
                 } else {
                     return #Predicate<Trip> { trip in
                         !trip.isCancelled && !trip.isCompleted
-                            && (trip.flightNumberSearchKey.contains(
+                            && (trip.tripNumberSearchKey.contains(
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
@@ -144,7 +144,7 @@ final class TripListViewModel {
             }
         } else {
             return #Predicate<Trip> { trip in
-                trip.flightNumberSearchKey.contains(normalisedSearch)
+                trip.tripNumberSearchKey.contains(normalisedSearch)
                     || trip.route.nameSearchKey.contains(normalisedSearch)
             }
         }

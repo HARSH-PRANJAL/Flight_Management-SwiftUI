@@ -74,7 +74,7 @@ enum FieldError: Hashable {
     case city, country
     case airports
     case password, confirmPassword
-    case staff, flightNumber, route, aircraft
+    case staff, tripNumber, route, aircraft
     
 }
 

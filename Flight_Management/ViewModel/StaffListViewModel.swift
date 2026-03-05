@@ -119,7 +119,7 @@ final class StaffListViewModel {
                                 || (designationSearch != nil
                                     && $0.designation == designationSearch!)
                                 || ($0.currentTrip?
-                                    .flightNumberSearchKey
+                                    .tripNumberSearchKey
                                     .contains(normalisedSearch)
                                     ?? false))
                     }
@@ -137,7 +137,7 @@ final class StaffListViewModel {
                                 || (designationSearch != nil
                                     && $0.designation == designationSearch!)
                                 || ($0.currentTrip?
-                                    .flightNumberSearchKey
+                                    .tripNumberSearchKey
                                     .contains(normalisedSearch)
                                     ?? false))
                     }
@@ -155,7 +155,7 @@ final class StaffListViewModel {
                                 || (designationSearch != nil
                                     && $0.designation == designationSearch!)
                                 || ($0.currentTrip?
-                                    .flightNumberSearchKey
+                                    .tripNumberSearchKey
                                     .contains(normalisedSearch)
                                     ?? false))
                     }
@@ -168,7 +168,7 @@ final class StaffListViewModel {
                     || (designationSearch != nil
                         && $0.designation == designationSearch!)
                     || ($0.currentTrip?
-                        .flightNumberSearchKey
+                        .tripNumberSearchKey
                         .contains(normalisedSearch) ?? false)
             }
         }

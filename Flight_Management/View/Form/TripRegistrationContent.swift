@@ -169,17 +169,17 @@ extension TripRegistrationContent {
                 label: "Trip Number",
                 placeholder: "Trip-001",
                 focus: .flightNumber,
-                hasError: viewModel.fieldErrors[.flightNumber] != nil,
+                hasError: viewModel.fieldErrors[.tripNumber] != nil,
                 maxLength: 50,
                 allowedCharacter: { $0.isLetter || $0.isNumber || $0 == "-" },
-                text: $viewModel.flightNumber,
+                text: $viewModel.tripNumber,
                 focusedField: $focusedField
             )
-            .onChange(of: viewModel.flightNumber) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .flightNumber)
+            .onChange(of: viewModel.tripNumber) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .tripNumber)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.flightNumber])
+            FormErrorMessage(error: viewModel.fieldErrors[.tripNumber])
         }
     }
 
@@ -375,7 +375,7 @@ extension TripRegistrationContent {
             nodeStatuses: [],
             route: route,
             scheduledDepartureTime: viewModel.scheduledDeparture,
-            flightNumber: viewModel.flightNumber,
+            tripNumber: viewModel.tripNumber,
             isCancelled: false
         )
 

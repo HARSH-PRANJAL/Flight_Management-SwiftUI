@@ -33,7 +33,7 @@ struct TripDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .tabBar)
         }
-        .navigationTitle("\(trip.flightNumber)")
+        .navigationTitle("\(trip.tripNumber)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -44,7 +44,7 @@ struct TripDetailView: View {
             Button("Cancel Trip", role: .destructive) {
                 performCancellation()
                 notification.showSuccess(
-                    "\(trip.flightNumber) is canceled successfully."
+                    "\(trip.tripNumber) is canceled successfully."
                 )
                 dismiss()
             }
@@ -68,7 +68,7 @@ struct TripDetailView: View {
             print("Error in cancelling trip: \(error)")
         }
         successMessage =
-            "Trip \(trip.flightNumber) has been cancelled successfully."
+            "Trip \(trip.tripNumber) has been cancelled successfully."
         showSuccessMessage = true
     }
 }
