@@ -259,7 +259,7 @@ extension AircraftDetailScreen {
             Button {
                 isEditPagePresented = true
             } label: {
-                Label("Edit reg number", systemImage: "pencil")
+                Label("Edit", systemImage: "pencil")
             }
 
             Button(role: .destructive) {
