@@ -20,20 +20,26 @@ final class AircraftListViewModel {
     func loadInitial(
         context: ModelContext,
         statusFilter: AircraftStatus?,
-        searchText: String
+        searchText: String,
+        sort: AircraftSort = .registration,
+        sortOrder: SortOrder = .ascending
     ) async {
         reset()
         await loadMore(
             context: context,
             statusFilter: statusFilter,
-            searchText: searchText
+            searchText: searchText,
+            sort: sort,
+            sortOrder: sortOrder
         )
     }
 
     func loadMore(
         context: ModelContext,
         statusFilter: AircraftStatus?,
-        searchText: String
+        searchText: String,
+        sort: AircraftSort = .registration,
+        sortOrder: SortOrder = .ascending
     ) async {
         guard !isLoading, hasMore else { return }
 
@@ -42,11 +48,21 @@ final class AircraftListViewModel {
 
         do {
             var descriptor = FetchDescriptor<Aircraft>()
+            let order: Foundation.SortOrder =
+                sortOrder == .ascending ? .forward : .reverse
+
             descriptor.fetchLimit = batchSize
             descriptor.fetchOffset = offset
-            descriptor.sortBy = [
-                SortDescriptor(\Aircraft.registrationNumber, order: .forward)
-            ]
+            switch sort {
+            case .registration:
+                descriptor.sortBy = [
+                    SortDescriptor(\Aircraft.registrationNumber, order: order)
+                ]
+            case .seatingCapacity:
+                descriptor.sortBy = [
+                    SortDescriptor(\Aircraft.seatingCapacity, order: order)
+                ]
+            }
 
             if let predicate = makePredicate(
                 statusFilter: statusFilter,
@@ -86,7 +102,7 @@ final class AircraftListViewModel {
                 if normalisedSearch.isEmpty {
                     return #Predicate<Aircraft> { aircraft in
                         aircraft.currentTrip == nil
-                        && !aircraft.isDecommissioned
+                            && !aircraft.isDecommissioned
                     }
                 } else {
                     return #Predicate<Aircraft> { aircraft in
@@ -94,14 +110,14 @@ final class AircraftListViewModel {
                             && aircraft.registrationNumberSearchKey.contains(
                                 normalisedSearch
                             )
-                        && !aircraft.isDecommissioned
+                            && !aircraft.isDecommissioned
                     }
                 }
             case .assigned:
                 if normalisedSearch.isEmpty {
                     return #Predicate<Aircraft> { aircraft in
                         aircraft.currentTrip != nil
-                        && !aircraft.isDecommissioned
+                            && !aircraft.isDecommissioned
                     }
                 } else {
                     return #Predicate<Aircraft> { aircraft in
@@ -109,22 +125,21 @@ final class AircraftListViewModel {
                             && aircraft.registrationNumberSearchKey.contains(
                                 normalisedSearch
                             )
-                        && !aircraft.isDecommissioned
+                            && !aircraft.isDecommissioned
                     }
                 }
-
             default:
                 return #Predicate<Aircraft> { aircraft in
                     aircraft.registrationNumberSearchKey.contains(
                         normalisedSearch
                     )
-                    && !aircraft.isDecommissioned
+                        && !aircraft.isDecommissioned
                 }
             }
         } else {
             return #Predicate<Aircraft> { aircraft in
                 aircraft.registrationNumberSearchKey.contains(normalisedSearch)
-                && !aircraft.isDecommissioned
+                    && !aircraft.isDecommissioned
             }
         }
     }

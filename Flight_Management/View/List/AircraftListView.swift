@@ -16,23 +16,25 @@ struct AircraftListView: View {
 
     var body: some View {
         Group {
-            if displayedAircrafts.isEmpty {
+            if viewModel.items.isEmpty {
                 fallbackBackground
             } else {
                 List {
-                    ForEach(displayedAircrafts, id: \.id) { aircraft in
+                    ForEach(viewModel.items, id: \.id) { aircraft in
                         NavigationLink(
                             destination: AircraftDetailView(aircraft: aircraft)
                         ) {
                             ListRow(aircraft: aircraft)
                         }
                         .onAppear {
-                            if aircraft.id == displayedAircrafts.last?.id {
+                            if aircraft.id == viewModel.items.last?.id {
                                 Task {
                                     await viewModel.loadMore(
                                         context: context,
                                         statusFilter: selectedStatus,
-                                        searchText: searchText
+                                        searchText: searchText,
+                                        sort: selectedSort,
+                                        sortOrder: selectedSortOrder
                                     )
                                 }
                             }
@@ -46,7 +48,9 @@ struct AircraftListView: View {
                         await viewModel.loadInitial(
                             context: context,
                             statusFilter: selectedStatus,
-                            searchText: ""
+                            searchText: "",
+                            sort: selectedSort,
+                            sortOrder: selectedSortOrder
                         )
                     }
                 }
@@ -72,7 +76,9 @@ struct AircraftListView: View {
             await viewModel.loadInitial(
                 context: context,
                 statusFilter: selectedStatus,
-                searchText: searchText
+                searchText: searchText,
+                sort: selectedSort,
+                sortOrder: selectedSortOrder
             )
         }
         .onChange(of: searchText) { _, newSearch in
@@ -80,7 +86,31 @@ struct AircraftListView: View {
                 await viewModel.loadInitial(
                     context: context,
                     statusFilter: selectedStatus,
-                    searchText: newSearch
+                    searchText: newSearch,
+                    sort: selectedSort,
+                    sortOrder: selectedSortOrder
+                )
+            }
+        }
+        .onChange(of: selectedSort) { _, _ in
+            Task {
+                await viewModel.loadInitial(
+                    context: context,
+                    statusFilter: selectedStatus,
+                    searchText: searchText,
+                    sort: selectedSort,
+                    sortOrder: selectedSortOrder
+                )
+            }
+        }
+        .onChange(of: selectedSortOrder) { _, _ in
+            Task {
+                await viewModel.loadInitial(
+                    context: context,
+                    statusFilter: selectedStatus,
+                    searchText: searchText,
+                    sort: selectedSort,
+                    sortOrder: selectedSortOrder
                 )
             }
         }
@@ -107,7 +137,9 @@ extension AircraftListView {
                             await viewModel.loadInitial(
                                 context: context,
                                 statusFilter: selectedStatus,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                     } label: {
@@ -125,7 +157,9 @@ extension AircraftListView {
                             await viewModel.loadInitial(
                                 context: context,
                                 statusFilter: selectedStatus,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                     } label: {
@@ -143,7 +177,9 @@ extension AircraftListView {
                             await viewModel.loadInitial(
                                 context: context,
                                 statusFilter: selectedStatus,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                     } label: {
@@ -161,12 +197,10 @@ extension AircraftListView {
                     ForEach(AircraftSort.allCases, id: \.self) { sort in
                         Button {
                             if selectedSort == sort {
-                                // Toggle sort order if same option clicked
                                 selectedSortOrder =
                                     selectedSortOrder == .ascending
                                     ? .descending : .ascending
                             } else {
-                                // Select new sort option
                                 selectedSort = sort
                                 selectedSortOrder = .ascending
                             }
@@ -193,7 +227,7 @@ extension AircraftListView {
     }
 }
 
-// MARK: Fallback and Filter Data
+// MARK: Fallback and Displayed Data
 extension AircraftListView {
     var fallbackBackground: some View {
         ContentUnavailableView {
@@ -201,25 +235,6 @@ extension AircraftListView {
         } description: {
             Text("Add aircraft to get started.")
         }
-    }
-
-    var displayedAircrafts: [Aircraft] {
-        let sorted = viewModel.items.sorted { lhs, rhs in
-            let isAscending = selectedSortOrder == .ascending
-
-            if selectedSort == .registration {
-                let comparison =
-                    lhs.registrationNumber
-                    .localizedStandardCompare(rhs.registrationNumber)
-                    == .orderedAscending
-                return isAscending ? comparison : !comparison
-            } else {
-                let comparison = lhs.seatingCapacity < rhs.seatingCapacity
-                return isAscending ? comparison : !comparison
-            }
-        }
-
-        return sorted
     }
 }
 
