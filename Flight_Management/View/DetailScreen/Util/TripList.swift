@@ -173,16 +173,9 @@ extension TripList {
         let sorted = filtered.sorted { lhs, rhs in
             let isAscending = selectedSortOrder == .ascending
 
-            if selectedSort == .flightNumber {
-                let comparison =
-                    lhs.flightNumber.lowercased()
-                    < rhs.flightNumber.lowercased()
-                return isAscending ? comparison : !comparison
-            } else {
-                let comparison =
-                    lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
-                return isAscending ? comparison : !comparison
-            }
+            let comparison =
+                lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
+            return isAscending ? comparison : !comparison
         }
 
         return sorted

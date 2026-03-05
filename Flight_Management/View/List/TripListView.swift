@@ -30,7 +30,9 @@ struct TripListView: View {
                             await viewModel.loadInitial(
                                 context: context,
                                 filter: selectedFilter,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                 }
@@ -50,7 +52,9 @@ struct TripListView: View {
                 await viewModel.loadInitial(
                     context: context,
                     filter: selectedFilter,
-                    searchText: searchText
+                    searchText: searchText,
+                    sort: selectedSort,
+                    sortOrder: selectedSortOrder
                 )
             }
             .onChange(of: selectedFilter) { _, newFilter in
@@ -59,7 +63,9 @@ struct TripListView: View {
                     await viewModel.loadInitial(
                         context: context,
                         filter: newFilter,
-                        searchText: searchText
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
                     )
                 }
             }
@@ -69,7 +75,33 @@ struct TripListView: View {
                     await viewModel.loadInitial(
                         context: context,
                         filter: selectedFilter,
-                        searchText: newSearch
+                        searchText: newSearch,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
+                    )
+                }
+            }
+            .onChange(of: selectedSort) { _, _ in
+                if externalTrips != nil { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
+                    )
+                }
+            }
+            .onChange(of: selectedSortOrder) { _, _ in
+                if externalTrips != nil { return }
+                Task {
+                    await viewModel.loadInitial(
+                        context: context,
+                        filter: selectedFilter,
+                        searchText: searchText,
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
                     )
                 }
             }
@@ -93,7 +125,9 @@ extension TripListView {
                             await viewModel.loadMore(
                                 context: context,
                                 filter: selectedFilter,
-                                searchText: searchText
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
                             )
                         }
                     }
@@ -179,7 +213,7 @@ extension TripListView {
     }
 }
 
-// MARK: Fallback and Filter Data
+// MARK: Fallback and Displayed Data
 extension TripListView {
 
     var fallbackBackground: some View {
@@ -191,41 +225,26 @@ extension TripListView {
     }
 
     var displayedTrips: [Trip] {
-        var filtered: [Trip]
-
-        if externalTrips != nil {
-            filtered = externalTrips!
-        } else {
-            filtered = viewModel.items
+        guard let external = externalTrips else {
+            return viewModel.items
         }
 
-        // Apply in-memory filter on the currently loaded batch / external list
+        var filtered = external
         if let status = selectedFilter {
             filtered = filtered.filter { $0.currentStatus == status }
         }
-
-        let sorted = filtered.sorted { lhs, rhs in
-            let isAscending = selectedSortOrder == .ascending
-
-            if selectedSort == .flightNumber {
-                let comparison =
-                lhs.flightNumber
-                .localizedStandardCompare(rhs.flightNumber)
-                == .orderedAscending
-                return isAscending ? comparison : !comparison
-            } else {
-                let comparison =
-                    lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
-                return isAscending ? comparison : !comparison
+        if !searchText.isEmpty {
+            filtered = filtered.filter { trip in
+                trip.flightNumber.localizedCaseInsensitiveContains(searchText)
+                    || trip.route.name.localizedCaseInsensitiveContains(searchText)
             }
         }
 
-        return sorted
-    }
-}
-
-#Preview {
-    NavigationStack {
-        TripListView(externalTrips: nil)
+        return filtered.sorted { lhs, rhs in
+            let asc = selectedSortOrder == .ascending
+            return asc
+                ? lhs.scheduledDepartureTime < rhs.scheduledDepartureTime
+                : lhs.scheduledDepartureTime > rhs.scheduledDepartureTime
+        }
     }
 }

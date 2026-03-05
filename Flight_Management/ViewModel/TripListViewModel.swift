@@ -20,20 +20,26 @@ final class TripListViewModel {
     func loadInitial(
         context: ModelContext,
         filter: TripStatus?,
-        searchText: String
+        searchText: String,
+        sort: TripSort = .departure,
+        sortOrder: SortOrder = .ascending
     ) async {
         reset()
         await loadMore(
             context: context,
             filter: filter,
-            searchText: searchText
+            searchText: searchText,
+            sort: sort,
+            sortOrder: sortOrder
         )
     }
 
     func loadMore(
         context: ModelContext,
         filter: TripStatus?,
-        searchText: String
+        searchText: String,
+        sort: TripSort = .departure,
+        sortOrder: SortOrder = .ascending
     ) async {
         guard !isLoading, hasMore else { return }
 
@@ -44,9 +50,15 @@ final class TripListViewModel {
             var descriptor = FetchDescriptor<Trip>()
             descriptor.fetchLimit = batchSize
             descriptor.fetchOffset = offset
-            descriptor.sortBy = [
-                SortDescriptor(\Trip.scheduledDepartureTime, order: .forward)
-            ]
+
+            let order: Foundation.SortOrder = sortOrder == .ascending ? .forward : .reverse
+            
+            switch sort {
+            case .departure:
+                descriptor.sortBy = [
+                    SortDescriptor(\Trip.scheduledDepartureTime, order: order)
+                ]
+            }
 
             if let predicate = makePredicate(
                 filter: filter,
@@ -131,7 +143,6 @@ final class TripListViewModel {
                 }
             }
         } else {
-            // No status filter, only search
             return #Predicate<Trip> { trip in
                 trip.flightNumberSearchKey.contains(normalisedSearch)
                     || trip.route.nameSearchKey.contains(normalisedSearch)
@@ -139,4 +150,3 @@ final class TripListViewModel {
         }
     }
 }
-

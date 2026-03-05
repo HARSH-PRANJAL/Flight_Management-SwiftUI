@@ -60,7 +60,6 @@ enum RouteSort: String, CaseIterable {
 }
 
 enum TripSort: String, CaseIterable {
-    case flightNumber = "Flight Number"
     case departure = "Departure Time"
 }
 
