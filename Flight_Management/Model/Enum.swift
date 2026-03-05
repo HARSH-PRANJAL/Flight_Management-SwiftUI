@@ -74,6 +74,8 @@ enum FieldError: Hashable {
     case city, country
     case airports
     case password, confirmPassword
+    case staff, flightNumber, route, aircraft
+    
 }
 
 enum SubmissionState: Equatable {

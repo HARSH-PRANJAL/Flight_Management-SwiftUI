@@ -16,11 +16,11 @@ final class TripRegistrationFormViewModel {
     var availableStaffs: [Staff] = []
     var availableStaffCountsByRole: [StaffRole: Int] = [:]
     var availableAircraft: [Aircraft] = []
-    
+
     var hasAvailableAircraft: Bool = false
-    var fieldErrors: [String: String] = [:]
+    var fieldErrors: [FieldError: String] = [:]
     var submissionState: SubmissionState = .none
-    
+
     var originalSnapshot: Snapshot?
 
     struct Snapshot: Equatable {
@@ -37,12 +37,12 @@ final class TripRegistrationFormViewModel {
         guard let original = originalSnapshot else { return false }
         return currentSnapshot() != original
     }
-    
+
     var isEditMode: Bool = false
     var tripToEdit: Trip?
-    
-    init(){}
-    
+
+    init() {}
+
     init(trip: Trip) {
         self.isEditMode = true
         self.tripToEdit = trip
@@ -66,6 +66,7 @@ final class TripRegistrationFormViewModel {
             selectedCrewMemberIds: Set(selectedCrewMembers.map(\.id))
         )
     }
+
     func addStaff(_ staff: Staff, role: StaffRole) {
         switch role {
         case .pilot where !selectedPilots.contains(where: { $0.id == staff.id }):
@@ -96,64 +97,58 @@ final class TripRegistrationFormViewModel {
     var allSelectedStaff: [Staff] {
         selectedPilots + selectedCoPilots + selectedCrewMembers
     }
-    
-    func validate(minRequired: [StaffRole: Int]) -> Bool {
 
+    func validate(minRequired: [StaffRole: Int]) -> Bool {
         fieldErrors.removeAll()
         var valid = true
 
         let trimmed = flightNumber.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
-            fieldErrors["flightNumber"] = "Trip number is required"
+            fieldErrors[.flightNumber] = "Trip number is required."
             valid = false
-        }
-
-        if trimmed.count > 50 {
-            fieldErrors["flightNumber"] =
-                "Trip number cannot exceed 50 characters."
+        } else if trimmed.count > 50 {
+            fieldErrors[.flightNumber] = "Trip number cannot exceed 50 characters."
             valid = false
-        }
+        } else {
+            let allowed =
+                CharacterSet.letters
+                .union(.decimalDigits)
+                .union(CharacterSet(charactersIn: "-"))
 
-        let allowed =
-            CharacterSet.letters
-            .union(.decimalDigits)
-            .union(CharacterSet(charactersIn: "-"))
-
-        if !trimmed.unicodeScalars.allSatisfy(allowed.contains) {
-            fieldErrors["flightNumber"] =
-                "Only letters, numbers and '-' allowed."
-            valid = false
+            if !trimmed.unicodeScalars.allSatisfy(allowed.contains) {
+                fieldErrors[.flightNumber] = "Only letters, numbers and '-' allowed."
+                valid = false
+            }
         }
 
         if valid { flightNumber = trimmed }
 
         if selectedRoute == nil {
-            fieldErrors["route"] = "Route is required"
+            fieldErrors[.route] = "Route is required."
             valid = false
         }
 
         if selectedAircraft == nil {
-            fieldErrors["aircraft"] = "Aircraft is required"
+            fieldErrors[.aircraft] = "Aircraft is required."
             valid = false
         }
 
         if scheduledDeparture <= Date() {
-            fieldErrors["departureDate"] =
-                "Departure must be in the future"
+            fieldErrors[.date] = "Departure must be in the future."
             valid = false
         }
 
         let assignedCounts: [StaffRole: Int] = [
             .pilot: selectedPilots.count,
             .coPilot: selectedCoPilots.count,
-            .cabinCrew: selectedCrewMembers.count
+            .cabinCrew: selectedCrewMembers.count,
         ]
 
         for (role, minReq) in minRequired where minReq > 0 {
             if (assignedCounts[role] ?? 0) < minReq {
-                fieldErrors["staff"] =
-                    "Aircraft requires at least \(minReq) \(role.rawValue)"
+                fieldErrors[.staff] =
+                    "Aircraft requires at least \(minReq) \(role.rawValue)."
                 valid = false
             }
         }
@@ -168,7 +163,6 @@ extension TripRegistrationFormViewModel {
         staffs: [Staff],
         aircrafts: [Aircraft]
     ) {
-
         guard let route = selectedRoute else {
             availableStaffs = []
             availableStaffCountsByRole = [:]
@@ -180,18 +174,16 @@ extension TripRegistrationFormViewModel {
             TimeInterval(route.totalPlannedDurationMinutes * 60)
         )
 
-        // Filter staff once
         let filteredStaff = staffs.filter {
             $0.isAvailable(from: scheduledDeparture, to: endDate)
         }
 
         availableStaffs = filteredStaff
 
-        // Count roles efficiently
         var counts: [StaffRole: Int] = [
             .pilot: 0,
             .coPilot: 0,
-            .cabinCrew: 0
+            .cabinCrew: 0,
         ]
 
         for staff in filteredStaff {
@@ -207,7 +199,7 @@ extension TripRegistrationFormViewModel {
                 availableStaff: counts
             )
         }
-        
+
         hasAvailableAircraft = !availableAircraft.isEmpty
     }
 }

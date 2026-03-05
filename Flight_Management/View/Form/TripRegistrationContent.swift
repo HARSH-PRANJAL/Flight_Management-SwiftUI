@@ -50,11 +50,7 @@ struct TripRegistrationContent: View {
                     crewSelectors
                 }
 
-                if let err = viewModel.fieldErrors["staff"] {
-                    Text(err)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
+                FormErrorMessage(error: viewModel.fieldErrors[.staff])
             }
             .padding(.horizontal)
 
@@ -81,15 +77,17 @@ struct TripRegistrationContent: View {
             viewModel.selectedPilots = []
             viewModel.selectedCoPilots = []
             viewModel.selectedCrewMembers = []
-            viewModel.fieldErrors.removeValue(forKey: "aircraft")
+            viewModel.fieldErrors.removeValue(forKey: .aircraft)
         }
         .onChange(of: viewModel.selectedRoute) { _, _ in
+            viewModel.fieldErrors.removeValue(forKey: .route)
             viewModel.recomputeAvailability(
                 staffs: staffs,
                 aircrafts: aircrafts
             )
         }
         .onChange(of: viewModel.scheduledDeparture) { _, _ in
+            viewModel.fieldErrors.removeValue(forKey: .date)
             viewModel.recomputeAvailability(
                 staffs: staffs,
                 aircrafts: aircrafts
@@ -101,13 +99,11 @@ struct TripRegistrationContent: View {
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
-
             case .aircraft:
                 AircraftSelectorView(
                     allAircraft: viewModel.availableAircraft,
                     selectedAircraft: $viewModel.selectedAircraft
                 )
-
             case .staff(let role):
                 StaffSelectorView(
                     role: role,
@@ -123,10 +119,15 @@ struct TripRegistrationContent: View {
             Button("Discard", role: .destructive) { close() }
             Button("Keep Editing", role: .cancel) {}
         } message: {
-            Text("You have unsaved changes. Are you sure you want to discard them?")
+            Text(
+                "You have unsaved changes. Are you sure you want to discard them?"
+            )
         }
         .task {
-            viewModel.recomputeAvailability(staffs: staffs, aircrafts: aircrafts)
+            viewModel.recomputeAvailability(
+                staffs: staffs,
+                aircrafts: aircrafts
+            )
         }
     }
 }
@@ -151,12 +152,7 @@ extension TripRegistrationContent {
     var submitToolbarButton: some ToolbarContent {
         ToolbarItem(placement: .confirmationAction) {
             Button(role: .confirm) {
-                if viewModel.validate(
-                    minRequired: viewModel.selectedAircraft?
-                        .minimumStaffRequired ?? [:]
-                ) {
-                    handleRegistration()
-                }
+                handleRegistration()
             } label: {
                 Image(systemName: "checkmark")
             }
@@ -168,16 +164,23 @@ extension TripRegistrationContent {
     }
 
     private var tripNumberField: some View {
-        FormInputField(
-            label: "Trip Number",
-            placeholder: "Trip-001",
-            focus: .flightNumber,
-            hasError: viewModel.fieldErrors["flightNumber"] != nil,
-            maxLength: 50,
-            allowedCharacter: { $0.isLetter || $0.isNumber || $0 == "-" },
-            text: $viewModel.flightNumber,
-            focusedField: $focusedField
-        )
+        VStack(alignment: .leading, spacing: 4) {
+            FormInputField(
+                label: "Trip Number",
+                placeholder: "Trip-001",
+                focus: .flightNumber,
+                hasError: viewModel.fieldErrors[.flightNumber] != nil,
+                maxLength: 50,
+                allowedCharacter: { $0.isLetter || $0.isNumber || $0 == "-" },
+                text: $viewModel.flightNumber,
+                focusedField: $focusedField
+            )
+            .onChange(of: viewModel.flightNumber) { _, _ in
+                viewModel.fieldErrors.removeValue(forKey: .flightNumber)
+            }
+
+            FormErrorMessage(error: viewModel.fieldErrors[.flightNumber])
+        }
     }
 
     @ViewBuilder
@@ -193,23 +196,30 @@ extension TripRegistrationContent {
             } label: {
                 pickerLabel(
                     viewModel.selectedRoute?.name ?? "Select Route",
-                    isEmpty: viewModel.selectedRoute == nil
+                    isEmpty: viewModel.selectedRoute == nil,
+                    hasError: viewModel.fieldErrors[.route] != nil
                 )
             }
+
+            FormErrorMessage(error: viewModel.fieldErrors[.route])
         }
     }
 
     private var datePicker: some View {
-        FormDateField(
-            selectedDate: $viewModel.scheduledDeparture,
-            title: "Departure",
-            title2: "Departure date & time",
-            format: "dd/MM/yyyy h:mm",
-            hasError: false,
-            minDate: minDepartureDate,
-            maxDate: maxDepartureDate,
-            datePickerComponents: [.date, .hourAndMinute]
-        )
+        VStack(alignment: .leading, spacing: 4) {
+            FormDateField(
+                selectedDate: $viewModel.scheduledDeparture,
+                title: "Departure",
+                title2: "Departure date & time",
+                format: "dd/MM/yyyy h:mm",
+                hasError: viewModel.fieldErrors[.date] != nil,
+                minDate: minDepartureDate,
+                maxDate: maxDepartureDate,
+                datePickerComponents: [.date, .hourAndMinute]
+            )
+
+            FormErrorMessage(error: viewModel.fieldErrors[.date])
+        }
     }
 
     private var aircraftPicker: some View {
@@ -219,10 +229,14 @@ extension TripRegistrationContent {
                 activeSheet = .aircraft
             } label: {
                 pickerLabel(
-                    viewModel.selectedAircraft?.registrationNumber ?? "Select Aircraft",
-                    isEmpty: viewModel.selectedAircraft == nil
+                    viewModel.selectedAircraft?.registrationNumber
+                        ?? "Select Aircraft",
+                    isEmpty: viewModel.selectedAircraft == nil,
+                    hasError: viewModel.fieldErrors[.aircraft] != nil
                 )
             }
+
+            FormErrorMessage(error: viewModel.fieldErrors[.aircraft])
         }
     }
 
@@ -230,13 +244,19 @@ extension TripRegistrationContent {
         VStack(alignment: .leading, spacing: 4) {
             Text("Crew").formFieldLabel()
             HStack(spacing: 12) {
-                if viewModel.selectedAircraft?.minimumStaffRequired[.pilot] ?? 0 > 0 {
+                if viewModel.selectedAircraft?.minimumStaffRequired[.pilot] ?? 0
+                    > 0
+                {
                     crewButton(.pilot, "Pilot")
                 }
-                if viewModel.selectedAircraft?.minimumStaffRequired[.coPilot] ?? 0 > 0 {
+                if viewModel.selectedAircraft?.minimumStaffRequired[.coPilot]
+                    ?? 0 > 0
+                {
                     crewButton(.coPilot, "Co-Pilot")
                 }
-                if viewModel.selectedAircraft?.minimumStaffRequired[.cabinCrew] ?? 0 > 0 {
+                if viewModel.selectedAircraft?.minimumStaffRequired[.cabinCrew]
+                    ?? 0 > 0
+                {
                     crewButton(.cabinCrew, "Crew")
                 }
             }
@@ -246,10 +266,15 @@ extension TripRegistrationContent {
     private func crewButton(_ role: StaffRole, _ title: String) -> some View {
         Button {
             activeSheet = .staff(role: role)
+            viewModel.fieldErrors.removeValue(forKey: .staff)
         } label: {
             pickerLabel(
-                Self.crewLabel(selected: selectedStaff(for: role), emptyTitle: title),
-                isEmpty: selectedStaff(for: role).isEmpty
+                Self.crewLabel(
+                    selected: selectedStaff(for: role),
+                    emptyTitle: title
+                ),
+                isEmpty: selectedStaff(for: role).isEmpty,
+                hasError: viewModel.fieldErrors[.staff] != nil
             )
             .lineLimit(1)
         }
@@ -271,7 +296,11 @@ extension TripRegistrationContent {
         }
     }
 
-    private func pickerLabel(_ text: String, isEmpty: Bool) -> some View {
+    private func pickerLabel(
+        _ text: String,
+        isEmpty: Bool,
+        hasError: Bool = false
+    ) -> some View {
         HStack {
             Text(text)
                 .foregroundColor(isEmpty ? Color(.systemGray3) : .primary)
@@ -283,27 +312,33 @@ extension TripRegistrationContent {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray6))
-                .strokeBorder(Color(.systemGray2), lineWidth: 1)
+                .strokeBorder(
+                    hasError ? Color(.systemRed) : Color(.systemGray2),
+                    lineWidth: 1
+                )
         )
+        .animation(.easeIn, value: hasError)
     }
 
     private func selectedStaff(for role: StaffRole) -> [Staff] {
         switch role {
-        case .pilot:      return viewModel.selectedPilots
-        case .coPilot:    return viewModel.selectedCoPilots
-        case .cabinCrew:  return viewModel.selectedCrewMembers
+        case .pilot: return viewModel.selectedPilots
+        case .coPilot: return viewModel.selectedCoPilots
+        case .cabinCrew: return viewModel.selectedCrewMembers
         }
     }
 
     private func selectedStaffBinding(for role: StaffRole) -> Binding<[Staff]> {
         switch role {
-        case .pilot:      return $viewModel.selectedPilots
-        case .coPilot:    return $viewModel.selectedCoPilots
-        case .cabinCrew:  return $viewModel.selectedCrewMembers
+        case .pilot: return $viewModel.selectedPilots
+        case .coPilot: return $viewModel.selectedCoPilots
+        case .cabinCrew: return $viewModel.selectedCrewMembers
         }
     }
 
-    private static func crewLabel(selected: [Staff], emptyTitle: String) -> String {
+    private static func crewLabel(selected: [Staff], emptyTitle: String)
+        -> String
+    {
         if selected.isEmpty { return emptyTitle }
         if selected.count == 1 { return selected[0].name }
         return "\(selected.count) \(emptyTitle)s"
@@ -315,7 +350,8 @@ extension TripRegistrationContent {
     }
 
     private func handleRegistration() {
-        let minRequired = viewModel.selectedAircraft?.minimumStaffRequired ?? [:]
+        let minRequired =
+            viewModel.selectedAircraft?.minimumStaffRequired ?? [:]
         guard viewModel.validate(minRequired: minRequired) else { return }
 
         if viewModel.isEditMode {
@@ -328,7 +364,7 @@ extension TripRegistrationContent {
     // MARK: Create
     private func submit() {
         guard let route = viewModel.selectedRoute,
-              let aircraft = viewModel.selectedAircraft
+            let aircraft = viewModel.selectedAircraft
         else { return }
 
         let selectedStaff = viewModel.allSelectedStaff
@@ -352,21 +388,22 @@ extension TripRegistrationContent {
             notificationManager.showSuccess("Trip scheduled successfully")
             close()
         } catch {
-            notificationManager.showError("Failed to save trip. Please try again.")
+            notificationManager.showError(
+                "Failed to save trip. Please try again."
+            )
         }
     }
 
     // MARK: Update (Edit Mode)
     private func updateTrip() {
         guard let trip = viewModel.tripToEdit,
-              let newAircraft = viewModel.selectedAircraft
+            let newAircraft = viewModel.selectedAircraft
         else { return }
 
         let oldAircraft = trip.aircraft
         let oldStaff = trip.staffs
         let newStaff = viewModel.allSelectedStaff
 
-        // Release trip from old aircraft if aircraft changed
         if oldAircraft.id != newAircraft.id {
             oldAircraft.trips.removeAll { $0.id == trip.id }
             if oldAircraft.nextScheduledTrip?.id == trip.id {
@@ -376,7 +413,6 @@ extension TripRegistrationContent {
             trip.aircraft = newAircraft
         }
 
-        // Release trip from removed staff
         let removedStaff = oldStaff.filter { old in
             !newStaff.contains { $0.id == old.id }
         }
@@ -387,13 +423,11 @@ extension TripRegistrationContent {
             }
         }
 
-        // Add trip to newly added staff
         let addedStaff = newStaff.filter { new in
             !oldStaff.contains { $0.id == new.id }
         }
         addedStaff.forEach { $0.trips.append(trip) }
 
-        // Update trip's staff list
         trip.staffs = newStaff
 
         do {
@@ -401,7 +435,9 @@ extension TripRegistrationContent {
             notificationManager.showSuccess("Trip updated successfully")
             close()
         } catch {
-            notificationManager.showError("Failed to update trip. Please try again.")
+            notificationManager.showError(
+                "Failed to update trip. Please try again."
+            )
         }
     }
 
