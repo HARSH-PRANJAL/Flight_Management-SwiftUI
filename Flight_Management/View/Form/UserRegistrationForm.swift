@@ -52,7 +52,7 @@ struct UserRegistrationForm: View {
 
                             userNameFieldSection
                                 .id("field_name")
-                            if viewModel.isEditMode == false {
+                            if !viewModel.isEditMode {
                                 emailFieldSection
                                     .id("field_email")
                             }
@@ -83,7 +83,7 @@ struct UserRegistrationForm: View {
                         guard let focus = newFocus,
                             let targetID = focusScrollMap[focus]
                         else { return }
-                        withAnimation(.easeOut(duration: 1)) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
                             proxy.scrollTo(targetID, anchor: .bottom)
                         }
                     }
@@ -111,51 +111,8 @@ struct UserRegistrationForm: View {
                             }
                         }
                     }
-                    .task {
-                        if session.isLoggedIn {
-                            user = await session.getUserFromDB(
-                                modelContext: context
-                            )
-                            if let user = user {
-                                viewModel.userToEdit = user
-                                viewModel.isEditMode = true
-                                await viewModel.loadUserData(user)
-                            }
-                        }
-                        viewModel.originalSnapshot = viewModel.currentSnapshot()
-                    }
                     .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button(role: .close) {
-                                if viewModel.isDirty {
-                                    showConfirmCloseAlert = true
-                                } else {
-                                    isPresented = false
-                                }
-                            } label: {
-                                Image(systemName: "xmark")
-                            }
-                        }
-
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button(role: .confirm) {
-                                if viewModel.validateAll() {
-                                    if viewModel.isEditMode {
-                                        handleUpdateUser()
-                                    } else {
-                                        handleRegister()
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "checkmark")
-                            }
-                            .disabled(!viewModel.isDirty)
-                            .foregroundStyle(
-                                viewModel.isDirty
-                                    ? Color(.systemBlue) : Color(.systemGray3)
-                            )
-                            .symbolRenderingMode(.palette)
-                        }
+                        toolbarContent
                     }
                 }
                 .onAppear {
@@ -163,7 +120,6 @@ struct UserRegistrationForm: View {
                 }
             }
         }
-        .animation(.easeInOut(duration: 0.6), value: focusScrollMap)
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {
             Button("Discard", role: .destructive) {
                 isPresented = false
@@ -174,11 +130,60 @@ struct UserRegistrationForm: View {
                 "You have unsaved changes. Are you sure you want to discard them?"
             )
         }
+        .task {
+            if session.isLoggedIn {
+                user = await session.getUserFromDB(
+                    modelContext: context
+                )
+                if let user = user {
+                    viewModel.userToEdit = user
+                    viewModel.isEditMode = true
+                    await viewModel.loadUserData(user)
+                }
+            }
+            viewModel.originalSnapshot = viewModel.currentSnapshot()
+            focusState = .name
+        }
     }
 }
 
 // MARK: - UI
 extension UserRegistrationForm {
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button(role: .close) {
+                if viewModel.isDirty {
+                    showConfirmCloseAlert = true
+                } else {
+                    isPresented = false
+                }
+            } label: {
+                Image(systemName: "xmark")
+            }
+        }
+
+        ToolbarItem(placement: .confirmationAction) {
+            Button(role: .confirm) {
+                if viewModel.validateAll() {
+                    if viewModel.isEditMode {
+                        handleUpdateUser()
+                    } else {
+                        handleRegister()
+                    }
+                }
+            } label: {
+                Image(systemName: "checkmark")
+            }
+            .disabled(!viewModel.isDirty)
+            .foregroundStyle(
+                viewModel.isDirty
+                    ? Color(.systemBlue) : Color(.systemGray3)
+            )
+            .symbolRenderingMode(.palette)
+        }
+    }
 
     private var userNameFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
