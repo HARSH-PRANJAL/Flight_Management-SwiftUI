@@ -4,9 +4,24 @@ import SwiftUI
 struct TripDetailScreen: View {
     let trip: Trip
 
+    @Environment(\.modelContext) var modelContext
+    @Environment(NotificationManager.self) var notification
+    @Environment(\.dismiss) var dismiss
+
+    @State private var isEditPresented = false
+
     var onCancelTapped: (() -> Void)? = nil
+    
     var canCancelTrip: Bool {
         !trip.isCancelled && !trip.isCompleted && onCancelTapped != nil
+    }
+    
+    var canEditTrip: Bool {
+        trip.currentStatus == .scheduled
+    }
+
+    var tripHasStarted: Bool {
+        !trip.nodeStatuses.isEmpty
     }
 
     var body: some View {
@@ -15,6 +30,25 @@ struct TripDetailScreen: View {
 
             VStack(spacing: 0) {
                 detailView
+            }
+            .toolbar {
+                if canEditTrip {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isEditPresented = true
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $isEditPresented) {
+                NavigationStack {
+                    TripRegistrationForm(
+                        trip: trip,
+                        isPresented: $isEditPresented
+                    )
+                }
             }
         }
     }

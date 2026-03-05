@@ -37,6 +37,23 @@ final class TripRegistrationFormViewModel {
         guard let original = originalSnapshot else { return false }
         return currentSnapshot() != original
     }
+    
+    var isEditMode: Bool = false
+    var tripToEdit: Trip?
+    
+    init(){}
+    
+    init(trip: Trip) {
+        self.isEditMode = true
+        self.tripToEdit = trip
+        self.flightNumber = trip.flightNumber
+        self.scheduledDeparture = trip.scheduledDepartureTime
+        self.selectedRoute = trip.route
+        self.selectedAircraft = trip.aircraft
+        self.selectedPilots = trip.staffs.filter { $0.designation == .pilot }
+        self.selectedCoPilots = trip.staffs.filter { $0.designation == .coPilot }
+        self.selectedCrewMembers = trip.staffs.filter { $0.designation == .cabinCrew }
+    }
 
     func currentSnapshot() -> Snapshot {
         Snapshot(
