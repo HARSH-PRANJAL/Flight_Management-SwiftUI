@@ -190,13 +190,15 @@ extension RouteDetailView {
                                 .lineLimit(1)
                                 .layoutPriority(1)
 
-                            Text(
-                                "Arrival: \(node.plannedArrivalOffsetMinutes) min"
-                            )
-                            .font(.subheadline.bold())
-                            .foregroundStyle(Color(.secondaryLabel))
-                            .lineLimit(1)
-                            .layoutPriority(1)
+                            if index > 0 {
+                                Text(
+                                    "Arrival: \(node.plannedArrivalOffsetMinutes) min"
+                                )
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.secondaryLabel))
+                                .lineLimit(1)
+                                .layoutPriority(1)
+                            }
                         }
 
                         Spacer()

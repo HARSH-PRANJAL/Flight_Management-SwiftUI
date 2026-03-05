@@ -11,11 +11,11 @@ struct TripDetailScreen: View {
     @State private var isEditPresented = false
 
     var onCancelTapped: (() -> Void)? = nil
-    
+
     var canCancelTrip: Bool {
         !trip.isCancelled && !trip.isCompleted && onCancelTapped != nil
     }
-    
+
     var canEditTrip: Bool {
         trip.currentStatus == .scheduled
     }
@@ -154,11 +154,6 @@ struct TripDetailScreen: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 DetailRowView(
-                    label: "Aircraft",
-                    value:
-                        "\(trip.aircraft.type) (\(trip.aircraft.registrationNumber))"
-                )
-                DetailRowView(
                     label: "Departure",
                     value: formatDate(
                         trip.scheduledDepartureTime,
@@ -179,8 +174,16 @@ struct TripDetailScreen: View {
                     )
                 }
 
-                let origin = trip.route.nodes.first?.airport.code ?? "—"
-                let dest = trip.route.nodes.last?.airport.code ?? "—"
+                let origin =
+                    trip.route.nodes.first(where: { $0.sequence == 1 })?.airport
+                    .code
+                    ?? "_"
+                let dest =
+                    trip.route.nodes.last(where: {
+                        $0.sequence == trip.route.nodes.count
+                    })?
+                    .airport.code
+                    ?? "_"
                 DetailRowView(label: "Route", value: "\(origin) → \(dest)")
             }
             .fixedSize(horizontal: false, vertical: true)
