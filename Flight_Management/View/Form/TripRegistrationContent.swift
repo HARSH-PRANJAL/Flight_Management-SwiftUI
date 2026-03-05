@@ -44,15 +44,24 @@ struct TripRegistrationContent: View {
                     && viewModel.hasAvailableAircraft
                 {
                     aircraftPicker
+                } else if viewModel.selectedRoute != nil
+                    && (viewModel.scheduledDeparture
+                        != viewModel.originalSnapshot?.scheduledDeparture
+                        || viewModel.isEditMode)
+                {
+                    noAircraftAvailableInfo
                 }
 
-                if viewModel.selectedAircraft != nil {
+                if viewModel.isEditMode {
                     crewSelectors
+                } else if viewModel.selectedAircraft != nil {
+                    crewAutoAssignInfo
                 }
 
                 FormErrorMessage(error: viewModel.fieldErrors[.staff])
             }
             .padding(.horizontal)
+            .padding(.top)
 
             Spacer(minLength: 20)
 
@@ -62,6 +71,7 @@ struct TripRegistrationContent: View {
         .scrollDismissesKeyboard(.immediately)
         .navigationBarTitleDisplayMode(.inline)
         .presentationDetents([.large, .height(650)], selection: $currentDetent)
+        .presentationDragIndicator(.hidden)
         .interactiveDismissDisabled(viewModel.isDirty)
         .onChange(of: currentDetent) { _, newValue in
             if newValue == .height(650) {
@@ -74,9 +84,9 @@ struct TripRegistrationContent: View {
             }
         }
         .onChange(of: viewModel.selectedAircraft) { _, _ in
-            viewModel.selectedPilots = []
-            viewModel.selectedCoPilots = []
-            viewModel.selectedCrewMembers = []
+            if !viewModel.isEditMode {
+                viewModel.autoAssignCrew()
+            }
             viewModel.fieldErrors.removeValue(forKey: .aircraft)
         }
         .onChange(of: viewModel.selectedRoute) { _, _ in
@@ -134,6 +144,57 @@ struct TripRegistrationContent: View {
 
 // MARK: UI
 extension TripRegistrationContent {
+
+    private var crewAutoAssignInfo: some View {
+        HStack(alignment: .top, spacing: 10) {
+
+            Image(systemName: "info.circle.fill")
+                .foregroundStyle(Color(.systemBlue))
+                .font(.callout)
+
+            Text(
+                "\(viewModel.selectedPilots.count) pilot, "
+                    + "\(viewModel.selectedCoPilots.count) co-pilot, "
+                    + "\(viewModel.selectedCrewMembers.count) crew member "
+                    + "have been automatically assigned. You can edit the crew in edit mode after creating the trip."
+            )
+            .font(.callout.bold())
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+
+            Spacer()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(.systemBlue).opacity(0.08))
+        )
+    }
+
+    private var noAircraftAvailableInfo: some View {
+        HStack(alignment: .top, spacing: 10) {
+
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color(.systemOrange))
+                .font(.callout)
+
+            Text(
+                !viewModel.isEditMode
+                    ? "No aircraft is available for the selected route and departure time. Please change the departure time or choose a different route."
+                    : "No aircraft is available for replacement."
+            )
+            .font(.callout.bold())
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+
+            Spacer()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(.systemOrange).opacity(0.08))
+        )
+    }
 
     var closeToolbarButton: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {

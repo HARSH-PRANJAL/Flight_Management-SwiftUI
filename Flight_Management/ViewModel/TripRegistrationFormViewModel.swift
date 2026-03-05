@@ -98,6 +98,43 @@ final class TripRegistrationFormViewModel {
         selectedPilots + selectedCoPilots + selectedCrewMembers
     }
 
+    func autoAssignCrew() {
+        guard let aircraft = selectedAircraft else { return }
+
+        selectedPilots = []
+        selectedCoPilots = []
+        selectedCrewMembers = []
+        fieldErrors.removeValue(forKey: .staff)
+
+        for role in StaffRole.allCases {
+            let required = aircraft.minimumStaffRequired[role, default: 0]
+            guard required > 0 else { continue }
+
+            let available = availableStaffs.filter { $0.designation == role }
+            let assigned = Array(available.prefix(required))
+
+            switch role {
+            case .pilot: selectedPilots = assigned
+            case .coPilot: selectedCoPilots = assigned
+            case .cabinCrew: selectedCrewMembers = assigned
+            }
+        }
+    }
+
+    var isCrewFullyAssigned: Bool {
+        guard let aircraft = selectedAircraft else { return false }
+        for (role, required) in aircraft.minimumStaffRequired where required > 0
+        {
+            switch role {
+            case .pilot: if selectedPilots.count < required { return false }
+            case .coPilot: if selectedCoPilots.count < required { return false }
+            case .cabinCrew:
+                if selectedCrewMembers.count < required { return false }
+            }
+        }
+        return true
+    }
+
     func validate(minRequired: [StaffRole: Int]) -> Bool {
         fieldErrors.removeAll()
         var valid = true
@@ -108,7 +145,8 @@ final class TripRegistrationFormViewModel {
             fieldErrors[.tripNumber] = "Trip number is required."
             valid = false
         } else if trimmed.count > 50 {
-            fieldErrors[.tripNumber] = "Trip number cannot exceed 50 characters."
+            fieldErrors[.tripNumber] =
+                "Trip number cannot exceed 50 characters."
             valid = false
         } else {
             let allowed =
@@ -117,7 +155,8 @@ final class TripRegistrationFormViewModel {
                 .union(CharacterSet(charactersIn: "-"))
 
             if !trimmed.unicodeScalars.allSatisfy(allowed.contains) {
-                fieldErrors[.tripNumber] = "Only letters, numbers and '-' allowed."
+                fieldErrors[.tripNumber] =
+                    "Only letters, numbers and '-' allowed."
                 valid = false
             }
         }

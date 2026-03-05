@@ -26,7 +26,7 @@ struct FormDateField: View {
 
     private var isAcceptedDate: Bool {
         if datePickerComponents.contains(.hourAndMinute) {
-            return selectedDate > Date()
+            return allowedDateRange.contains(selectedDate)
         }
         return !Calendar.current.isDateInToday(selectedDate)
     }
@@ -118,3 +118,4 @@ struct FormDateField: View {
         datePickerComponents: [.date]
     )
 }
+
