@@ -65,13 +65,11 @@ final class RouteRegistrationFormViewModel {
 extension RouteRegistrationFormViewModel {
     func validateJourneyTime(journeyTimeMinutes: Int) -> Bool {
         if journeyTimeMinutes > 120 {
-            fieldErrors[.journeyTime] =
-                "Maximum allowed journey time between two airports is 120 minutes."
             return false
         }
         return true
     }
-    
+
     func validateRouteName() -> Bool {
         let trimmed = routeName.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -79,11 +77,6 @@ extension RouteRegistrationFormViewModel {
             fieldErrors[.name] = "Route name cannot be empty."
             return false
         }
-
-        let allowedCharacters =
-            CharacterSet.letters
-            .union(.whitespaces)
-            .union(CharacterSet(charactersIn: "-"))
 
         routeName = trimmed
         return true
@@ -111,13 +104,13 @@ extension RouteRegistrationFormViewModel {
                 guard let journeyTime = Int(node.journeyTimeMinutes),
                     journeyTime > 0
                 else {
-                    fieldErrors[.journeyTime] =
+                    fieldErrors[.date] =
                         "Journey time for leg \(index + 1) must be greater than 0 minutes."
                     return false
                 }
 
                 if !validateJourneyTime(journeyTimeMinutes: journeyTime) {
-                    fieldErrors[.journeyTime] =
+                    fieldErrors[.date] =
                         "Journey time for leg \(index + 1) must not exceed 120 minutes."
                     return false
                 }
@@ -150,7 +143,7 @@ extension RouteRegistrationFormViewModel {
         }
 
         selectedNodes[index].journeyTimeMinutes = minutes
-        fieldErrors.removeValue(forKey: .journeyTime)
+        fieldErrors.removeValue(forKey: .date)
     }
 
     var routeSummary: String {

@@ -72,31 +72,14 @@ extension AircraftRegistrationFormViewModel {
         )
 
         if trimmed.isEmpty {
-            fieldErrors[.registrationNumber] =
+            fieldErrors[.name] =
                 "Registration number cannot be empty."
             return false
         }
 
         if trimmed.count < 3 {
-            fieldErrors[.registrationNumber] =
+            fieldErrors[.name] =
                 "Registration number must be at least 3 characters."
-            return false
-        }
-
-        if trimmed.count > 8 {
-            fieldErrors[.registrationNumber] =
-                "Registration number cannot be longer than 8 characters."
-            return false
-        }
-
-        let allowedCharacters =
-            CharacterSet.letters
-            .union(.decimalDigits)
-            .union(CharacterSet(charactersIn: "-"))
-
-        if !trimmed.unicodeScalars.allSatisfy(allowedCharacters.contains) {
-            fieldErrors[.registrationNumber] =
-                "Registration number can only contain letters, numbers, and \"-\"."
             return false
         }
 
@@ -109,23 +92,6 @@ extension AircraftRegistrationFormViewModel {
 
         if trimmed.isEmpty {
             fieldErrors[.type] = "Aircraft type cannot be empty."
-            return false
-        }
-
-        if trimmed.count > 50 {
-            fieldErrors[.type] =
-                "Aircraft type cannot be longer than 50 characters."
-            return false
-        }
-
-        let allowedCharacters =
-            CharacterSet.letters
-            .union(.decimalDigits)
-            .union(.whitespaces)
-
-        if !trimmed.unicodeScalars.allSatisfy(allowedCharacters.contains) {
-            fieldErrors[.type] =
-                "Aircraft type can only contain letters, numbers, and spaces."
             return false
         }
 

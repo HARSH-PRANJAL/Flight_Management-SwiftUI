@@ -144,7 +144,7 @@ struct AircraftRegistrationContent: View {
                         "You have unsaved changes. Are you sure you want to discard them?"
                     )
                 }
-            }  // ScrollViewReader
+            }
         }
     }
 }
@@ -158,7 +158,7 @@ extension AircraftRegistrationContent {
                 label: "Registration Number",
                 placeholder: "e.g., N12345",
                 focus: .registrationNumber,
-                hasError: viewModel.fieldErrors[.registrationNumber] != nil,
+                hasError: viewModel.fieldErrors[.name] != nil,
                 maxLength: 8,
                 allowedCharacter: {
                     $0.isLetter || $0.isNumber || $0 == "-"
@@ -169,10 +169,10 @@ extension AircraftRegistrationContent {
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.characters)
             .onChange(of: viewModel.registrationNumber) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .registrationNumber)
+                viewModel.fieldErrors.removeValue(forKey: .name)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.registrationNumber])
+            FormErrorMessage(error: viewModel.fieldErrors[.name])
         }
     }
 

@@ -106,7 +106,8 @@ struct AirportRegistrationContent: View {
                 label: "Airport Code",
                 placeholder: "e.g., JFK, LHR",
                 focus: .code,
-                hasError: viewModel.fieldErrors[.code] != nil,
+                hasError: viewModel.fieldErrors[.name] != nil,
+                maxLength: 5,
                 allowedCharacter: {
                     $0.isLetter
                 },
@@ -116,10 +117,10 @@ struct AirportRegistrationContent: View {
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.characters)
             .onChange(of: viewModel.code) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .code)
+                viewModel.fieldErrors.removeValue(forKey: .name)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.code])
+            FormErrorMessage(error: viewModel.fieldErrors[.name])
         }
     }
 

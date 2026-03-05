@@ -71,9 +71,9 @@ enum AircraftSort: String, CaseIterable {
 
 enum FieldError: Hashable {
     case name, email, gender, role, date
-    case registrationNumber, type, seatingCapacity, minimumStaffRequired
-    case code, city, country
-    case airports, journeyTime
+    case type, seatingCapacity, minimumStaffRequired
+    case city, country
+    case airports
     case password, confirmPassword
 }
 

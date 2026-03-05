@@ -48,12 +48,12 @@ extension AirportRegistrationFormViewModel {
         let trimmed = code.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         if trimmed.isEmpty {
-            fieldErrors[.code] = "Code cannot be empty."
+            fieldErrors[.name] = "Code cannot be empty."
             return false
         }
         
-        if trimmed.count != 3 {
-            fieldErrors[.code] = "Code must be 3 characters (e.g., JFK, LHR)."
+        if trimmed.count < 3 {
+            fieldErrors[.name] = "Code should contain at least 3 characters."
             return false
         }
         

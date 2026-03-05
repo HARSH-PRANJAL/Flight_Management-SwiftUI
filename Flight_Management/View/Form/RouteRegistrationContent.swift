@@ -276,7 +276,7 @@ extension RouteRegistrationContent {
             .tint(Color(.systemBlue))
 
             FormErrorMessage(error: viewModel.fieldErrors[.airports])
-            FormErrorMessage(error: viewModel.fieldErrors[.journeyTime])
+            FormErrorMessage(error: viewModel.fieldErrors[.date])
         }
     }
 
