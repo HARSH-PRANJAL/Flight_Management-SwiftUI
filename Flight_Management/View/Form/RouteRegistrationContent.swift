@@ -136,7 +136,7 @@ extension RouteRegistrationContent {
                 label: "Route Name",
                 placeholder: "e.g., East Coast Loop",
                 focus: .routeName,
-                hasError: viewModel.fieldErrors[.routeName] != nil,
+                hasError: viewModel.fieldErrors[.name] != nil,
                 maxLength: 50,
                 allowedCharacter: {
                     $0.isLetter || $0.isWhitespace || $0 == "-"
@@ -145,10 +145,10 @@ extension RouteRegistrationContent {
                 focusedField: $focusedField
             )
             .onChange(of: viewModel.routeName) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .routeName)
+                viewModel.fieldErrors.removeValue(forKey: .name)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.routeName])
+            FormErrorMessage(error: viewModel.fieldErrors[.name])
         }
     }
 
@@ -332,7 +332,7 @@ extension RouteRegistrationContent {
 
     func validateAll() -> Bool {
         if !isNameUnique() {
-            viewModel.fieldErrors[.routeName] =
+            viewModel.fieldErrors[.name] =
                 "A route with this name already exists."
             return false
         }

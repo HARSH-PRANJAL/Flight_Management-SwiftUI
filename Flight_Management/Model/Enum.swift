@@ -73,7 +73,7 @@ enum FieldError: Hashable {
     case name, email, gender, role, date
     case registrationNumber, type, seatingCapacity, minimumStaffRequired
     case code, city, country
-    case routeName, airports, journeyTime
+    case airports, journeyTime
     case password, confirmPassword
 }
 

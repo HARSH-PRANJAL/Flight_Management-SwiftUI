@@ -76,13 +76,7 @@ extension RouteRegistrationFormViewModel {
         let trimmed = routeName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
-            fieldErrors[.routeName] = "Route name cannot be empty."
-            return false
-        }
-
-        if trimmed.count > 50 {
-            fieldErrors[.routeName] =
-                "Route name cannot be longer than 50 characters."
+            fieldErrors[.name] = "Route name cannot be empty."
             return false
         }
 
@@ -90,12 +84,6 @@ extension RouteRegistrationFormViewModel {
             CharacterSet.letters
             .union(.whitespaces)
             .union(CharacterSet(charactersIn: "-"))
-
-        if !trimmed.unicodeScalars.allSatisfy(allowedCharacters.contains) {
-            fieldErrors[.routeName] =
-                "Route name can only contain letters, spaces, and \"-\"."
-            return false
-        }
 
         routeName = trimmed
         return true
