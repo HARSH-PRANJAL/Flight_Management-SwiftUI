@@ -34,6 +34,7 @@ struct TripListView: View {
                                 sort: selectedSort,
                                 sortOrder: selectedSortOrder
                             )
+                            await loadUntilVisible()
                         }
                 }
             }
@@ -56,6 +57,7 @@ struct TripListView: View {
                     sort: selectedSort,
                     sortOrder: selectedSortOrder
                 )
+                await loadUntilVisible()
             }
             .onChange(of: selectedFilter) { _, newFilter in
                 if externalTrips != nil { return }
@@ -67,6 +69,7 @@ struct TripListView: View {
                         sort: selectedSort,
                         sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
                 }
             }
             .onChange(of: searchText) { _, newSearch in
@@ -79,6 +82,7 @@ struct TripListView: View {
                         sort: selectedSort,
                         sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
                 }
             }
             .onChange(of: selectedSort) { _, _ in
@@ -91,6 +95,7 @@ struct TripListView: View {
                         sort: selectedSort,
                         sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
                 }
             }
             .onChange(of: selectedSortOrder) { _, _ in
@@ -103,6 +108,7 @@ struct TripListView: View {
                         sort: selectedSort,
                         sortOrder: selectedSortOrder
                     )
+                    await loadUntilVisible()
                 }
             }
         }
@@ -129,6 +135,7 @@ extension TripListView {
                                 sort: selectedSort,
                                 sortOrder: selectedSortOrder
                             )
+                            await loadUntilVisible()
                         }
                     }
                 }
@@ -224,9 +231,32 @@ extension TripListView {
         }
     }
 
+    private func loadUntilVisible() async {
+        while displayedTrips.isEmpty && viewModel.hasMore
+            && !viewModel.isLoading
+        {
+            await viewModel.loadMore(
+                context: context,
+                filter: selectedFilter,
+                searchText: searchText,
+                sort: selectedSort,
+                sortOrder: selectedSortOrder
+            )
+        }
+    }
+
     var displayedTrips: [Trip] {
         guard let external = externalTrips else {
-            return viewModel.items
+            switch selectedFilter {
+            case .scheduled:
+                return viewModel.items.filter { $0.currentStatus == .scheduled }
+            case .onTime:
+                return viewModel.items.filter { $0.currentStatus == .onTime }
+            case .delayed:
+                return viewModel.items.filter { $0.currentStatus == .delayed }
+            default:
+                return viewModel.items
+            }
         }
 
         var filtered = external
@@ -236,7 +266,9 @@ extension TripListView {
         if !searchText.isEmpty {
             filtered = filtered.filter { trip in
                 trip.flightNumber.localizedCaseInsensitiveContains(searchText)
-                    || trip.route.name.localizedCaseInsensitiveContains(searchText)
+                    || trip.route.name.localizedCaseInsensitiveContains(
+                        searchText
+                    )
             }
         }
 
