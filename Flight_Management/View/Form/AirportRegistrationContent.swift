@@ -106,7 +106,7 @@ struct AirportRegistrationContent: View {
                 label: "Airport Code",
                 placeholder: "e.g., JFK, LHR",
                 focus: .code,
-                hasError: viewModel.fieldErrors[.name] != nil,
+                hasError: viewModel.fieldErrors[.code] != nil,
                 maxLength: 5,
                 allowedCharacter: {
                     $0.isLetter
@@ -117,10 +117,10 @@ struct AirportRegistrationContent: View {
             .autocorrectionDisabled(true)
             .textInputAutocapitalization(.characters)
             .onChange(of: viewModel.code) { _, _ in
-                viewModel.fieldErrors.removeValue(forKey: .name)
+                viewModel.fieldErrors.removeValue(forKey: .code)
             }
 
-            FormErrorMessage(error: viewModel.fieldErrors[.name])
+            FormErrorMessage(error: viewModel.fieldErrors[.code])
         }
     }
 
@@ -198,13 +198,33 @@ struct AirportRegistrationContent: View {
         .padding(.top, 16)
         .padding(.bottom, 30)
     }
+}
 
-    private var isFormValid: Bool {
-        !viewModel.code.isEmpty && !viewModel.name.isEmpty
-            && !viewModel.city.isEmpty && !viewModel.country.isEmpty
+// MARK: Util
+extension AirportRegistrationContent {
+    private func isUniqueCode() -> Bool {
+        let code = viewModel.code.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let descriptor = FetchDescriptor<Airport>(
+            predicate: #Predicate {
+                $0.code == code
+            }
+        )
+
+        do {
+            let result = try context.fetch(descriptor)
+            return result.isEmpty
+        } catch {
+            return false
+        }
     }
-
     private func handleRegistration() {
+        guard viewModel.validateAll() else { return }
+        if !isUniqueCode() {
+            viewModel.fieldErrors[.code] = "This code is already taken."
+            return
+        }
         if viewModel.saveAirport(to: context) {
             notificationManager.showSuccess("Airport registered successfully")
             dismiss()

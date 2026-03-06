@@ -97,8 +97,8 @@ class RouteNode {
 class Airport {
     @Attribute(.unique)
     var id: UUID
-
     var code: String
+    
     var name: String
     var city: String
     var country: String

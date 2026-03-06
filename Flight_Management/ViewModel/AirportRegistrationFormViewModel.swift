@@ -109,8 +109,6 @@ extension AirportRegistrationFormViewModel {
     }
 
     func saveAirport(to context: ModelContext) -> Bool {
-        guard validateAll() else { return false }
-        
         let airport = Airport(
             code: code.trimmingCharacters(in: .whitespacesAndNewlines),
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
