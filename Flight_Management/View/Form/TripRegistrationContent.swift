@@ -23,9 +23,9 @@ struct TripRegistrationContent: View {
         sort: [SortDescriptor(\.name, comparator: .localizedStandard)]
     )
     private var routes: [Route]
-    @Query(filter: #Predicate<Aircraft> { !$0.isDecommissioned })
+    @Query(filter: #Predicate<Aircraft> { !$0.isDecommissioned }, sort: \.type)
     private var aircrafts: [Aircraft]
-    @Query(filter: #Predicate<Staff> { !$0.isMarkedUnavailable })
+    @Query(filter: #Predicate<Staff> { !$0.isMarkedUnavailable }, sort: \.name)
     private var staffs: [Staff]
 
     @FocusState private var focusedField: FormFocus?
@@ -52,7 +52,7 @@ struct TripRegistrationContent: View {
                     noAircraftAvailableInfo
                 }
 
-                if viewModel.isEditMode {
+                if viewModel.isEditMode && viewModel.selectedAircraft != nil {
                     crewSelectors
                 } else if viewModel.selectedAircraft != nil {
                     crewAutoAssignInfo
@@ -91,17 +91,29 @@ struct TripRegistrationContent: View {
         }
         .onChange(of: viewModel.selectedRoute) { _, _ in
             viewModel.fieldErrors.removeValue(forKey: .route)
-            viewModel.recomputeAvailability(
-                staffs: staffs,
-                aircrafts: aircrafts
-            )
+            viewModel.resetAircraftAndStaff()
+            if viewModel.scheduledDeparture
+                != viewModel.originalSnapshot?.scheduledDeparture
+            {
+                Task {
+                    await viewModel.recomputeAvailability(
+                        staffs: staffs,
+                        aircrafts: aircrafts
+                    )
+                }
+            }
         }
-        .onChange(of: viewModel.scheduledDeparture) { _, _ in
+        .onChange(of: viewModel.scheduledDeparture) { _, newVal in
             viewModel.fieldErrors.removeValue(forKey: .date)
-            viewModel.recomputeAvailability(
-                staffs: staffs,
-                aircrafts: aircrafts
-            )
+            viewModel.resetAircraftAndStaff()
+            if newVal != viewModel.originalSnapshot?.scheduledDeparture {
+                Task {
+                    await viewModel.recomputeAvailability(
+                        staffs: staffs,
+                        aircrafts: aircrafts
+                    )
+                }
+            }
         }
         .toolbar {
             closeToolbarButton
@@ -134,7 +146,7 @@ struct TripRegistrationContent: View {
             )
         }
         .task {
-            viewModel.recomputeAvailability(
+            await viewModel.recomputeAvailability(
                 staffs: staffs,
                 aircrafts: aircrafts
             )
@@ -403,7 +415,8 @@ extension TripRegistrationContent {
 
         let descriptor = FetchDescriptor<Trip>(
             predicate: #Predicate<Trip> {
-                $0.tripNumberSearchKey == tripNumber && (id == nil || id! != $0.id)
+                $0.tripNumberSearchKey == tripNumber
+                    && (id == nil || id! != $0.id)
             }
         )
 

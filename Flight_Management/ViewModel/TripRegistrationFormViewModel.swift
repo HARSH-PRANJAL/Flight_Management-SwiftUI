@@ -51,8 +51,12 @@ final class TripRegistrationFormViewModel {
         self.selectedRoute = trip.route
         self.selectedAircraft = trip.aircraft
         self.selectedPilots = trip.staffs.filter { $0.designation == .pilot }
-        self.selectedCoPilots = trip.staffs.filter { $0.designation == .coPilot }
-        self.selectedCrewMembers = trip.staffs.filter { $0.designation == .cabinCrew }
+        self.selectedCoPilots = trip.staffs.filter {
+            $0.designation == .coPilot
+        }
+        self.selectedCrewMembers = trip.staffs.filter {
+            $0.designation == .cabinCrew
+        }
     }
 
     func currentSnapshot() -> Snapshot {
@@ -67,31 +71,11 @@ final class TripRegistrationFormViewModel {
         )
     }
 
-    func addStaff(_ staff: Staff, role: StaffRole) {
-        switch role {
-        case .pilot where !selectedPilots.contains(where: { $0.id == staff.id }):
-            selectedPilots.append(staff)
-
-        case .coPilot where !selectedCoPilots.contains(where: { $0.id == staff.id }):
-            selectedCoPilots.append(staff)
-
-        case .cabinCrew where !selectedCrewMembers.contains(where: { $0.id == staff.id }):
-            selectedCrewMembers.append(staff)
-
-        default:
-            break
-        }
-    }
-
-    func removeStaff(_ staff: Staff, role: StaffRole) {
-        switch role {
-        case .pilot:
-            selectedPilots.removeAll { $0.id == staff.id }
-        case .coPilot:
-            selectedCoPilots.removeAll { $0.id == staff.id }
-        case .cabinCrew:
-            selectedCrewMembers.removeAll { $0.id == staff.id }
-        }
+    func resetAircraftAndStaff() {
+        selectedAircraft = nil
+        selectedPilots.removeAll()
+        selectedCoPilots.removeAll()
+        selectedCrewMembers.removeAll()
     }
 
     var allSelectedStaff: [Staff] {
@@ -201,7 +185,7 @@ extension TripRegistrationFormViewModel {
     func recomputeAvailability(
         staffs: [Staff],
         aircrafts: [Aircraft]
-    ) {
+    ) async {
         guard let route = selectedRoute else {
             availableStaffs = []
             availableStaffCountsByRole = [:]
@@ -237,6 +221,14 @@ extension TripRegistrationFormViewModel {
                 to: endDate,
                 availableStaff: counts
             )
+        }
+
+        if let aircraft = selectedAircraft {
+            availableAircraft.append(aircraft)
+        }
+
+        if !allSelectedStaff.isEmpty {
+            availableStaffs.append(contentsOf: allSelectedStaff)
         }
 
         hasAvailableAircraft = !availableAircraft.isEmpty
