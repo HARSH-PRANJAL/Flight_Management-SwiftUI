@@ -5,6 +5,8 @@ import SwiftData
 class Trip {
     @Attribute(.unique)
     var id: UUID
+    @Attribute(.unique)
+    var tripNumber: String
 
     @Relationship(deleteRule: .nullify, inverse: \Staff.trips)
     var staffs: [Staff]
@@ -15,7 +17,6 @@ class Trip {
 
     var route: Route
     var scheduledDepartureTime: Date
-    var tripNumber: String
     var tripNumberSearchKey: String
     var isCancelled: Bool = false
     var isCompleted: Bool = false
@@ -65,10 +66,14 @@ class Trip {
         } else if isCancelled {
             // Sort by sequence so we reliably get the last visited node
             // regardless of SwiftData's relationship array ordering
-            let sorted = nodeStatuses.sorted { $0.routeNode.sequence < $1.routeNode.sequence }
+            let sorted = nodeStatuses.sorted {
+                $0.routeNode.sequence < $1.routeNode.sequence
+            }
             if let last = sorted.last, last.actualArrivalTime != nil {
                 // cancelled after landing at an intermediate airport
-                if sorted.count > 1, let dep = sorted[sorted.count - 2].actualDepartureTime {
+                if sorted.count > 1,
+                    let dep = sorted[sorted.count - 2].actualDepartureTime
+                {
                     return dep
                 } else {
                     return arrivalTime
@@ -80,7 +85,9 @@ class Trip {
         }
 
         // trip is ongoing
-        return arrivalTime.addingTimeInterval(TimeInterval(totalDelayedMinutes * 60))
+        return arrivalTime.addingTimeInterval(
+            TimeInterval(totalDelayedMinutes * 60)
+        )
     }
 
     // route node for the current airport (1-based sequence)
@@ -119,12 +126,11 @@ extension Trip {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "" }
 
-        let withoutWhitespace =
+        let filtered =
             trimmed
-            .components(separatedBy: .whitespacesAndNewlines)
-            .joined()
+            .filter { $0.isLetter || $0.isNumber }
 
-        return withoutWhitespace.lowercased()
+        return String(filtered).lowercased()
     }
 }
 
@@ -288,4 +294,3 @@ class TripNodeStatus {
     }
 
 }
-

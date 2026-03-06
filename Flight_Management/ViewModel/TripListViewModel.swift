@@ -83,9 +83,8 @@ final class TripListViewModel {
         filter: TripStatus?,
         searchText: String
     ) -> Predicate<Trip>? {
-        let trimmed = searchText
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalisedSearch = Trip.normalisedSearchKey(from: trimmed)
+        let normalisedSearch = Trip.normalisedSearchKey(from: searchText)
+        let normalisedRouteSearch = Route.normalisedSearchKey(from: searchText)
 
         if filter == nil && normalisedSearch.isEmpty {
             return nil
@@ -105,7 +104,7 @@ final class TripListViewModel {
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
-                                    normalisedSearch
+                                    normalisedRouteSearch
                                 ))
                     }
                 }
@@ -121,7 +120,7 @@ final class TripListViewModel {
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
-                                    normalisedSearch
+                                    normalisedRouteSearch
                                 ))
                     }
                 }
@@ -137,7 +136,7 @@ final class TripListViewModel {
                                 normalisedSearch
                             )
                                 || trip.route.nameSearchKey.contains(
-                                    normalisedSearch
+                                    normalisedRouteSearch
                                 ))
                     }
                 }
@@ -145,7 +144,7 @@ final class TripListViewModel {
         } else {
             return #Predicate<Trip> { trip in
                 trip.tripNumberSearchKey.contains(normalisedSearch)
-                    || trip.route.nameSearchKey.contains(normalisedSearch)
+                    || trip.route.nameSearchKey.contains(normalisedRouteSearch)
             }
         }
     }

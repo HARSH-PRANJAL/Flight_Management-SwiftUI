@@ -397,6 +397,25 @@ extension TripRegistrationContent {
         }
     }
 
+    func isUniqueTripNumber() -> Bool {
+        let tripNumber = Trip.normalisedSearchKey(from: viewModel.tripNumber)
+        let id = viewModel.tripToEdit?.id
+
+        let descriptor = FetchDescriptor<Trip>(
+            predicate: #Predicate<Trip> {
+                $0.tripNumberSearchKey == tripNumber && (id == nil || id! != $0.id)
+            }
+        )
+
+        do {
+            let result = try context.fetch(descriptor)
+            if !result.isEmpty { return false }
+            return true
+        } catch {
+            return false
+        }
+    }
+
     private static func crewLabel(selected: [Staff], emptyTitle: String)
         -> String
     {
@@ -415,6 +434,10 @@ extension TripRegistrationContent {
             viewModel.selectedAircraft?.minimumStaffRequired ?? [:]
         guard viewModel.validate(minRequired: minRequired) else { return }
 
+        if !self.isUniqueTripNumber() {
+            viewModel.fieldErrors[.tripNumber] = "Trip number is already taken."
+            return
+        }
         if viewModel.isEditMode {
             updateTrip()
         } else {
@@ -422,7 +445,6 @@ extension TripRegistrationContent {
         }
     }
 
-    // MARK: Create
     private func submit() {
         guard let route = viewModel.selectedRoute,
             let aircraft = viewModel.selectedAircraft
@@ -455,7 +477,6 @@ extension TripRegistrationContent {
         }
     }
 
-    // MARK: Update (Edit Mode)
     private func updateTrip() {
         guard let trip = viewModel.tripToEdit,
             let newAircraft = viewModel.selectedAircraft
