@@ -201,7 +201,8 @@ extension AircraftRegistrationContent {
             }
             .onChange(of: focusedField) { old, new in
                 if old == .registrationNumber && new != .registrationNumber {
-                    viewModel.registrationNumber = viewModel.registrationNumber.uppercased()
+                    viewModel.registrationNumber = viewModel.registrationNumber
+                        .uppercased()
                 }
             }
 
@@ -275,25 +276,34 @@ extension AircraftRegistrationContent {
                     .focused($isStaffInputFocused)
                     .font(.system(size: 17))
                     .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
+                    .multilineTextAlignment(.center)
                     .padding()
                     .frame(width: 80)
                     .background {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(.systemGray6))
-                            .stroke(Color(.systemGray3), lineWidth: 1)
+                            .stroke(
+                                viewModel.fieldErrors[
+                                    FieldError.getFieldTypeFor(staffRole: role)
+                                ] != nil
+                                    ? Color(.systemRed) : Color(.systemGray3),
+                                lineWidth: 1
+                            )
                     }
                     .onChange(of: viewModel.minimumStaffRequired[role] ?? "") {
                         _,
                         _ in
                         viewModel.fieldErrors.removeValue(
-                            forKey: .minimumStaffRequired
+                            forKey: FieldError.getFieldTypeFor(staffRole: role)
                         )
                     }
                 }
             }
 
-            if let error = viewModel.fieldErrors[.minimumStaffRequired] {
+            if let error =
+                viewModel.fieldErrors[.pilot] ?? viewModel.fieldErrors[.copilot]
+                ?? viewModel.fieldErrors[.crew]
+            {
                 FormErrorMessage(error: error)
             }
         }
@@ -319,14 +329,17 @@ extension AircraftRegistrationContent {
 
 // MARK: Util
 extension AircraftRegistrationContent {
-    
+
     func isUniqueRegistrationNumber() -> Bool {
-        let regNumber = Aircraft.normalisedSearchKey(from: viewModel.registrationNumber)
+        let regNumber = Aircraft.normalisedSearchKey(
+            from: viewModel.registrationNumber
+        )
         let id = aircraft?.id
 
         let descriptor = FetchDescriptor<Aircraft>(
             predicate: #Predicate<Aircraft> {
-                $0.registrationNumberSearchKey == regNumber && (id == nil || id! != $0.id)
+                $0.registrationNumberSearchKey == regNumber
+                    && (id == nil || id! != $0.id)
             }
         )
 
@@ -341,21 +354,25 @@ extension AircraftRegistrationContent {
 
     private func handleRegistration() {
         guard viewModel.validateAll() else { return }
-        
+
         if !isUniqueRegistrationNumber() {
-            viewModel.fieldErrors[.name] = "Registration number is already in use."
+            viewModel.fieldErrors[.name] =
+                "Registration number is already in use."
             return
         }
 
-        if let _ = aircraft {
-            if hasStaffRequirementChanged && !tripsAffectedByStaffChange.isEmpty {
+        if aircraft != nil {
+            if hasStaffRequirementChanged && !tripsAffectedByStaffChange.isEmpty
+            {
                 showStaffChangeAlert = true
             } else {
                 performUpdate()
             }
         } else {
             if viewModel.saveAircraft(to: context) {
-                notificationManager.showSuccess("Aircraft registered successfully")
+                notificationManager.showSuccess(
+                    "Aircraft registered successfully"
+                )
                 isPresented = false
             } else {
                 notificationManager.showError(
