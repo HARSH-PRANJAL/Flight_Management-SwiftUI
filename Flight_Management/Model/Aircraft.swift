@@ -5,11 +5,12 @@ import SwiftData
 class Aircraft {
     @Attribute(.unique)
     var id: UUID
+    @Attribute(.unique)
+    var registrationNumber: String
 
     @Relationship(deleteRule: .cascade)
     var trips: [Trip]
 
-    var registrationNumber: String
     var registrationNumberSearchKey: String
     var type: String
     var seatingCapacity: Int
@@ -122,11 +123,10 @@ extension Aircraft {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "" }
 
-        let withoutWhitespace =
+        let filtered =
             trimmed
-            .components(separatedBy: .whitespacesAndNewlines)
-            .joined()
+            .filter { $0.isLetter || $0.isNumber }
 
-        return withoutWhitespace.lowercased()
+        return String(filtered).lowercased()
     }
 }

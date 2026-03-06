@@ -199,6 +199,11 @@ extension AircraftRegistrationContent {
             .onChange(of: viewModel.registrationNumber) { _, _ in
                 viewModel.fieldErrors.removeValue(forKey: .name)
             }
+            .onChange(of: focusedField) { old, new in
+                if old == .registrationNumber && new != .registrationNumber {
+                    viewModel.registrationNumber = viewModel.registrationNumber.uppercased()
+                }
+            }
 
             FormErrorMessage(error: viewModel.fieldErrors[.name])
         }
@@ -314,9 +319,33 @@ extension AircraftRegistrationContent {
 
 // MARK: Util
 extension AircraftRegistrationContent {
+    
+    func isUniqueRegistrationNumber() -> Bool {
+        let regNumber = Aircraft.normalisedSearchKey(from: viewModel.registrationNumber)
+        let id = aircraft?.id
+
+        let descriptor = FetchDescriptor<Aircraft>(
+            predicate: #Predicate<Aircraft> {
+                $0.registrationNumberSearchKey == regNumber && (id == nil || id! != $0.id)
+            }
+        )
+
+        do {
+            let result = try context.fetch(descriptor)
+            if !result.isEmpty { return false }
+            return true
+        } catch {
+            return false
+        }
+    }
 
     private func handleRegistration() {
         guard viewModel.validateAll() else { return }
+        
+        if !isUniqueRegistrationNumber() {
+            viewModel.fieldErrors[.name] = "Registration number is already in use."
+            return
+        }
 
         if let _ = aircraft {
             if hasStaffRequirementChanged && !tripsAffectedByStaffChange.isEmpty {
