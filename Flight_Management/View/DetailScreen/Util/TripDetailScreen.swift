@@ -52,6 +52,10 @@ struct TripDetailScreen: View {
             }
         }
     }
+}
+
+// MARK: UI
+extension TripDetailScreen {
 
     var detailView: some View {
         ScrollViewReader { proxy in
@@ -104,16 +108,8 @@ struct TripDetailScreen: View {
                     }
                     .padding(.bottom, 8)
 
-                    ClickableSection(
-                        title: "Assigned Aircraft",
-                        icon: "airplane",
-                        iconColor: Color(.systemBlue),
-                        row: { ListRow(aircraft: trip.aircraft) },
-                        destination: {
-                            AircraftDetailView(aircraft: trip.aircraft)
-                        }
-                    )
-                    .padding(.bottom, 8)
+                    assignedAircraft
+                        .padding(.bottom, 8)
 
                     if !trip.staffs.isEmpty {
                         assignedStaffList
@@ -124,6 +120,35 @@ struct TripDetailScreen: View {
         }
         .scrollIndicators(.hidden)
         .padding(.horizontal, 16)
+    }
+
+    var assignedAircraft: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label {
+                Text("Aircraft")
+                    .font(.subheadline.weight(.semibold))
+            } icon: {
+                Image(systemName: "airplane")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.systemBlue))
+            }
+            NavigationLink(
+                destination: AircraftDetailView(
+                    aircraft: trip.aircraft
+                )
+            ) {
+                HStack {
+                    ListRow(aircraft: trip.aircraft)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.smallCaps())
+                        .foregroundStyle(Color(.tertiaryLabel))
+                        .padding(.trailing, 12)
+                }
+                .padding(12)
+            }
+            .buttonStyle(PressableRowStyle())
+        }
     }
 
     var primaryCard: some View {
@@ -193,15 +218,11 @@ struct TripDetailScreen: View {
         .background(cardTheme())
     }
 
-}
-
-extension TripDetailScreen {
-
     @ViewBuilder
     var assignedStaffList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label {
-                Text("Flight Crew")
+                Text("Crew")
                     .font(.subheadline.weight(.semibold))
             } icon: {
                 Image(systemName: "person.2")
