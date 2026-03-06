@@ -244,10 +244,13 @@ extension StaffRegistrationContent {
 extension StaffRegistrationContent {
     private func isUniqueEmail() -> Bool {
         if viewModel.email.isEmpty { return true }
-        
-        let email = viewModel.email
+
+        let email = viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let userId = viewModel.staffToEdit?.id
         let descriptor = FetchDescriptor<Staff>(
-            predicate: #Predicate<Staff> { $0.email == email }
+            predicate: #Predicate<Staff> {
+                $0.email == email && (userId == nil || $0.id != userId!)
+            }
         )
 
         do {
