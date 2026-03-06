@@ -55,10 +55,10 @@ struct TripManagerDashboardView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
 
-                        UpcomingTripsScrollView(trips: upcomingTrips)
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrips)
                             .padding(.horizontal, -16)
 
-                        if upcomingTrips.count > 3 {
+                        if filteredUpcomingTrips.count > 3 {
                             HStack {
                                 Spacer()
                                 Button("View more") {
@@ -78,9 +78,9 @@ struct TripManagerDashboardView: View {
             .sheet(isPresented: $showingTripList) {
                 NavigationStack {
                     TripList(
-                        externalTrips: upcomingTrips,
+                        externalTrips: filteredUpcomingTrips,
                         navigationTitle:
-                            "Trips in next 24 hr (\(upcomingTrips.count))",
+                            "Trips in next 24 hr (\(filteredUpcomingTrips.count))",
                         requiredFilters: [.scheduled, .cancelled]
                     )
                     .navigationBarTitleDisplayMode(.inline)
@@ -126,6 +126,12 @@ extension TripManagerDashboardView {
 
 // MARK: - Data for display
 extension TripManagerDashboardView {
+    
+    private var filteredUpcomingTrips: [Trip] {
+        return upcomingTrips.filter{
+            $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
+        }
+    }
 
     private var onTimePercentage: Int {
         let total = todayTrips.filter {

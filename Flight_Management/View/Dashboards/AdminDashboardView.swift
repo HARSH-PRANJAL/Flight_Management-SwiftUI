@@ -102,9 +102,9 @@ struct AdminDashboardView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        UpcomingTripsScrollView(trips: upcomingTrips)
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
                             .padding(.horizontal, -16)
-                        if upcomingTrips.count > 3 {
+                        if filteredUpcomingTrip.count > 3 {
                             HStack {
                                 Spacer()
                                 Button("View more") {
@@ -126,9 +126,9 @@ struct AdminDashboardView: View {
         .sheet(isPresented: $showingTripList) {
             NavigationStack {
                 TripList(
-                    externalTrips: upcomingTrips,
+                    externalTrips: filteredUpcomingTrip,
                     navigationTitle:
-                        "Trips in next 6 hours (\(upcomingTrips.count))",
+                        "Trips in next 6 hours (\(filteredUpcomingTrip.count))",
                     requiredFilters: [.scheduled, .cancelled]
                 )
                 .navigationBarTitleDisplayMode(.inline)
@@ -149,6 +149,12 @@ struct AdminDashboardView: View {
 
 // MARK: - Data for display
 extension AdminDashboardView {
+    
+    private var filteredUpcomingTrip: [Trip] {
+        return upcomingTrips.filter{
+            $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
+        }
+    }
 
     private var onTimePercentage: Int {
         let total = todayTrips.filter {
