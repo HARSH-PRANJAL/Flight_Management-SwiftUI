@@ -132,7 +132,7 @@ extension ListRow {
 
     init(replacementStaff staff: Staff) {
         let meta = String(
-            format: "%.0f hr logged in \(staff.completedTrips.count) trips",
+            format: "%.0fhr logged in \(staff.completedTrips.count) trips",
             staff.totalTripHours
         )
 

@@ -73,9 +73,17 @@ final class TripRegistrationFormViewModel {
 
     func resetAircraftAndStaff() {
         selectedAircraft = nil
-        selectedPilots.removeAll()
-        selectedCoPilots.removeAll()
-        selectedCrewMembers.removeAll()
+        fieldErrors.removeValue(forKey: .aircraft)
+        resetCrew()
+    }
+
+    func resetCrew() {
+        selectedPilots = []
+        selectedCoPilots = []
+        selectedCrewMembers = []
+        fieldErrors.removeValue(forKey: .pilot)
+        fieldErrors.removeValue(forKey: .copilot)
+        fieldErrors.removeValue(forKey: .crew)
     }
 
     var allSelectedStaff: [Staff] {
@@ -84,11 +92,7 @@ final class TripRegistrationFormViewModel {
 
     func autoAssignCrew() {
         guard let aircraft = selectedAircraft else { return }
-
-        selectedPilots = []
-        selectedCoPilots = []
-        selectedCrewMembers = []
-        fieldErrors.removeValue(forKey: .staff)
+        resetCrew()
 
         for role in StaffRole.allCases {
             let required = aircraft.minimumStaffRequired[role, default: 0]
@@ -170,9 +174,9 @@ final class TripRegistrationFormViewModel {
 
         for (role, minReq) in minRequired where minReq > 0 {
             if (assignedCounts[role] ?? 0) < minReq {
-                fieldErrors[.staff] =
+                fieldErrors[FieldError.getFieldTypeFor(staffRole: role)] =
                     "Aircraft requires at least \(minReq) \(role.rawValue)."
-                valid = false
+                return false
             }
         }
 

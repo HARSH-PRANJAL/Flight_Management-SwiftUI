@@ -57,8 +57,6 @@ struct TripRegistrationContent: View {
                 } else if viewModel.selectedAircraft != nil {
                     crewAutoAssignInfo
                 }
-
-                FormErrorMessage(error: viewModel.fieldErrors[.staff])
             }
             .padding(.horizontal)
             .padding(.top)
@@ -313,7 +311,12 @@ extension TripRegistrationContent {
         }
     }
 
+    @ViewBuilder
     private var crewSelectors: some View {
+        let crewError =
+            viewModel.fieldErrors[.pilot] ?? viewModel.fieldErrors[.copilot]
+            ?? viewModel.fieldErrors[.crew]
+
         VStack(alignment: .leading, spacing: 4) {
             Text("Crew").formFieldLabel()
             HStack(spacing: 12) {
@@ -333,13 +336,17 @@ extension TripRegistrationContent {
                     crewButton(.cabinCrew, "Crew")
                 }
             }
+
+            FormErrorMessage(error: crewError)
         }
     }
 
     private func crewButton(_ role: StaffRole, _ title: String) -> some View {
         Button {
             activeSheet = .staff(role: role)
-            viewModel.fieldErrors.removeValue(forKey: .staff)
+            viewModel.fieldErrors.removeValue(
+                forKey: FieldError.getFieldTypeFor(staffRole: role)
+            )
         } label: {
             pickerLabel(
                 Self.crewLabel(
@@ -347,7 +354,9 @@ extension TripRegistrationContent {
                     emptyTitle: title
                 ),
                 isEmpty: selectedStaff(for: role).isEmpty,
-                hasError: viewModel.fieldErrors[.staff] != nil
+                hasError: viewModel.fieldErrors[
+                    FieldError.getFieldTypeFor(staffRole: role)
+                ] != nil
             )
             .lineLimit(1)
         }

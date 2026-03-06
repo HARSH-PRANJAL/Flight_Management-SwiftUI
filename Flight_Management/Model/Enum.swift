@@ -74,8 +74,19 @@ enum FieldError: Hashable {
     case code, city, country
     case airports
     case password, confirmPassword
-    case staff, tripNumber, route, aircraft
-    
+    case tripNumber, route, aircraft, copilot, pilot, crew
+
+    static func getFieldTypeFor(staffRole: StaffRole) -> FieldError {
+        switch staffRole {
+        case .pilot:
+            return .pilot
+        case .coPilot:
+            return .copilot
+        case .cabinCrew:
+            return .crew
+        }
+    }
+
 }
 
 enum SubmissionState: Equatable {
@@ -96,4 +107,3 @@ enum NotificationType: Equatable {
     case error(message: String)
     case none
 }
-
