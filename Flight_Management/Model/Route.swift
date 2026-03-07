@@ -98,24 +98,42 @@ class Airport {
     @Attribute(.unique)
     var id: UUID
     var code: String
-    
     var name: String
     var city: String
     var country: String
+    var isRemoved: Bool = false
 
-    var fullName: String {
-        "\(name) (\(code))"
-    }
+    var searchKey: String
 
-    var locationLabel: String {
-        "\(city), \(country)"
-    }
+    var fullName: String { "\(name) (\(code))" }
+    var locationLabel: String { "\(city), \(country)" }
 
     init(code: String, name: String, city: String, country: String) {
         self.id = UUID()
-        self.code = code
-        self.name = name
-        self.city = city
-        self.country = country
+        self.code = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.city = city.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.country = country.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.searchKey = Airport.makeSearchKey(
+            code: code, name: name, city: city, country: country
+        )
+    }
+
+    func updateDetails(code: String, name: String, city: String, country: String) {
+        self.code = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.city = city.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.country = country.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.searchKey = Airport.makeSearchKey(
+            code: code, name: name, city: city, country: country
+        )
+    }
+
+    static func makeSearchKey(
+        code: String, name: String, city: String, country: String
+    ) -> String {
+        "\(name) \(code) \(city) \(country)"
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

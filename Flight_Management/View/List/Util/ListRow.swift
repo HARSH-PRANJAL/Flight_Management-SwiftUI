@@ -145,6 +145,15 @@ extension ListRow {
             showFallbackImage: true
         )
     }
+    
+    init(airport: Airport) {
+            self.init(
+                profileImage: nil,
+                title: airport.name,
+                subtitle: airport.code,
+                metadata: airport.locationLabel
+            )
+        }
 
     init(trip: Trip) {
         let origin =
