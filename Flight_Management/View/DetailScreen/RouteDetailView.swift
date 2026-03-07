@@ -33,6 +33,12 @@ struct RouteDetailView: View {
                 .padding(.bottom, 16)
             }
             .navigationTitle("\(route.name)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Button(""){}
+                }
+            }
         }
         .toolbar(.hidden, for: .tabBar)
     }
