@@ -45,10 +45,17 @@ class Trip {
         nodeStatuses.max { $0.routeNode.sequence < $1.routeNode.sequence }
     }
 
-    // delay for the entire trip completed so far
     var totalDelayedMinutes: Int {
-        guard let latest = latestNodeStatus else { return 0 }
-        return latest.totalDelayMinutes(tripStartTime: scheduledDepartureTime)
+        guard !nodeStatuses.isEmpty else { return 0 }
+        return nodeStatuses
+            .map { $0.totalDelayMinutes(tripStartTime: scheduledDepartureTime) }
+            .max() ?? 0
+    }
+
+    var actualDepartureTime: Date? {
+        // The first TripNodeStatus represents the source airport node.
+        let sorted = nodeStatuses.sorted { $0.routeNode.sequence < $1.routeNode.sequence }
+        return sorted.first?.actualDepartureTime
     }
 
     // estimated arrival time (cancellation and delay were considered)
