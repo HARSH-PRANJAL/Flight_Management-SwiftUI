@@ -49,17 +49,16 @@ struct TripManagerDashboardView: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Upcoming Trips")
-                            .font(.headline)
-                        Text("Next 24 hours")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrips)
-                            .padding(.horizontal, -16)
-
-                        if filteredUpcomingTrips.count > 3 {
-                            HStack {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Upcoming Trips")
+                                    .font(.headline)
+                                Text("Next 24 hours")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if filteredUpcomingTrips.count > 3 {
                                 Spacer()
                                 Button("View more") {
                                     showingTripList = true
@@ -68,6 +67,9 @@ struct TripManagerDashboardView: View {
                                 .tint(Color(.systemBlue))
                             }
                         }
+
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrips)
+                            .padding(.horizontal, -16)
                     }
 
                     Spacer(minLength: 24)
@@ -126,9 +128,9 @@ extension TripManagerDashboardView {
 
 // MARK: - Data for display
 extension TripManagerDashboardView {
-    
+
     private var filteredUpcomingTrips: [Trip] {
-        return upcomingTrips.filter{
+        return upcomingTrips.filter {
             $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
         }
     }

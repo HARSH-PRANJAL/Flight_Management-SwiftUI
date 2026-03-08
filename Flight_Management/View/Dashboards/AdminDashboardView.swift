@@ -92,20 +92,18 @@ struct AdminDashboardView: View {
                             cardTheme()
                         )
                     }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        VStack(alignment: .leading){
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 6 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
 
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
-                            .padding(.horizontal, -16)
-                        if filteredUpcomingTrip.count > 3 {
-                            HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Upcoming Trips")
+                                    .font(.headline)
+                                Text("Next 6 hours")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if filteredUpcomingTrip.count > 3 {
                                 Spacer()
                                 Button("View more") {
                                     showingTripList = true
@@ -114,6 +112,9 @@ struct AdminDashboardView: View {
                                 .tint(Color(.systemBlue))
                             }
                         }
+
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
+                            .padding(.horizontal, -16)
                     }
 
                     Spacer(minLength: 24)
@@ -149,9 +150,9 @@ struct AdminDashboardView: View {
 
 // MARK: - Data for display
 extension AdminDashboardView {
-    
+
     private var filteredUpcomingTrip: [Trip] {
-        return upcomingTrips.filter{
+        return upcomingTrips.filter {
             $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
         }
     }
