@@ -227,14 +227,14 @@ extension TripRegistrationFormViewModel {
             )
         }
 
-        if let aircraft = selectedAircraft {
-            availableAircraft.append(aircraft)
-        }
-
         if !allSelectedStaff.isEmpty {
             availableStaffs.append(contentsOf: allSelectedStaff)
         }
 
         hasAvailableAircraft = !availableAircraft.isEmpty
+        
+        if let aircraft = selectedAircraft {
+            availableAircraft.append(aircraft)
+        }
     }
 }

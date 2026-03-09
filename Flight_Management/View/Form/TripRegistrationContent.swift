@@ -40,8 +40,8 @@ struct TripRegistrationContent: View {
                     datePicker
                 }
 
-                if !viewModel.availableStaffs.isEmpty
-                    && viewModel.hasAvailableAircraft
+                if (viewModel.selectedAircraft != nil && !viewModel.isEditMode)
+                    || viewModel.hasAvailableAircraft
                 {
                     aircraftPicker
                 } else if viewModel.selectedRoute != nil
@@ -52,7 +52,7 @@ struct TripRegistrationContent: View {
                     noAircraftAvailableInfo
                 }
 
-                if viewModel.isEditMode && viewModel.selectedAircraft != nil {
+                if viewModel.isEditMode {
                     crewSelectors
                 } else if viewModel.selectedAircraft != nil {
                     crewAutoAssignInfo
