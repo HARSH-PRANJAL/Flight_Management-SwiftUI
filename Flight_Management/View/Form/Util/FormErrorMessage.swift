@@ -6,7 +6,8 @@ struct FormErrorMessage: View {
     var body: some View {
         if let error = error {
             Text(error)
-                .font(.caption)
+                .font(.callout)
+                .fontWeight(.medium)
                 .foregroundStyle(Color(.systemRed))
                 .padding(.leading, 4)
         }
