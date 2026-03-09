@@ -4,7 +4,6 @@ import UIKit
 extension Color {
     
     static let scheduled    = Color("StatusScheduled")
-    static let onTime       = Color("StatusOnTime")
     static let delayed      = Color("StatusDelayed")
     static let cancelled    = Color("StatusCancelled")
     static let completed    = Color("StatusCompleted")
@@ -13,7 +12,7 @@ extension Color {
     static func tripStatusColor(for status: TripStatus) -> Color {
         switch status {
         case .scheduled:  return .scheduled
-        case .onTime:     return .onTime
+        case .onTime:     return .available
         case .delayed:    return .delayed
         case .cancelled:  return .cancelled
         case .completed:  return .completed
