@@ -17,13 +17,15 @@ struct AircraftDetailScreen: View {
     @Binding var isScheduledTripsPresented: Bool
     @State private var showDecommissionAlert: Bool = false
 
-    let formatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.minimumFractionDigits = 0
-        f.maximumFractionDigits = 1
-        f.minimumIntegerDigits = 1
-        return f
-    }()
+    var tripHours: String {
+        let hours = aircraft.totalTripHours
+
+        if hours.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(Int(hours))
+        } else {
+            return String(format: "%.1f", hours)
+        }
+    }
 
     var tripString: String {
         if scheduledTrips.count > 1 {
@@ -125,9 +127,7 @@ extension AircraftDetailScreen {
                         }
                         CardView(
                             title: "Flying Hours",
-                            value: formatter.string(
-                                from: NSNumber(value: aircraft.totalTripHours)
-                            )?.appending(" hr") ?? "0 hr",
+                            value: "\(tripHours) hr",
                             icon: "clock",
                             iconColor: Color(.systemBrown)
                         )
