@@ -8,10 +8,6 @@ struct DonutChartView: View {
     @State private var selectedCategory: String? = nil
     @State private var selectedAngle: Double? = nil
 
-    var total: Int {
-        data.reduce(0) { $0 + $1.count }
-    }
-
     var body: some View {
         if total == 0 {
             VStack(spacing: 12) {
@@ -36,7 +32,10 @@ struct DonutChartView: View {
             .padding(.horizontal)
         }
     }
+}
 
+// MARK: UI
+extension DonutChartView {
     private var chartView: some View {
         Chart(data.indices, id: \.self) { index in
             let item = data[index]
@@ -44,7 +43,7 @@ struct DonutChartView: View {
             SectorMark(
                 angle: .value("Count", item.count),
                 innerRadius: .ratio(0.618),
-                angularInset: 2
+                angularInset: 1
             )
             .foregroundStyle(item.color)
             .cornerRadius(5)
@@ -193,11 +192,26 @@ struct DonutChartView: View {
             }
         }
     }
+}
 
+// MARK: Util
+extension DonutChartView {
     private func percentage(for count: Int) -> String {
         guard total > 0 else { return "0" }
         let percent = Double(count) / Double(total) * 100
-        return String(format: "%.0f", percent)
+        return percentageValues(value: percent)
+    }
+
+    var total: Int {
+        data.reduce(0) { $0 + $1.count }
+    }
+
+    private func percentageValues(value: Double) -> String {
+        if value.truncatingRemainder(dividingBy: 1) == 0 {
+            return String(Int(value))
+        } else {
+            return String(format: "%.1f", value)
+        }
     }
 }
 
