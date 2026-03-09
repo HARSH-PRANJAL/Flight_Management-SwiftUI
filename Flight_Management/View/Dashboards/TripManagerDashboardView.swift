@@ -68,7 +68,7 @@ struct TripManagerDashboardView: View {
                             }
                         }
 
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrips, noDataMessage: "No upcoming flights in next 24 hours")
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrips, noDataMessage: "No upcoming trips in next 24 hours")
                             .padding(.horizontal, -16)
                     }
 
@@ -110,13 +110,13 @@ extension TripManagerDashboardView {
             CardView(
                 title: "On-Time Performance",
                 value: "\(onTimePercentage)%",
-                subtitle: "Flights today",
+                subtitle: "Trips today",
                 icon: "clock.fill",
                 iconColor: Color(.systemGreen).opacity(0.75)
             )
 
             CardView(
-                title: "Delayed Flights",
+                title: "Delayed Trips",
                 value: "\(delayedCount)",
                 subtitle: "Today",
                 icon: "airplane.departure",

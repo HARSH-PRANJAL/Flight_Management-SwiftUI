@@ -2,7 +2,7 @@ import SwiftUI
 
 struct UpcomingTripsScrollView: View {
     let trips: [Trip]
-    var noDataMessage: String = "No upcoming flights in next 6 hours"
+    var noDataMessage: String = "No upcoming trips in next 6 hours"
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {

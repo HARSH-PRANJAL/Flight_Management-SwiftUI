@@ -24,7 +24,7 @@ final class TripRegistrationFormViewModel {
     var originalSnapshot: Snapshot?
 
     struct Snapshot: Equatable {
-        let flightNumber: String
+        let tripNumber: String
         let scheduledDeparture: Date
         let selectedRouteId: UUID?
         let selectedAircraftId: UUID?
@@ -61,7 +61,7 @@ final class TripRegistrationFormViewModel {
 
     func currentSnapshot() -> Snapshot {
         Snapshot(
-            flightNumber: tripNumber,
+            tripNumber: tripNumber,
             scheduledDeparture: scheduledDeparture,
             selectedRouteId: selectedRoute?.id,
             selectedAircraftId: selectedAircraft?.id,

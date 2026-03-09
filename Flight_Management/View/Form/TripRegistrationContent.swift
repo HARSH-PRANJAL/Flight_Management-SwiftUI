@@ -239,7 +239,7 @@ extension TripRegistrationContent {
             FormInputField(
                 label: "Trip Number",
                 placeholder: "Trip-001",
-                focus: .flightNumber,
+                focus: .tripNumber,
                 hasError: viewModel.fieldErrors[.tripNumber] != nil,
                 maxLength: 50,
                 allowedCharacter: { $0.isLetter || $0.isNumber || $0 == "-" },

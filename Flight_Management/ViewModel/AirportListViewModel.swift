@@ -1,5 +1,3 @@
-// Flight_Management/ViewModel/AirportListViewModel.swift
-
 import Foundation
 import SwiftData
 import SwiftUI

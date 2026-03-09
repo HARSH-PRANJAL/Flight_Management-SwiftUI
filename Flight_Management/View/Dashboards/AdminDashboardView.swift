@@ -41,7 +41,7 @@ struct AdminDashboardView: View {
                         )
 
                         CardView(
-                            title: "Delayed Flights",
+                            title: "Delayed Trips",
                             value: "\(delayedCount)",
                             subtitle: "Today",
                             icon: "airplane.departure",

@@ -50,7 +50,7 @@ struct StaffListView: View {
             }
             .searchable(
                 text: $searchText,
-                prompt: "Enter name, or current flight number"
+                prompt: "Enter name, or current trip number"
             )
             .searchToolbarBehavior(.minimize)
             .task {

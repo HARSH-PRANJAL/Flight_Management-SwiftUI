@@ -159,7 +159,7 @@ extension AircraftDetailScreen {
         VStack(alignment: .leading, spacing: 16) {
             if let trip = aircraft.currentTrip {
                 ClickableSection(
-                    title: "Current Flight",
+                    title: "Current Trip",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
                     row: { ListRow(trip: trip) },
@@ -168,7 +168,7 @@ extension AircraftDetailScreen {
             }
             if let trip = aircraft.nextScheduledTrip {
                 ClickableSection(
-                    title: "Next Flight",
+                    title: "Next Trip",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
                     row: { ListRow(trip: trip) },
@@ -177,7 +177,7 @@ extension AircraftDetailScreen {
             }
             if let trip = aircraft.lastCompletedTrip {
                 ClickableSection(
-                    title: "Last Flight",
+                    title: "Last Trip",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
                     row: { ListRow(trip: trip) },

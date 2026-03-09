@@ -1,5 +1,3 @@
-// Flight_Management/ViewModel/AirportRegistrationFormViewModel.swift
-
 import SwiftUI
 import SwiftData
 

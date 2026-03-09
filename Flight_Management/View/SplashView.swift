@@ -19,7 +19,7 @@ struct SplashView: View {
                     VStack(spacing: 16){
                         LottieView(filename: "Airplane")
                             .frame(width: 300, height: 300)
-                        Text("Flight Manager")
+                        Text("Trip Manager")
                             .font(.system(size: 34, weight: .bold))
                             .foregroundColor(.primary)
                     }

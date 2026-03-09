@@ -99,7 +99,7 @@ enum FormFocus: Hashable {
     case code, city, country
     case routeName, journeyTime
     case password, confirmPassword
-    case flightNumber
+    case tripNumber
 }
 
 enum NotificationType: Equatable {
