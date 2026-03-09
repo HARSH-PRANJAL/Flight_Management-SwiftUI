@@ -5,6 +5,7 @@ struct AircraftDetailScreen: View {
 
     @Environment(\.modelContext) var context
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.dismiss) var dismiss
 
     let aircraft: Aircraft
     var isManager: Bool = false
@@ -61,6 +62,7 @@ struct AircraftDetailScreen: View {
 
                 Button("Decommission", role: .destructive) {
                     decommissionAircraft()
+                    dismiss()
                 }
 
                 Button("Cancel", role: .cancel) {}
