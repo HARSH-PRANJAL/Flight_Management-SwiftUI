@@ -55,6 +55,8 @@ struct AircraftDetailScreen: View {
                 ToolbarItem(placement: .principal) {
                     if !aircraft.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
+                    } else {
+                        Button(""){}
                     }
                 }
             }
