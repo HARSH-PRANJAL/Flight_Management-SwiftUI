@@ -48,6 +48,7 @@ struct AircraftSelectorView: View {
                 text: $searchText,
                 prompt: "Search by registration or type"
             )
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Select Aircraft")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -134,9 +135,9 @@ extension AircraftSelectorView {
 
     var fallbackBackground: some View {
         ContentUnavailableView {
-            Label("No Aircraft", systemImage: "airplane")
+            Label("", systemImage: "airplane")
         } description: {
-            Text("All aircraft have been assigned.")
+            Text("There is no available aircraft.")
         }
     }
 }

@@ -34,6 +34,7 @@ struct StaffSelectorView: View {
             staffList
                 .padding(.top, -10)
                 .searchable(text: $searchText, prompt: "Search by name")
+                .scrollDismissesKeyboard(.immediately)
                 .navigationTitle(navigationTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -116,9 +117,9 @@ extension StaffSelectorView {
     
     var fallbackBackground: some View {
         ContentUnavailableView {
-            Label("No Staff", systemImage: "person.2")
+            Label("", systemImage: "person.2")
         } description: {
-            Text("All staff have been assigned.")
+            Text("There is no available \(role.rawValue.lowercased()).")
         }
     }
 
