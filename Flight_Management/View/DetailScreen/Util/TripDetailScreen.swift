@@ -149,6 +149,7 @@ extension TripDetailScreen {
                 .padding(12)
             }
             .buttonStyle(PressableRowStyle())
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -164,7 +165,17 @@ extension TripDetailScreen {
                 .fontWeight(.semibold)
                 .padding(.bottom, 4)
 
-            Text(trip.route.name)
+            let origin =
+                trip.route.nodes.first(where: { $0.sequence == 1 })?.airport
+                .code
+                ?? "_"
+            let dest =
+                trip.route.nodes.last(where: {
+                    $0.sequence == trip.route.nodes.count
+                })?
+                .airport.code
+                ?? "_"
+            Text("\(origin) - \(dest)")
                 .font(.subheadline)
                 .foregroundStyle(Color(.secondaryLabel))
                 .padding(.bottom, 12)
@@ -200,17 +211,7 @@ extension TripDetailScreen {
                     )
                 }
 
-                let origin =
-                    trip.route.nodes.first(where: { $0.sequence == 1 })?.airport
-                    .code
-                    ?? "_"
-                let dest =
-                    trip.route.nodes.last(where: {
-                        $0.sequence == trip.route.nodes.count
-                    })?
-                    .airport.code
-                    ?? "_"
-                DetailRowView(label: "Route", value: "\(origin) → \(dest)")
+                DetailRowView(label: "Route", value: trip.route.name)
             }
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -247,17 +248,14 @@ extension TripDetailScreen {
                         }
                         .padding(12)
                     }
+                    .buttonStyle(PressableRowStyle())
                     if staff.id != trip.staffs.last?.id {
                         Divider()
                             .padding(.leading, 16)
                     }
                 }
             }
-            .buttonStyle(PressableRowStyle())
-            .background(
-                Color(.tertiarySystemBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(.bottom, 16)
     }

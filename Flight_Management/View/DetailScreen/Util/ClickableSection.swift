@@ -45,6 +45,7 @@ struct ClickableSection<Row: View, Destination: View>: View {
                 .padding(12)
             }
             .buttonStyle(PressableRowStyle())
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 }
@@ -67,7 +68,7 @@ struct PressableRowStyle: ButtonStyle {
 
         return configuration.label
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                Rectangle()
                     .fill(configuration.isPressed ? pressedColor : backgroundColor)
             )
             .animation(.easeOut(duration: 0.02),
