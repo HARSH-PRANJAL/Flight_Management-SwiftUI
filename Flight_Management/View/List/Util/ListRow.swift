@@ -145,15 +145,26 @@ extension ListRow {
             showFallbackImage: true
         )
     }
-    
+
+    init(tripStaff staff: Staff) {
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: staff.designation.rawValue,
+            metadata: nil,
+            status: .from(staffStatus: staff.currentStatus),
+            showFallbackImage: true
+        )
+    }
+
     init(airport: Airport) {
-            self.init(
-                profileImage: nil,
-                title: airport.name,
-                subtitle: airport.code,
-                metadata: airport.locationLabel
-            )
-        }
+        self.init(
+            profileImage: nil,
+            title: airport.name,
+            subtitle: airport.code,
+            metadata: airport.locationLabel
+        )
+    }
 
     init(trip: Trip) {
         let origin =
@@ -164,7 +175,7 @@ extension ListRow {
                 $0.sequence == trip.route.nodes.count
             })?.airport.code ?? "_"
         let meta =
-            "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
+            "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "dd MMM, HH:mm"))"
         self.init(
             profileImage: nil,
             title: trip.tripNumber,

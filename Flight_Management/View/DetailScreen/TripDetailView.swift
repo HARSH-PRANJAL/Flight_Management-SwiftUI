@@ -28,7 +28,8 @@ struct TripDetailView: View {
             TripDetailScreen(
                 trip: trip,
                 onCancelTapped: isTripManager
-                    ? { showCancellationAlert = true } : nil
+                    ? { showCancellationAlert = true } : nil,
+                isTripManager: isTripManager
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .tabBar)
