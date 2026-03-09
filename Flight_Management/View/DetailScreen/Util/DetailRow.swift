@@ -7,8 +7,10 @@ struct DetailRowView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(label)
-                .foregroundStyle(Color(.systemGray))
+                .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .trailing)
                 .minimumScaleFactor(0.7)
                 .lineLimit(5)
             Text(value)
