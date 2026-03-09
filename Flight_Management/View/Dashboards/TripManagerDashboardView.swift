@@ -68,7 +68,7 @@ struct TripManagerDashboardView: View {
                             }
                         }
 
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrips)
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrips, noDataMessage: "No upcoming flights in next 24 hours")
                             .padding(.horizontal, -16)
                     }
 

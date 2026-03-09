@@ -161,7 +161,7 @@ extension AdminDashboardView {
         let total = todayTrips.filter {
             $0.currentStatus == .onTime || $0.currentStatus == .delayed
         }.count
-        guard total > 0 else { return 100 }
+        guard total > 0 else { return 0 }
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         return Int((Double(onTime) / Double(total)) * 100)
     }
