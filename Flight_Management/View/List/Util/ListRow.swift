@@ -132,7 +132,7 @@ extension ListRow {
 
     init(replacementStaff staff: Staff) {
         let meta = String(
-            format: "%.0f hr logged in \(staff.completedTrips.count) trips",
+            format: "%.0fhr logged in \(staff.completedTrips.count) trips",
             staff.totalTripHours
         )
 
@@ -146,6 +146,26 @@ extension ListRow {
         )
     }
 
+    init(tripStaff staff: Staff) {
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: staff.designation.rawValue,
+            metadata: nil,
+            status: .from(staffStatus: staff.currentStatus),
+            showFallbackImage: true
+        )
+    }
+
+    init(airport: Airport) {
+        self.init(
+            profileImage: nil,
+            title: airport.name,
+            subtitle: airport.code,
+            metadata: airport.locationLabel
+        )
+    }
+
     init(trip: Trip) {
         let origin =
             trip.route.nodes.first(where: { $0.sequence == 1 })?.airport.code
@@ -155,7 +175,7 @@ extension ListRow {
                 $0.sequence == trip.route.nodes.count
             })?.airport.code ?? "_"
         let meta =
-            "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "HH:mm"))"
+            "\(origin) → \(dest) • \(formatDate(trip.estimatedArrivalTime, format: "dd MMM, HH:mm"))"
         self.init(
             profileImage: nil,
             title: trip.tripNumber,

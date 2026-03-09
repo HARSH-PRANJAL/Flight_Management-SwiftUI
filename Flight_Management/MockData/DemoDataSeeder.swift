@@ -20,6 +20,10 @@ final class DemoDataSeeder {
 
     private var modelContext: ModelContext?
 
+    /// Cached per‑trip planned departure delay in minutes (for simulation only).
+    /// Ensures delays are stable across timer ticks.
+    private var tripDelayMinutesCache: [UUID: Int] = [:]
+
     private var allTrips: [Trip] {
         guard let modelContext else { return [] }
         let descriptor = FetchDescriptor<Trip>(
@@ -481,14 +485,25 @@ extension DemoDataSeeder {
         do {
             for trip in allTrips {
                 if trip.nodeStatuses.isEmpty {
-                    // Trip hasn't started yet — depart on time
-                    if currentTime >= trip.scheduledDepartureTime {
-                        trip.startTrip(
-                            departureTime: trip.scheduledDepartureTime
-                        )
+                    // Trip hasn't started yet — depart at (possibly delayed) time.
+                    let delayMinutes = plannedDelayMinutes(for: trip)
+                    let plannedActualDeparture = trip.scheduledDepartureTime
+                        .addingTimeInterval(TimeInterval(delayMinutes * 60))
+
+                    if currentTime >= plannedActualDeparture {
+                        trip.startTrip(departureTime: plannedActualDeparture)
                     }
                 } else {
                     progressTrip(trip, currentTime: currentTime)
+                }
+
+                // If this trip is now delayed, propagate effects to dependent trips.
+                if trip.totalDelayedMinutes > 0 {
+                    CrewScheduler.handleDelayPropagation(
+                        delayedTrip: trip,
+                        in: context,
+                        now: currentTime
+                    )
                 }
             }
 
@@ -914,6 +929,36 @@ extension DemoDataSeeder {
         }
 
         return trips
+    }
+}
+
+extension DemoDataSeeder {
+
+    /// Returns a stable, pseudo‑random planned departure delay (in minutes)
+    /// for the given trip. Most trips are on‑time; a smaller subset get
+    /// moderate or heavy delays.
+    private func plannedDelayMinutes(for trip: Trip) -> Int {
+        if let existing = tripDelayMinutesCache[trip.id] {
+            return existing
+        }
+
+        // Basic distribution:
+        //  - 70%: on-time (0 min)
+        //  - 20%: small delay (3–5 min)
+        //  - 10%: larger delay (5–15 min)
+        let roll = Int.random(in: 0..<100)
+        let delay: Int
+
+        if roll < 70 {
+            delay = 0
+        } else if roll < 90 {
+            delay = Int.random(in: 3...5)
+        } else {
+            delay = Int.random(in: 5...15)
+        }
+
+        tripDelayMinutesCache[trip.id] = delay
+        return delay
     }
 }
 

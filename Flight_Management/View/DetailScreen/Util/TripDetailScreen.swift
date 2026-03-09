@@ -2,22 +2,22 @@ import SwiftData
 import SwiftUI
 
 struct TripDetailScreen: View {
-    let trip: Trip
-
     @Environment(\.modelContext) var modelContext
     @Environment(NotificationManager.self) var notification
     @Environment(\.dismiss) var dismiss
 
     @State private var isEditPresented = false
 
+    let trip: Trip
     var onCancelTapped: (() -> Void)? = nil
+    var isTripManager: Bool = false
 
     var canCancelTrip: Bool {
         !trip.isCancelled && !trip.isCompleted && onCancelTapped != nil
     }
 
     var canEditTrip: Bool {
-        trip.currentStatus == .scheduled
+        trip.currentStatus == .scheduled && isTripManager
     }
 
     var tripHasStarted: Bool {
@@ -52,6 +52,10 @@ struct TripDetailScreen: View {
             }
         }
     }
+}
+
+// MARK: UI
+extension TripDetailScreen {
 
     var detailView: some View {
         ScrollViewReader { proxy in
@@ -215,15 +219,11 @@ struct TripDetailScreen: View {
         .background(cardTheme())
     }
 
-}
-
-extension TripDetailScreen {
-
     @ViewBuilder
     var assignedStaffList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label {
-                Text("Flight Crew")
+                Text("Crew")
                     .font(.subheadline.weight(.semibold))
             } icon: {
                 Image(systemName: "person.2")
@@ -232,13 +232,13 @@ extension TripDetailScreen {
             }
 
             VStack(spacing: 0) {
-                ForEach(trip.staffs, id: \.id) { staff in
+                ForEach(crew, id: \.id) { staff in
 
                     NavigationLink(
                         destination: StaffDetailView(staff: staff)
                     ) {
                         HStack {
-                            ListRow(staff: staff)
+                            ListRow(tripStaff: staff)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.subheadline.smallCaps())
@@ -260,5 +260,26 @@ extension TripDetailScreen {
             )
         }
         .padding(.bottom, 16)
+    }
+}
+
+// MARK: Util
+extension TripDetailScreen {
+    private var crew: [Staff] {
+        return trip.staffs.sorted { staff1, staff2 in
+            func priority(for designation: StaffRole) -> Int {
+                switch designation {
+                case .pilot:
+                    return 0
+                case .coPilot:
+                    return 1
+                case .cabinCrew:
+                    return 2
+                }
+            }
+
+            return priority(for: staff1.designation)
+                < priority(for: staff2.designation)
+        }
     }
 }

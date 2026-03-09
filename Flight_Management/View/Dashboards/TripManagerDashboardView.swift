@@ -49,17 +49,16 @@ struct TripManagerDashboardView: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Upcoming Trips")
-                            .font(.headline)
-                        Text("Next 24 hours")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrips)
-                            .padding(.horizontal, -16)
-
-                        if filteredUpcomingTrips.count > 3 {
-                            HStack {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Upcoming Trips")
+                                    .font(.headline)
+                                Text("Next 24 hours")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if filteredUpcomingTrips.count > 3 {
                                 Spacer()
                                 Button("View more") {
                                     showingTripList = true
@@ -68,6 +67,9 @@ struct TripManagerDashboardView: View {
                                 .tint(Color(.systemBlue))
                             }
                         }
+
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrips, noDataMessage: "No upcoming trips in next 24 hours")
+                            .padding(.horizontal, -16)
                     }
 
                     Spacer(minLength: 24)
@@ -108,13 +110,13 @@ extension TripManagerDashboardView {
             CardView(
                 title: "On-Time Performance",
                 value: "\(onTimePercentage)%",
-                subtitle: "Flights today",
+                subtitle: "Trips today",
                 icon: "clock.fill",
                 iconColor: Color(.systemGreen).opacity(0.75)
             )
 
             CardView(
-                title: "Delayed Flights",
+                title: "Delayed Trips",
                 value: "\(delayedCount)",
                 subtitle: "Today",
                 icon: "airplane.departure",
@@ -126,9 +128,9 @@ extension TripManagerDashboardView {
 
 // MARK: - Data for display
 extension TripManagerDashboardView {
-    
+
     private var filteredUpcomingTrips: [Trip] {
-        return upcomingTrips.filter{
+        return upcomingTrips.filter {
             $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
         }
     }

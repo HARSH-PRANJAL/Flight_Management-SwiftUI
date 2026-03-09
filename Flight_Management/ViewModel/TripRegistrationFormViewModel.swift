@@ -24,7 +24,7 @@ final class TripRegistrationFormViewModel {
     var originalSnapshot: Snapshot?
 
     struct Snapshot: Equatable {
-        let flightNumber: String
+        let tripNumber: String
         let scheduledDeparture: Date
         let selectedRouteId: UUID?
         let selectedAircraftId: UUID?
@@ -51,13 +51,17 @@ final class TripRegistrationFormViewModel {
         self.selectedRoute = trip.route
         self.selectedAircraft = trip.aircraft
         self.selectedPilots = trip.staffs.filter { $0.designation == .pilot }
-        self.selectedCoPilots = trip.staffs.filter { $0.designation == .coPilot }
-        self.selectedCrewMembers = trip.staffs.filter { $0.designation == .cabinCrew }
+        self.selectedCoPilots = trip.staffs.filter {
+            $0.designation == .coPilot
+        }
+        self.selectedCrewMembers = trip.staffs.filter {
+            $0.designation == .cabinCrew
+        }
     }
 
     func currentSnapshot() -> Snapshot {
         Snapshot(
-            flightNumber: tripNumber,
+            tripNumber: tripNumber,
             scheduledDeparture: scheduledDeparture,
             selectedRouteId: selectedRoute?.id,
             selectedAircraftId: selectedAircraft?.id,
@@ -67,31 +71,19 @@ final class TripRegistrationFormViewModel {
         )
     }
 
-    func addStaff(_ staff: Staff, role: StaffRole) {
-        switch role {
-        case .pilot where !selectedPilots.contains(where: { $0.id == staff.id }):
-            selectedPilots.append(staff)
-
-        case .coPilot where !selectedCoPilots.contains(where: { $0.id == staff.id }):
-            selectedCoPilots.append(staff)
-
-        case .cabinCrew where !selectedCrewMembers.contains(where: { $0.id == staff.id }):
-            selectedCrewMembers.append(staff)
-
-        default:
-            break
-        }
+    func resetAircraftAndStaff() {
+        selectedAircraft = nil
+        fieldErrors.removeValue(forKey: .aircraft)
+        resetCrew()
     }
 
-    func removeStaff(_ staff: Staff, role: StaffRole) {
-        switch role {
-        case .pilot:
-            selectedPilots.removeAll { $0.id == staff.id }
-        case .coPilot:
-            selectedCoPilots.removeAll { $0.id == staff.id }
-        case .cabinCrew:
-            selectedCrewMembers.removeAll { $0.id == staff.id }
-        }
+    func resetCrew() {
+        selectedPilots = []
+        selectedCoPilots = []
+        selectedCrewMembers = []
+        fieldErrors.removeValue(forKey: .pilot)
+        fieldErrors.removeValue(forKey: .copilot)
+        fieldErrors.removeValue(forKey: .crew)
     }
 
     var allSelectedStaff: [Staff] {
@@ -100,11 +92,7 @@ final class TripRegistrationFormViewModel {
 
     func autoAssignCrew() {
         guard let aircraft = selectedAircraft else { return }
-
-        selectedPilots = []
-        selectedCoPilots = []
-        selectedCrewMembers = []
-        fieldErrors.removeValue(forKey: .staff)
+        resetCrew()
 
         for role in StaffRole.allCases {
             let required = aircraft.minimumStaffRequired[role, default: 0]
@@ -186,9 +174,9 @@ final class TripRegistrationFormViewModel {
 
         for (role, minReq) in minRequired where minReq > 0 {
             if (assignedCounts[role] ?? 0) < minReq {
-                fieldErrors[.staff] =
+                fieldErrors[FieldError.getFieldTypeFor(staffRole: role)] =
                     "Aircraft requires at least \(minReq) \(role.rawValue)."
-                valid = false
+                return false
             }
         }
 
@@ -201,7 +189,7 @@ extension TripRegistrationFormViewModel {
     func recomputeAvailability(
         staffs: [Staff],
         aircrafts: [Aircraft]
-    ) {
+    ) async {
         guard let route = selectedRoute else {
             availableStaffs = []
             availableStaffCountsByRole = [:]
@@ -239,6 +227,14 @@ extension TripRegistrationFormViewModel {
             )
         }
 
+        if !allSelectedStaff.isEmpty {
+            availableStaffs.append(contentsOf: allSelectedStaff)
+        }
+
         hasAvailableAircraft = !availableAircraft.isEmpty
+        
+        if let aircraft = selectedAircraft {
+            availableAircraft.append(aircraft)
+        }
     }
 }

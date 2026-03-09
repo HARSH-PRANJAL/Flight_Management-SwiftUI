@@ -51,6 +51,12 @@ struct AdminHome: View {
                         }
                 }
             }
+
+            Tab("Airports", systemImage: "airplane.landed") {
+                NavigationStack {
+                    AirportListView()
+                }
+            }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .sheet(isPresented: $isAddStaffPresented) {

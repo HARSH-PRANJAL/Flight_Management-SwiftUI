@@ -41,7 +41,7 @@ struct AdminDashboardView: View {
                         )
 
                         CardView(
-                            title: "Delayed Flights",
+                            title: "Delayed Trips",
                             value: "\(delayedCount)",
                             subtitle: "Today",
                             icon: "airplane.departure",
@@ -92,20 +92,18 @@ struct AdminDashboardView: View {
                             cardTheme()
                         )
                     }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        VStack(alignment: .leading){
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 6 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
 
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
-                            .padding(.horizontal, -16)
-                        if filteredUpcomingTrip.count > 3 {
-                            HStack {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Upcoming Trips")
+                                    .font(.headline)
+                                Text("Next 6 hours")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if filteredUpcomingTrip.count > 3 {
                                 Spacer()
                                 Button("View more") {
                                     showingTripList = true
@@ -114,6 +112,9 @@ struct AdminDashboardView: View {
                                 .tint(Color(.systemBlue))
                             }
                         }
+
+                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
+                            .padding(.horizontal, -16)
                     }
 
                     Spacer(minLength: 24)
@@ -149,9 +150,9 @@ struct AdminDashboardView: View {
 
 // MARK: - Data for display
 extension AdminDashboardView {
-    
+
     private var filteredUpcomingTrip: [Trip] {
-        return upcomingTrips.filter{
+        return upcomingTrips.filter {
             $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
         }
     }
@@ -160,7 +161,7 @@ extension AdminDashboardView {
         let total = todayTrips.filter {
             $0.currentStatus == .onTime || $0.currentStatus == .delayed
         }.count
-        guard total > 0 else { return 100 }
+        guard total > 0 else { return 0 }
         let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
         return Int((Double(onTime) / Double(total)) * 100)
     }

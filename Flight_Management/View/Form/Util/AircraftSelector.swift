@@ -136,7 +136,7 @@ extension AircraftSelectorView {
         ContentUnavailableView {
             Label("No Aircraft", systemImage: "airplane")
         } description: {
-            Text("Add aircraft to get started.")
+            Text("All aircraft have been assigned.")
         }
     }
 }

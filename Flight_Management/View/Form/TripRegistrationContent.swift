@@ -23,9 +23,9 @@ struct TripRegistrationContent: View {
         sort: [SortDescriptor(\.name, comparator: .localizedStandard)]
     )
     private var routes: [Route]
-    @Query(filter: #Predicate<Aircraft> { !$0.isDecommissioned })
+    @Query(filter: #Predicate<Aircraft> { !$0.isDecommissioned }, sort: \.type)
     private var aircrafts: [Aircraft]
-    @Query(filter: #Predicate<Staff> { !$0.isMarkedUnavailable })
+    @Query(filter: #Predicate<Staff> { !$0.isMarkedUnavailable }, sort: \.name)
     private var staffs: [Staff]
 
     @FocusState private var focusedField: FormFocus?
@@ -40,8 +40,8 @@ struct TripRegistrationContent: View {
                     datePicker
                 }
 
-                if !viewModel.availableStaffs.isEmpty
-                    && viewModel.hasAvailableAircraft
+                if (viewModel.selectedAircraft != nil && !viewModel.isEditMode)
+                    || viewModel.hasAvailableAircraft
                 {
                     aircraftPicker
                 } else if viewModel.selectedRoute != nil
@@ -57,8 +57,6 @@ struct TripRegistrationContent: View {
                 } else if viewModel.selectedAircraft != nil {
                     crewAutoAssignInfo
                 }
-
-                FormErrorMessage(error: viewModel.fieldErrors[.staff])
             }
             .padding(.horizontal)
             .padding(.top)
@@ -91,17 +89,29 @@ struct TripRegistrationContent: View {
         }
         .onChange(of: viewModel.selectedRoute) { _, _ in
             viewModel.fieldErrors.removeValue(forKey: .route)
-            viewModel.recomputeAvailability(
-                staffs: staffs,
-                aircrafts: aircrafts
-            )
+            viewModel.resetAircraftAndStaff()
+            if viewModel.scheduledDeparture
+                != viewModel.originalSnapshot?.scheduledDeparture
+            {
+                Task {
+                    await viewModel.recomputeAvailability(
+                        staffs: staffs,
+                        aircrafts: aircrafts
+                    )
+                }
+            }
         }
-        .onChange(of: viewModel.scheduledDeparture) { _, _ in
+        .onChange(of: viewModel.scheduledDeparture) { _, newVal in
             viewModel.fieldErrors.removeValue(forKey: .date)
-            viewModel.recomputeAvailability(
-                staffs: staffs,
-                aircrafts: aircrafts
-            )
+            viewModel.resetAircraftAndStaff()
+            if newVal != viewModel.originalSnapshot?.scheduledDeparture {
+                Task {
+                    await viewModel.recomputeAvailability(
+                        staffs: staffs,
+                        aircrafts: aircrafts
+                    )
+                }
+            }
         }
         .toolbar {
             closeToolbarButton
@@ -134,7 +144,7 @@ struct TripRegistrationContent: View {
             )
         }
         .task {
-            viewModel.recomputeAvailability(
+            await viewModel.recomputeAvailability(
                 staffs: staffs,
                 aircrafts: aircrafts
             )
@@ -229,7 +239,7 @@ extension TripRegistrationContent {
             FormInputField(
                 label: "Trip Number",
                 placeholder: "Trip-001",
-                focus: .flightNumber,
+                focus: .tripNumber,
                 hasError: viewModel.fieldErrors[.tripNumber] != nil,
                 maxLength: 50,
                 allowedCharacter: { $0.isLetter || $0.isNumber || $0 == "-" },
@@ -301,7 +311,12 @@ extension TripRegistrationContent {
         }
     }
 
+    @ViewBuilder
     private var crewSelectors: some View {
+        let crewError =
+            viewModel.fieldErrors[.pilot] ?? viewModel.fieldErrors[.copilot]
+            ?? viewModel.fieldErrors[.crew]
+
         VStack(alignment: .leading, spacing: 4) {
             Text("Crew").formFieldLabel()
             HStack(spacing: 12) {
@@ -321,13 +336,17 @@ extension TripRegistrationContent {
                     crewButton(.cabinCrew, "Crew")
                 }
             }
+
+            FormErrorMessage(error: crewError)
         }
     }
 
     private func crewButton(_ role: StaffRole, _ title: String) -> some View {
         Button {
             activeSheet = .staff(role: role)
-            viewModel.fieldErrors.removeValue(forKey: .staff)
+            viewModel.fieldErrors.removeValue(
+                forKey: FieldError.getFieldTypeFor(staffRole: role)
+            )
         } label: {
             pickerLabel(
                 Self.crewLabel(
@@ -335,7 +354,9 @@ extension TripRegistrationContent {
                     emptyTitle: title
                 ),
                 isEmpty: selectedStaff(for: role).isEmpty,
-                hasError: viewModel.fieldErrors[.staff] != nil
+                hasError: viewModel.fieldErrors[
+                    FieldError.getFieldTypeFor(staffRole: role)
+                ] != nil
             )
             .lineLimit(1)
         }
@@ -403,7 +424,8 @@ extension TripRegistrationContent {
 
         let descriptor = FetchDescriptor<Trip>(
             predicate: #Predicate<Trip> {
-                $0.tripNumberSearchKey == tripNumber && (id == nil || id! != $0.id)
+                $0.tripNumberSearchKey == tripNumber
+                    && (id == nil || id! != $0.id)
             }
         )
 

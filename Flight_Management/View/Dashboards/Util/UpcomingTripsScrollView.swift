@@ -2,6 +2,7 @@ import SwiftUI
 
 struct UpcomingTripsScrollView: View {
     let trips: [Trip]
+    var noDataMessage: String = "No upcoming trips in next 6 hours"
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -25,7 +26,7 @@ struct UpcomingTripsScrollView: View {
                     .padding(.bottom, 8)
                 }
                 if trips.isEmpty {
-                    Text("No upcoming flights in next 6 hours")
+                    Text(noDataMessage)
                         .foregroundColor(.secondary)
                         .padding()
                 }
