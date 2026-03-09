@@ -139,7 +139,7 @@ extension TripDetailScreen {
                 )
             ) {
                 HStack {
-                    ListRow(aircraft: trip.aircraft)
+                    ListRow(tripAircraft: trip.aircraft)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.subheadline.smallCaps())
@@ -193,7 +193,7 @@ extension TripDetailScreen {
                 DetailRowView(
                     label: "Departure",
                     value: formatDate(
-                        trip.scheduledDepartureTime,
+                        trip.actualDepartureTime ?? trip.scheduledDepartureTime,
                         format: "dd MMM yyyy, HH:mm"
                     )
                 )

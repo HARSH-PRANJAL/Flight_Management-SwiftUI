@@ -106,6 +106,33 @@ extension ListRow {
         )
     }
 
+    init(replacementStaff staff: Staff) {
+        let meta = String(
+            format: "%.0fhr logged in \(staff.completedTrips.count) trips",
+            staff.totalTripHours
+        )
+
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: nil,
+            metadata: meta,
+            status: nil,
+            showFallbackImage: true
+        )
+    }
+
+    init(tripStaff staff: Staff) {
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: staff.designation.rawValue,
+            metadata: nil,
+            status: nil,
+            showFallbackImage: true
+        )
+    }
+    
     init(aircraft: Aircraft) {
         let meta =
             "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
@@ -129,31 +156,16 @@ extension ListRow {
             status: nil
         )
     }
-
-    init(replacementStaff staff: Staff) {
-        let meta = String(
-            format: "%.0fhr logged in \(staff.completedTrips.count) trips",
-            staff.totalTripHours
-        )
-
+    
+    init(tripAircraft aircraft: Aircraft) {
+        let meta =
+            "\(aircraft.seatingCapacity) seats"
         self.init(
-            profileImage: staff.avatarImage,
-            title: staff.name,
+            profileImage: nil,
+            title: aircraft.type,
             subtitle: nil,
             metadata: meta,
-            status: nil,
-            showFallbackImage: true
-        )
-    }
-
-    init(tripStaff staff: Staff) {
-        self.init(
-            profileImage: staff.avatarImage,
-            title: staff.name,
-            subtitle: staff.designation.rawValue,
-            metadata: nil,
-            status: .from(staffStatus: staff.currentStatus),
-            showFallbackImage: true
+            status: nil
         )
     }
 
@@ -161,7 +173,7 @@ extension ListRow {
         self.init(
             profileImage: nil,
             title: airport.name,
-            subtitle: airport.code,
+            subtitle: "Code: \(airport.code)",
             metadata: airport.locationLabel
         )
     }
