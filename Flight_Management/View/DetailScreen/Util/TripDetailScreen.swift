@@ -7,6 +7,7 @@ struct TripDetailScreen: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var isEditPresented = false
+    @State private var selectedTab: DetailAirportTab = .detail
 
     let trip: Trip
     var onCancelTapped: (() -> Void)? = nil
@@ -29,17 +30,17 @@ struct TripDetailScreen: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                detailView
+                switch selectedTab {
+                case .detail:
+                    detailView
+                case .legDetail:
+                    AirportStatusListView(trip: trip)
+                        .padding(.top, -20)
+                }
             }
             .toolbar {
-                if canEditTrip {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            isEditPresented = true
-                        } label: {
-                            Image(systemName: "pencil")
-                        }
-                    }
+                ToolbarItem(placement: .principal) {
+                    detailScreenPicker(selectedTab: $selectedTab)
                 }
             }
             .sheet(isPresented: $isEditPresented) {
@@ -116,10 +117,22 @@ extension TripDetailScreen {
                             .id("staffSection")
                     }
                 }
+                .padding(.top, 16)
+            }
+            .scrollIndicators(.hidden)
+            .padding(.horizontal, 16)
+            .toolbar {
+                if canEditTrip {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isEditPresented = true
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                    }
+                }
             }
         }
-        .scrollIndicators(.hidden)
-        .padding(.horizontal, 16)
     }
 
     var assignedAircraft: some View {
@@ -146,7 +159,7 @@ extension TripDetailScreen {
                         .foregroundStyle(Color(.tertiaryLabel))
                         .padding(.trailing, 12)
                 }
-                .padding(12)
+                .padding(16)
             }
             .buttonStyle(PressableRowStyle())
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -246,7 +259,7 @@ extension TripDetailScreen {
                                 .foregroundStyle(Color(.tertiaryLabel))
                                 .padding(.trailing, 12)
                         }
-                        .padding(12)
+                        .padding(16)
                     }
                     .buttonStyle(PressableRowStyle())
                     if staff.id != trip.staffs.last?.id {

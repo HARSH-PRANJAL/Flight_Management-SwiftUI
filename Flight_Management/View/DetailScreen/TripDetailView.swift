@@ -36,11 +36,6 @@ struct TripDetailView: View {
         }
         .navigationTitle("\(trip.tripNumber)")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("")
-            }
-        }
         .alert("", isPresented: $showCancellationAlert) {
             Button("Cancel Trip", role: .destructive) {
                 performCancellation()
