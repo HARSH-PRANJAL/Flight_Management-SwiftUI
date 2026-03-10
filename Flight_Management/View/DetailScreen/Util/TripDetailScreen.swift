@@ -38,6 +38,7 @@ struct TripDetailScreen: View {
                         .padding(.top, -20)
                 }
             }
+            .animation(.linear(duration: 0.5), value: selectedTab)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     detailScreenPicker(selectedTab: $selectedTab)
