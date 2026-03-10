@@ -203,21 +203,25 @@ extension TripDetailScreen {
                 .padding(.bottom, 12)
 
             VStack(alignment: .leading, spacing: 10) {
-                DetailRowView(
-                    label: "Departure",
-                    value: formatDate(
-                        trip.actualDepartureTime ?? trip.scheduledDepartureTime,
-                        format: "dd MMM yyyy, HH:mm"
+                if !trip.nodeStatuses.isEmpty || trip.currentStatus == .scheduled {
+                    DetailRowView(
+                        label: "Departure",
+                        value: formatDate(
+                            trip.actualDepartureTime ?? trip.scheduledDepartureTime,
+                            format: "dd MMM yyyy, HH:mm"
+                        )
                     )
-                )
-                DetailRowView(
-                    label: "Arrival",
-                    value: formatDate(
-                        trip.estimatedArrivalTime,
-                        format: "dd MMM yyyy, HH:mm"
+                }
+                if !trip.isCancelled {
+                    DetailRowView(
+                        label: trip.isCompleted ? "Arrival" : "Estimated Arrival",
+                        value: formatDate(
+                            trip.estimatedArrivalTime,
+                            format: "dd MMM yyyy, HH:mm"
+                        )
                     )
-                )
-                if trip.currentStatus == .delayed {
+                }
+                if trip.totalDelayedMinutes > 0 {
                     DetailRowView(
                         label: "Delayed by",
                         value: "\(trip.totalDelayedMinutes) m"

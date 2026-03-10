@@ -101,11 +101,12 @@ extension AirportStatusListView {
 
             let nodeStatus = statusByNodeId[node.id]
 
-            // An airport is covered when the trips is completed or arrived at that node
-            let isCovered =
-                trip.isCompleted
-                || (node.sequence < trip.currentAirportSequence
-                    && trip.activeNodeStatus?.actualDepartureTime != nil)
+            let hasDeparted: Bool =
+                isSource
+                ? nodeStatus?.actualDepartureTime != nil
+                : nodeStatus?.actualArrivalTime != nil
+
+            let isCovered = trip.isCompleted || hasDeparted
 
             if isCovered {
                 let delay =
