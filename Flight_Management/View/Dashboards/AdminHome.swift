@@ -37,7 +37,7 @@ struct AdminHome: View {
                 }
             }
 
-            Tab("Route", systemImage: "location") {
+            Tab("Route", systemImage: "map") {
                 NavigationStack {
                     RouteListView()
                         .toolbar {

@@ -31,15 +31,15 @@ struct TripManagerDashboardView: View {
                     VStack(alignment: .leading) {
                         Text("Daily Trip Status")
                             .font(.headline)
-                        Text("Overview of all trips today")
+                        Text("Overview of operated trips today")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     DonutChartView(
-                        data: tripsSummary,
-                        defaultTitle: "Total trips"
+                        data: tripPerformanceSummary,
+                        defaultTitle: "Total trips \noperated"
                     )
                     .frame(maxHeight: 500)
                     .frame(maxWidth: .infinity)
@@ -68,8 +68,11 @@ struct TripManagerDashboardView: View {
                             }
                         }
 
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrips, noDataMessage: "No upcoming trips in next 24 hours")
-                            .padding(.horizontal, -16)
+                        UpcomingTripsScrollView(
+                            trips: filteredUpcomingTrips,
+                            noDataMessage: "No upcoming trips in next 24 hours"
+                        )
+                        .padding(.horizontal, -16)
                     }
 
                     Spacer(minLength: 24)
@@ -106,23 +109,43 @@ struct TripManagerDashboardView: View {
 extension TripManagerDashboardView {
 
     var tripDetailCards: some View {
-        HStack(spacing: 12) {
-            CardView(
-                title: "On-Time Performance",
-                value: "\(onTimePercentage)%",
-                subtitle: "Trips today",
-                icon: "clock.fill",
-                iconColor: Color(.systemGreen).opacity(0.75)
-            )
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                CardView(
+                    title: "Scheduled Trips",
+                    value: "\(scheduledTripsCount)",
+                    subtitle: "Today",
+                    icon: "clock.fill",
+                    iconColor: Color.tripStatusColor(for: .scheduled)
+                )
 
-            CardView(
-                title: "Delayed Trips",
-                value: "\(delayedCount)",
-                subtitle: "Today",
-                icon: "airplane.departure",
-                iconColor: Color(.systemRed).opacity(0.75)
-            )
+                CardView(
+                    title: "Completed Trips",
+                    value: "\(completedTripsCount)",
+                    subtitle: "Today",
+                    icon: "airplane.arrival",
+                    iconColor: Color.tripStatusColor(for: .completed)
+                )
+            }
+            HStack(spacing: 16) {
+                CardView(
+                    title: "On time Trips",
+                    value: "\(liveOntimeTripsCount)",
+                    subtitle: "Operating now",
+                    icon: "clock.badge.airplane",
+                    iconColor: Color.tripStatusColor(for: .onTime)
+                )
+
+                CardView(
+                    title: "Delayed Trips",
+                    value: "\(liveDelayedTripsCount)",
+                    subtitle: "Operating now",
+                    icon: "clock.badge.airplane",
+                    iconColor: Color.tripStatusColor(for: .delayed)
+                )
+            }
         }
+
     }
 }
 
@@ -135,50 +158,37 @@ extension TripManagerDashboardView {
         }
     }
 
-    private var onTimePercentage: Int {
-        let total = todayTrips.filter {
-            $0.currentStatus == .onTime || $0.currentStatus == .delayed
+    var scheduledTripsCount: Int {
+        return todayTrips.filter { $0.currentStatus == .scheduled }.count
+    }
+
+    var completedTripsCount: Int {
+        return todayTrips.filter { $0.isCompleted }.count
+    }
+
+    var liveOntimeTripsCount: Int {
+        return todayTrips.filter { $0.currentStatus == .onTime }.count
+    }
+
+    var liveDelayedTripsCount: Int {
+        return todayTrips.filter { $0.currentStatus == .delayed }.count
+    }
+
+    var tripPerformanceSummary: [(String, Int, Color)] {
+        let completedTrips = todayTrips.filter(\.isCompleted)
+        let onTime = completedTrips.filter {
+            $0.totalDelayedMinutes == 0
         }.count
-        if total <= 0 { return 0 }
-        let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
-        return Int((Double(onTime) / Double(total)) * 100)
-    }
+        let delayed = completedTrips.filter {
+            $0.totalDelayedMinutes > 0
+        }.count
+        let cancelled = todayTrips.filter { $0.isCancelled }.count
 
-    private var delayedCount: Int {
-        todayTrips.filter { $0.currentStatus == .delayed }.count
-    }
-
-    private var tripsSummary: [(String, Int, Color)] {
-        let onTime = todayTrips.filter { $0.currentStatus == .onTime }.count
-        let delayed = todayTrips.filter { $0.currentStatus == .delayed }.count
-        let cancelled = todayTrips.filter { $0.currentStatus == .cancelled }
-            .count
-        let scheduled = todayTrips.filter { $0.currentStatus == .scheduled }
-            .count
-        let completed = todayTrips.filter { $0.currentStatus == .completed }
-            .count
         return [
-            (
-                category: "On-Time", count: onTime,
-                color: Color.tripStatusColor(for: .onTime)
-            ),
-            (
-                category: "Delayed", count: delayed,
-                color: Color.tripStatusColor(for: .delayed)
-            ),
-            (
-                category: "Cancelled", count: cancelled,
-                color: Color.tripStatusColor(for: .cancelled)
-            ),
-            (
-                category: "Scheduled", count: scheduled,
-                color: Color.tripStatusColor(for: .scheduled)
-            ),
-            (
-                category: "Completed", count: completed,
-                color: Color.tripStatusColor(for: .completed)
-            ),
-        ]
+            ("On-Time", onTime, Color.tripStatusColor(for: .onTime)),
+            ("Delayed", delayed, Color.tripStatusColor(for: .delayed)),
+            ("Cancelled", cancelled, Color.tripStatusColor(for: .cancelled)),
+        ].filter { $0.1 > 0 }
     }
 }
 

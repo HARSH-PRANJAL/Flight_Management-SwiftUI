@@ -214,18 +214,3 @@ extension DonutChartView {
         }
     }
 }
-
-#Preview {
-    let sampleData = [
-        (category: "Available", count: 42, color: Color.green),
-        (category: "On Duty", count: 0, color: Color.blue),
-        (category: "Unavailable", count: 15, color: Color.red.opacity(0.85)),
-        (category: "Leave", count: 0, color: Color.orange),
-    ]
-
-    DonutChartView(
-        data: sampleData,
-        defaultTitle: "Staff Status"
-    )
-    .padding()
-}
