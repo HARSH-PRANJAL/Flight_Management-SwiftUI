@@ -132,7 +132,7 @@ extension ListRow {
             showFallbackImage: true
         )
     }
-    
+
     init(aircraft: Aircraft) {
         let meta =
             "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
@@ -148,15 +148,17 @@ extension ListRow {
     init(selectedAircraft aircraft: Aircraft) {
         let meta =
             "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
+        let subtitle =
+            "\(aircraft.minimumStaffRequired[.pilot] ?? 0) P • \(aircraft.minimumStaffRequired[.coPilot] ?? 0) Cp • \(aircraft.minimumStaffRequired[.cabinCrew] ?? 0) C"
         self.init(
             profileImage: nil,
             title: aircraft.type,
-            subtitle: nil,
+            subtitle: subtitle,
             metadata: meta,
             status: nil
         )
     }
-    
+
     init(tripAircraft aircraft: Aircraft) {
         let meta =
             "\(aircraft.seatingCapacity) seats"
