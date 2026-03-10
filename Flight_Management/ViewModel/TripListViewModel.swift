@@ -51,8 +51,9 @@ final class TripListViewModel {
             descriptor.fetchLimit = batchSize
             descriptor.fetchOffset = offset
 
-            let order: Foundation.SortOrder = sortOrder == .ascending ? .forward : .reverse
-            
+            let order: Foundation.SortOrder =
+                sortOrder == .ascending ? .forward : .reverse
+
             switch sort {
             case .departure:
                 descriptor.sortBy = [
@@ -124,7 +125,7 @@ final class TripListViewModel {
                                 ))
                     }
                 }
-            case .scheduled, .onTime, .delayed:
+            case .scheduled, .onTime:
                 if normalisedSearch.isEmpty {
                     return #Predicate<Trip> { trip in
                         !trip.isCancelled && !trip.isCompleted
@@ -132,6 +133,22 @@ final class TripListViewModel {
                 } else {
                     return #Predicate<Trip> { trip in
                         !trip.isCancelled && !trip.isCompleted
+                            && (trip.tripNumberSearchKey.contains(
+                                normalisedSearch
+                            )
+                                || trip.route.nameSearchKey.contains(
+                                    normalisedRouteSearch
+                                ))
+                    }
+                }
+            case .delayed:
+                if normalisedSearch.isEmpty {
+                    return #Predicate<Trip> { trip in
+                        !trip.isCancelled
+                    }
+                } else {
+                    return #Predicate<Trip> { trip in
+                        !trip.isCompleted
                             && (trip.tripNumberSearchKey.contains(
                                 normalisedSearch
                             )

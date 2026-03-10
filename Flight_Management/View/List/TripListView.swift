@@ -232,7 +232,7 @@ extension TripListView {
     }
 
     private func loadUntilVisible() async {
-        while displayedTrips.isEmpty && viewModel.hasMore
+        while displayedTrips.count < 50 && viewModel.hasMore
             && !viewModel.isLoading
         {
             await viewModel.loadMore(
@@ -253,7 +253,7 @@ extension TripListView {
             case .onTime:
                 return viewModel.items.filter { $0.currentStatus == .onTime }
             case .delayed:
-                return viewModel.items.filter { $0.currentStatus == .delayed }
+                return viewModel.items.filter { $0.totalDelayedMinutes > 0}
             default:
                 return viewModel.items
             }
