@@ -43,6 +43,8 @@ struct StaffDetailScreen: View {
                 ToolbarItem(placement: .principal) {
                     if !staff.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
+                    } else {
+                        Button(""){}
                     }
                 }
             }
