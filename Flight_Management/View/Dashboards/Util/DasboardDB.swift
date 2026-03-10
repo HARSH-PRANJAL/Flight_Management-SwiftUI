@@ -16,7 +16,6 @@ enum DashboardDB {
         let now = Date()
         let until = Calendar.current.date(byAdding: .hour, value: hours, to: now) ?? now
         return #Predicate<Trip> {
-            !$0.isCancelled &&
             !$0.isCompleted &&
             $0.scheduledDepartureTime >= now &&
             $0.scheduledDepartureTime <= until
