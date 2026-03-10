@@ -9,7 +9,7 @@ struct AdminDashboardView: View {
     @Query private var onDutyStaff: [Staff]
     @Query private var unavailableStaff: [Staff]
 
-    @State private var showingTripList: Bool = false
+    @State private var activeSheet: ActiveSheet? = nil
 
     init() {
         _todayTrips = Query(
@@ -31,23 +31,7 @@ struct AdminDashboardView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    HStack(spacing: 12) {
-                        CardView(
-                            title: "Scheduled Trips",
-                            value: "\(scheduledTripsCount)",
-                            subtitle: "Today",
-                            icon: "clock.fill",
-                            iconColor: Color.tripStatusColor(for: .scheduled)
-                        )
-
-                        CardView(
-                            title: "Completed Trips",
-                            value: "\(completedTripsCount)",
-                            subtitle: "Today",
-                            icon: "airplane.arrival",
-                            iconColor: Color.tripStatusColor(for: .completed)
-                        )
-                    }
+                    tripDetailCards
 
                     VStack(spacing: 12) {
                         VStack(alignment: .leading) {
@@ -106,7 +90,7 @@ struct AdminDashboardView: View {
                             if filteredUpcomingTrip.count > 3 {
                                 Spacer()
                                 Button("View more") {
-                                    showingTripList = true
+                                    activeSheet = .upcomingTrips
                                 }
                                 .font(.subheadline)
                                 .tint(Color(.systemBlue))
@@ -124,32 +108,118 @@ struct AdminDashboardView: View {
             .navigationTitle("Admin")
             .scrollIndicators(.hidden)
         }
-        .sheet(isPresented: $showingTripList) {
+        .sheet(item: $activeSheet) { sheet in
             NavigationStack {
-                TripList(
-                    externalTrips: filteredUpcomingTrip,
-                    navigationTitle:
-                        "Trips in next 6 hours (\(filteredUpcomingTrip.count))",
-                    requiredFilters: [.scheduled, .cancelled]
-                )
-                .navigationBarTitleDisplayMode(.inline)
-                .padding(.top, -20)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                            showingTripList = false
-                        } label: {
-                            Image(systemName: "xmark")
-                        }
-                    }
+                switch sheet {
+                case .upcomingTrips:
+                    upcomingTripList
+                case .scheduledTrips, .completedTrips:
+                    liveTripList(for: sheet)
                 }
             }
         }
     }
 }
 
+// MARK: Ui
+extension AdminDashboardView {
+    var upcomingTripList: some View {
+        TripList(
+            externalTrips: filteredUpcomingTrip,
+            navigationTitle:
+                "Trips in next 6 hours (\(filteredUpcomingTrip.count))",
+            requiredFilters: [.scheduled, .cancelled]
+        )
+        .navigationBarTitleDisplayMode(.inline)
+        .padding(.top, -20)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
+                    activeSheet = nil
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+    }
+
+    private func liveTripList(for sheet: ActiveSheet) -> some View {
+        TripList(
+            externalTrips: tripsToDisplay(for: sheet),
+            navigationTitle:
+                "",
+            requiredFilters: []
+        )
+        .navigationBarTitleDisplayMode(.inline)
+        .padding(.top, -20)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
+                    activeSheet = nil
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
+    }
+
+    var tripDetailCards: some View {
+        HStack(spacing: 12) {
+            CardView(
+                title: "Scheduled Trips",
+                value: "\(scheduledTripsCount)",
+                subtitle: "Today",
+                icon: "clock.fill",
+                iconColor: Color.tripStatusColor(for: .scheduled)
+            )
+            .onTapGesture {
+                if scheduledTripsCount != 0 {
+                    activeSheet = .scheduledTrips
+                }
+            }
+
+            CardView(
+                title: "Completed Trips",
+                value: "\(completedTripsCount)",
+                subtitle: "Today",
+                icon: "airplane.arrival",
+                iconColor: Color.tripStatusColor(for: .completed)
+            )
+            .onTapGesture {
+                if completedTripsCount != 0 {
+                    activeSheet = .completedTrips
+                }
+            }
+        }
+    }
+}
+
+// MARK: Util
+extension AdminDashboardView {
+    private enum ActiveSheet: Identifiable {
+        case upcomingTrips
+        case scheduledTrips
+        case completedTrips
+
+        var id: Int { hashValue }
+    }
+}
+
 // MARK: - Data for display
 extension AdminDashboardView {
+    private func tripsToDisplay(for sheet: ActiveSheet) -> [Trip] {
+
+        switch sheet {
+        case .scheduledTrips:
+            return todayTrips.filter { $0.currentStatus == .scheduled }
+
+        case .completedTrips:
+            return todayTrips.filter(\.isCompleted)
+
+        default:
+            return []
+        }
+    }
 
     private var filteredUpcomingTrip: [Trip] {
         return upcomingTrips.filter {
