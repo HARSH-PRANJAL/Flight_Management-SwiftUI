@@ -13,10 +13,10 @@ struct UpcomingTripsScrollView: View {
                             title: trip.tripNumber,
                             value: formatDate(
                                 trip.scheduledDepartureTime,
-                                format: "h:mm a"
+                                format: "dd MMM, HH:mm"
                             ),
                             subtitle:
-                                "Planned arrival: \(formatDate(trip.estimatedArrivalTime, format: "h:mm a"))",
+                                "Planned arrival: \(formatDate(trip.estimatedArrivalTime, format: "dd MMM, HH:mm"))",
                             icon: "airplane",
                             iconColor: Color(.systemBlue)
                         )

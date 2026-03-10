@@ -37,7 +37,7 @@ struct AdminDashboardView: View {
                         VStack(alignment: .leading) {
                             Text("Daily Trip Status")
                                 .font(.headline)
-                            Text("Overview of all trips today")
+                            Text("Overview of operated trips today")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -59,7 +59,7 @@ struct AdminDashboardView: View {
                         VStack(alignment: .leading) {
                             Text("Crew Status")
                                 .font(.headline)
-                            Text("Overall availability today")
+                            Text("Overall crew availability")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
