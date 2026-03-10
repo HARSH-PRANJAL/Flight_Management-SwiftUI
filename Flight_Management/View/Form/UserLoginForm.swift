@@ -43,7 +43,7 @@ struct UserLoginForm: View {
                         }
                         FormErrorMessage(error: errorMessage)
 
-                        FormInputField(
+                        FormSecureInputField(
                             label: "Password",
                             placeholder: "Enter your password",
                             focus: .password,

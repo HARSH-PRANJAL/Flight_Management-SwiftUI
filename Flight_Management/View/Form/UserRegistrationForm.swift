@@ -233,7 +233,7 @@ extension UserRegistrationForm {
 
     private var passwordFieldSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            FormInputField(
+            FormSecureInputField(
                 label: "Password",
                 placeholder: "Enter your password",
                 focus: .password,
