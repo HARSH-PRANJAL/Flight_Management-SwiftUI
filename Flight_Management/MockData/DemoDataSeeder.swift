@@ -23,6 +23,7 @@ final class DemoDataSeeder {
     /// Cached per‑trip planned departure delay in minutes (for simulation only).
     /// Ensures delays are stable across timer ticks.
     private var tripDelayMinutesCache: [UUID: Int] = [:]
+    private var delayPropagationProcessedAt: [UUID: Date] = [:]
 
     private var allTrips: [Trip] {
         guard let modelContext else { return [] }
@@ -419,7 +420,7 @@ extension DemoDataSeeder {
         let airports = airportData()
         let aircrafts = aircraftData()
         let staff = await createStaff(batchIndex: 0)
-        let routes = createRoutes()
+        let routes = createRoutes(airports: airports)
         let users = await createUser()
 
         for airport in airports { context.insert(airport) }
@@ -461,7 +462,7 @@ extension DemoDataSeeder {
         // Then repeat every 30 seconds on the main run loop
         // so it continues running even when the app is in the foreground
         // navigating between views (timer is held by the singleton, not a view)
-        let timer = Timer(timeInterval: 20, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
             guard let self else { return }
             self.simulateFlightProgression(in: context)
         }
@@ -499,11 +500,19 @@ extension DemoDataSeeder {
 
                 // If this trip is now delayed, propagate effects to dependent trips.
                 if trip.totalDelayedMinutes > 0 {
-                    CrewScheduler.handleDelayPropagation(
-                        delayedTrip: trip,
-                        in: context,
-                        now: currentTime
-                    )
+                    let lastProcessed = delayPropagationProcessedAt[trip.id]
+                    let alreadyProcessed =
+                        lastProcessed.map {
+                            currentTime.timeIntervalSince($0) < 30
+                        } ?? false
+                    if !alreadyProcessed {
+                        CrewScheduler.handleDelayPropagation(
+                            delayedTrip: trip,
+                            in: context,
+                            now: currentTime
+                        )
+                        delayPropagationProcessedAt[trip.id] = currentTime
+                    }
                 }
             }
 
@@ -512,7 +521,7 @@ extension DemoDataSeeder {
             print("Error during flight simulation: \(error)")
         }
     }
-    
+
     public func resolveExpiredTrips(in context: ModelContext) async {
         let now = Date()
 
@@ -523,16 +532,77 @@ extension DemoDataSeeder {
         guard let trips = try? context.fetch(descriptor) else { return }
 
         for trip in trips {
-            if trip.estimatedArrivalTime <= now {
-                trip.isCompleted = true
+            guard trip.estimatedArrivalTime <= now else { continue }
 
-                // Keep aircraft and staff state consistent
-                trip.aircraft.updateLastAndNextScheduledTrip(
-                    completedTrip: trip
-                )
-                for staff in trip.staffs {
-                    staff.updateLastAndNextScheduledTrip(completedTrip: trip)
+            // Use actual departure as reference if available, otherwise scheduled
+            let refTime =
+                trip.actualDepartureTime ?? trip.scheduledDepartureTime
+
+            let sortedNodes = trip.route.nodes.sorted {
+                $0.sequence < $1.sequence
+            }
+
+            for (index, routeNode) in sortedNodes.enumerated() {
+                let isFirst = index == 0
+                let isLast = index == sortedNodes.count - 1
+
+                // Find or create the TripNodeStatus for this node
+                if let nodeStatus = trip.nodeStatuses.first(where: {
+                    $0.routeNode.sequence == routeNode.sequence
+                }) {
+                    // Node exists — fill in any missing timestamps
+                    if isFirst {
+                        // Source node: only has departure, never an arrival
+                        if nodeStatus.actualDepartureTime == nil {
+                            nodeStatus.actualDepartureTime = refTime
+                        }
+                    } else {
+                        let plannedArrival = refTime.addingTimeInterval(
+                            TimeInterval(
+                                routeNode.plannedArrivalOffsetMinutes * 60
+                            )
+                        )
+                        if nodeStatus.actualArrivalTime == nil {
+                            nodeStatus.actualArrivalTime = plannedArrival
+                        }
+                        // Intermediate nodes also need departure (no turnaround)
+                        if !isLast && nodeStatus.actualDepartureTime == nil {
+                            nodeStatus.actualDepartureTime =
+                                nodeStatus.actualArrivalTime
+                        }
+                    }
+                } else {
+                    // Node status doesn't exist at all — create it
+                    let newStatus: TripNodeStatus
+
+                    if isFirst {
+                        newStatus = TripNodeStatus(
+                            routeNode: routeNode,
+                            actualDepartureTime: refTime
+                        )
+                    } else {
+                        let plannedArrival = refTime.addingTimeInterval(
+                            TimeInterval(
+                                routeNode.plannedArrivalOffsetMinutes * 60
+                            )
+                        )
+                        newStatus = TripNodeStatus(
+                            routeNode: routeNode,
+                            actualArrivalTime: plannedArrival,
+                            actualDepartureTime: isLast ? nil : plannedArrival
+                        )
+                    }
+
+                    trip.nodeStatuses.append(newStatus)
                 }
+            }
+
+            trip.currentAirportSequence = sortedNodes.count
+            trip.isCompleted = true
+
+            trip.aircraft.updateLastAndNextScheduledTrip(completedTrip: trip)
+            for staff in trip.staffs {
+                staff.updateLastAndNextScheduledTrip(completedTrip: trip)
             }
         }
 
@@ -553,7 +623,10 @@ extension DemoDataSeeder {
                 // Arrival time is deterministic: scheduled departure + the node's
                 // planned offset. No random jitter — the offset already encodes
                 // the full journey time from the source airport.
-                let expectedArrival = trip.scheduledDepartureTime
+                let referenceTime =
+                    trip.actualDepartureTime ?? trip.scheduledDepartureTime
+                let expectedArrival =
+                    referenceTime
                     .addingTimeInterval(
                         TimeInterval(
                             activeNode.routeNode.plannedArrivalOffsetMinutes
@@ -562,7 +635,7 @@ extension DemoDataSeeder {
                     )
 
                 guard currentTime >= expectedArrival else {
-                    break  // Still en-route; check again on next timer tick
+                    break  // Still en-route, check again on next timer tick
                 }
 
                 trip.scheduleCurrentAirportArrival(arrivalTime: expectedArrival)
@@ -584,9 +657,6 @@ extension DemoDataSeeder {
                 trip.scheduleCurrentAirportDeparture(
                     departureTime: departureTime
                 )
-                // scheduleCurrentAirportDeparture increments currentAirportSequence
-                // and appends the next TripNodeStatus, so the next activeNodeStatus
-                // lookup will correctly target the new pending node.
             }
         }
     }
@@ -669,6 +739,26 @@ extension DemoDataSeeder {
                 day: Int.random(in: 1...28)
             )
         )
+    }
+
+    private func plannedDelayMinutes(for trip: Trip) -> Int {
+        if let existing = tripDelayMinutesCache[trip.id] {
+            return existing
+        }
+
+        let roll = Int.random(in: 0..<100)
+        let delay: Int
+
+        if roll < 70 {
+            delay = 0
+        } else if roll < 80 {
+            delay = Int.random(in: 3...5)
+        } else {
+            delay = Int.random(in: 5...15)
+        }
+
+        tripDelayMinutesCache[trip.id] = delay
+        return delay
     }
 }
 
@@ -770,10 +860,10 @@ extension DemoDataSeeder {
         return staff
     }
 
-    private func createRoutes() -> [Route] {
+    private func createRoutes(airports: [Airport]) -> [Route] {
 
         func airport(_ code: String) -> Airport {
-            airportData().first { $0.code == code }!
+            airports.first { $0.code == code }!
         }
 
         let routeDefinitions: [(name: String, stops: [String])] = [
@@ -929,36 +1019,6 @@ extension DemoDataSeeder {
         }
 
         return trips
-    }
-}
-
-extension DemoDataSeeder {
-
-    /// Returns a stable, pseudo‑random planned departure delay (in minutes)
-    /// for the given trip. Most trips are on‑time; a smaller subset get
-    /// moderate or heavy delays.
-    private func plannedDelayMinutes(for trip: Trip) -> Int {
-        if let existing = tripDelayMinutesCache[trip.id] {
-            return existing
-        }
-
-        // Basic distribution:
-        //  - 70%: on-time (0 min)
-        //  - 20%: small delay (3–5 min)
-        //  - 10%: larger delay (5–15 min)
-        let roll = Int.random(in: 0..<100)
-        let delay: Int
-
-        if roll < 70 {
-            delay = 0
-        } else if roll < 90 {
-            delay = Int.random(in: 3...5)
-        } else {
-            delay = Int.random(in: 5...15)
-        }
-
-        tripDelayMinutesCache[trip.id] = delay
-        return delay
     }
 }
 

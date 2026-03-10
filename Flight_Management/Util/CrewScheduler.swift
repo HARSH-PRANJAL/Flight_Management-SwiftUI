@@ -45,6 +45,7 @@ struct CrewScheduler {
         let delayedArrival = delayedTrip.estimatedArrivalTime
 
         let overlappingCrewIds = Set(delayedTrip.staffs.map { $0.id })
+        var replacementCrewIds: Set<UUID> = []
 
         let affectedTrips = allTrips.filter { candidate in
             guard !candidate.isCancelled,
@@ -63,12 +64,18 @@ struct CrewScheduler {
             // delayed trip share at-least one crew which is scheduled for
             // just next trip
             let candidateCrewIds = Set(candidate.staffs.map { $0.id })
+            replacementCrewIds.formUnion(candidateCrewIds)
             return !candidateCrewIds.isDisjoint(with: overlappingCrewIds)
         }
 
-        for trip in affectedTrips {
+        let sortedAffectedTrips = affectedTrips.sorted {
+            $0.scheduledDepartureTime < $1.scheduledDepartureTime
+        }
+        
+        for trip in sortedAffectedTrips {
             resolveCrewForUpcomingTrip(
                 trip,
+                delayedCrewIds: replacementCrewIds,
                 allStaff: allStaff,
                 blockingArrival: delayedArrival
             )
@@ -77,33 +84,36 @@ struct CrewScheduler {
     
     private static func resolveCrewForUpcomingTrip(
         _ trip: Trip,
+        delayedCrewIds: Set<UUID>,
         allStaff: [Staff],
         blockingArrival: Date
     ) {
         let start = trip.scheduledDepartureTime
-        let end = start.addingTimeInterval(
-            TimeInterval(trip.route.totalPlannedDurationMinutes * 60)
+        let end = start.addingTimeInterval(TimeInterval(trip.route.totalPlannedDurationMinutes * 60))
+
+        var updatedCrew = trip.staffs.filter { !delayedCrewIds.contains($0.id) }
+
+        let conflictedByRole = Dictionary(
+            grouping: trip.staffs.filter { delayedCrewIds.contains($0.id) },
+            by: \.designation
         )
 
-        var newCrew: [Staff] = []
-
-        for (role, requiredCount) in trip.aircraft.minimumStaffRequired
-        where requiredCount > 0 {
+        for (role, conflicted) in conflictedByRole {
+            let needed = conflicted.count
             let candidates = allStaff.filter { staff in
-                staff.designation == role
+                !delayedCrewIds.contains(staff.id)
+                    && !updatedCrew.contains { $0.id == staff.id }
+                    && staff.designation == role
                     && staff.isAvailable(from: start, to: end)
             }
-
-            guard candidates.count >= requiredCount else {
-                // Not enough replacement crew – delay this trip.
+            guard candidates.count >= needed else {
                 delayTrip(trip, blockedUntil: blockingArrival)
                 return
             }
-
-            newCrew.append(contentsOf: candidates.prefix(requiredCount))
+            updatedCrew.append(contentsOf: candidates.prefix(needed))
         }
 
-        reassignCrew(of: trip, to: newCrew)
+        reassignCrew(of: trip, to: updatedCrew)
     }
 
     private static func reassignCrew(of trip: Trip, to newCrew: [Staff]) {
@@ -126,7 +136,7 @@ struct CrewScheduler {
     }
 
     private static func delayTrip(_ trip: Trip, blockedUntil: Date) {
-        guard blockedUntil > trip.scheduledDepartureTime else { return }
+        guard blockedUntil >= trip.scheduledDepartureTime else { return }
         trip.scheduledDepartureTime = blockedUntil
     }
 }
