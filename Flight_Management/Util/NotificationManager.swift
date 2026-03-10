@@ -79,16 +79,44 @@ struct NotificationView: View {
     }
 }
 
-#Preview {
-    ZStack {
-        Color(.systemGroupedBackground).ignoresSafeArea()
-        VStack {
-            Text("Content")
-            Spacer()
+// MARK: notification
+struct SuccessOverlay: View {
+    let message: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Color(.systemGreen))
+            Text(message)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color(.systemGreen))
         }
+        .padding()
+        .clipShape(Capsule())
+        .glassEffect(.clear.tint(Color(.systemGreen).opacity(0.05)))
+        .padding(.top, 16)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
-    .overlay(alignment: .top) {
-        NotificationView(notificationType: .success(message: "Operation successful"))
-    }
-    .environment(NotificationManager.shared)
 }
+
+struct ErrorOverlay: View {
+    let message: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(Color(.systemRed))
+            Text(message)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color(.systemRed))
+        }
+        .padding()
+        .clipShape(Capsule())
+        .glassEffect(.clear.tint(Color(.systemRed).opacity(0.05)))
+        .padding(.top, 16)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
