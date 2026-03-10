@@ -1,8 +1,13 @@
 import SwiftUI
 
-enum DetailTab: String, CaseIterable {
+enum DetailTripTab: String, CaseIterable, Hashable {
     case detail = "Detail"
     case tripHistory = "Trips"
+}
+
+enum DetailAirportTab: String, CaseIterable, Hashable {
+    case detail = "Detail"
+    case legDetail = "Leg"
 }
 
 func detailScreenPicker<T>(selectedTab: Binding<T>) -> some View

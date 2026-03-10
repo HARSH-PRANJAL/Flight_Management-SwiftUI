@@ -11,7 +11,7 @@ struct AircraftDetailScreen: View {
     var isManager: Bool = false
     var isAircraftAvailable: Bool { aircraft.currentStatus == .available }
 
-    @State private var selectedTab: DetailTab = .detail
+    @State private var selectedTab: DetailTripTab = .detail
     @State private var scheduledTrips: [Trip] = []
     @Binding var isEditPagePresented: Bool
     @Binding var isScheduledTripsPresented: Bool

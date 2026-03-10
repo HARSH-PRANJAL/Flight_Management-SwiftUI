@@ -7,7 +7,7 @@ struct StaffDetailScreen: View {
 
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
-    @State private var selectedTab: DetailTab = .detail
+    @State private var selectedTab: DetailTripTab = .detail
     @Binding var isScheduledTripsPresented: Bool
     @Binding var isEditPageShowing: Bool
 
