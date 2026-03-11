@@ -51,7 +51,7 @@ extension FormSecureInputField {
         .padding()
         .background {
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.tertiarySystemGroupedBackground))
+                .fill(Color.fieldFill)
                 .stroke(borderColor, lineWidth: 1)
         }
         .focused($focusedField, equals: focus)
@@ -94,7 +94,8 @@ extension FormSecureInputField {
         if hasError {
             return Color(.systemRed)
         }
-        return focusedField == focus ? Color(.systemBlue) : Color(.systemGray2)
+        return focusedField == focus
+        ? Color(.systemBlue) : Color.fieldBorder
     }
 
     func sanitise(_ input: String) -> String {

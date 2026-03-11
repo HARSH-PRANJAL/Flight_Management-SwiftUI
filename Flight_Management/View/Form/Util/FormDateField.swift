@@ -21,7 +21,7 @@ struct FormDateField: View {
         if hasError {
             return Color(.systemRed)
         }
-        return Color(.systemGray2)
+        return Color.fieldBorder
     }
 
     private var isAcceptedDate: Bool {
@@ -52,7 +52,7 @@ struct FormDateField: View {
             .padding(.vertical, 14)
             .background {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.tertiarySystemGroupedBackground))
+                    .fill(Color.fieldFill)
                     .strokeBorder(
                         borderColor,
                         lineWidth: 1

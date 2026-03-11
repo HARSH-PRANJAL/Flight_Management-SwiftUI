@@ -61,8 +61,8 @@ struct AirportSearchDropdown: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.tertiarySystemFill))
-                    .stroke(Color(.systemGray3), lineWidth: 1)
+                    .fill(Color(.tertiarySystemFill).opacity(0.5))
+                    .stroke(Color(.systemGray3).opacity(0.5), lineWidth: 1)
             )
 
             // Dropdown List
@@ -90,6 +90,7 @@ struct AirportSearchDropdown: View {
                                         Text(airport.name)
                                             .font(.system(size: 14))
                                             .foregroundColor(Color(.systemGray))
+                                            .multilineTextAlignment(.leading)
                                     }
 
                                     Spacer()
@@ -97,6 +98,7 @@ struct AirportSearchDropdown: View {
                                     Text(airport.locationLabel)
                                         .font(.system(size: 12))
                                         .foregroundColor(Color(.systemGray2))
+                                        .multilineTextAlignment(.leading)
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)

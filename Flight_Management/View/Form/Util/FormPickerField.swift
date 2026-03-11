@@ -25,12 +25,7 @@ where T.RawValue == String {
                 menuLabel
             }
             .focused($focusedField, equals: focus)
-        }.shadow(
-            color: Color.black.opacity(0.07),
-            radius: 2,
-            x: 0,
-            y: 2
-        )
+        }
     }
 
     private var menuLabel: some View {
@@ -53,13 +48,13 @@ where T.RawValue == String {
         .padding()
         .background {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.tertiarySystemGroupedBackground))
+                .fill(Color.fieldFill)
                 .strokeBorder(borderColor, lineWidth: 1)
         }
     }
 
     var borderColor: Color {
-        hasError ? Color(.systemRed) : Color(.systemGray2)
+        hasError ? Color(.systemRed) : Color.fieldBorder
     }
 }
 
