@@ -8,6 +8,8 @@ struct TripDetailScreen: View {
 
     @State private var isEditPresented = false
     @State private var selectedTab: DetailAirportTab = .detail
+    @State private var previousTab: DetailAirportTab = .detail
+    @State private var slideFromRight = true
 
     let trip: Trip
     var onCancelTapped: (() -> Void)? = nil
@@ -30,18 +32,38 @@ struct TripDetailScreen: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                switch selectedTab {
-                case .detail:
-                    detailView
-                case .legDetail:
-                    AirportStatusListView(trip: trip)
-                        .padding(.top, -20)
+                ZStack {
+                    Group {
+                        switch selectedTab {
+                        case .detail:
+                            detailView
+                        case .legDetail:
+                            AirportStatusListView(trip: trip)
+                                .padding(.top, -20)
+                        }
+                    }
+                    .id(selectedTab)
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(
+                                edge: slideFromRight ? .trailing : .leading
+                            ),
+                            removal: .move(
+                                edge: slideFromRight ? .leading : .trailing
+                            )
+                        )
+                    )
                 }
             }
-            .animation(.linear(duration: 0.5), value: selectedTab)
+            .animation(.snappy(duration: 0.35), value: selectedTab)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     detailScreenPicker(selectedTab: $selectedTab)
+                        .onChange(of: selectedTab) { oldValue, newValue in
+                            slideFromRight =
+                                newValue.rawValue < oldValue.rawValue
+                            previousTab = oldValue
+                        }
                 }
             }
             .sheet(isPresented: $isEditPresented) {
@@ -204,18 +226,22 @@ extension TripDetailScreen {
                 .padding(.bottom, 12)
 
             VStack(alignment: .leading, spacing: 10) {
-                if !trip.nodeStatuses.isEmpty || trip.currentStatus == .scheduled {
+                if !trip.nodeStatuses.isEmpty
+                    || trip.currentStatus == .scheduled
+                {
                     DetailRowView(
                         label: "Departure",
                         value: formatDate(
-                            trip.actualDepartureTime ?? trip.scheduledDepartureTime,
+                            trip.actualDepartureTime
+                                ?? trip.scheduledDepartureTime,
                             format: "dd MMM yyyy, HH:mm"
                         )
                     )
                 }
                 if !trip.isCancelled {
                     DetailRowView(
-                        label: trip.isCompleted ? "Arrival" : "Estimated Arrival",
+                        label: trip.isCompleted
+                            ? "Arrival" : "Estimated Arrival",
                         value: formatDate(
                             trip.estimatedArrivalTime,
                             format: "dd MMM yyyy, HH:mm"

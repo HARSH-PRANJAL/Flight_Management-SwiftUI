@@ -8,6 +8,9 @@ struct StaffDetailScreen: View {
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
     @State private var selectedTab: DetailTripTab = .detail
+    @State private var previousTab: DetailTripTab = .detail
+    @State private var slideFromRight = true
+
     @Binding var isScheduledTripsPresented: Bool
     @Binding var isEditPageShowing: Bool
 
@@ -29,12 +32,28 @@ struct StaffDetailScreen: View {
                 if staff.trips.isEmpty {
                     detailView
                 } else {
-                    switch selectedTab {
-                    case .detail:
-                        detailView
-                    case .tripHistory:
-                        tripContent
+                    ZStack {
+                        Group {
+                            switch selectedTab {
+                            case .detail:
+                                detailView
+                            case .tripHistory:
+                                tripContent
+                            }
+                        }
+                        .id(selectedTab)
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(
+                                    edge: slideFromRight ? .trailing : .leading
+                                ),
+                                removal: .move(
+                                    edge: slideFromRight ? .leading : .trailing
+                                )
+                            )
+                        )
                     }
+
                 }
             }
             .navigationTitle("\(staff.name)")
@@ -43,13 +62,18 @@ struct StaffDetailScreen: View {
                 ToolbarItem(placement: .principal) {
                     if !staff.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
+                            .onChange(of: selectedTab) { oldValue, newValue in
+                                slideFromRight =
+                                    newValue.rawValue < oldValue.rawValue
+                                previousTab = oldValue
+                            }
                     } else {
-                        Button(""){}
+                        Button("") {}
                     }
                 }
             }
+            .animation(.snappy(duration: 0.35), value: selectedTab)
         }
-        .animation(.linear(duration: 0.5), value: selectedTab)
         .fullScreenCover(isPresented: $showImagePreview) {
             if let image = staff.avatarImage {
                 NavigationStack {

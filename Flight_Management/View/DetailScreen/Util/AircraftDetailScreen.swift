@@ -12,6 +12,8 @@ struct AircraftDetailScreen: View {
     var isAircraftAvailable: Bool { aircraft.currentStatus == .available }
 
     @State private var selectedTab: DetailTripTab = .detail
+    @State private var previousTab: DetailTripTab = .detail
+    @State private var slideFromRight = true
     @State private var scheduledTrips: [Trip] = []
     @Binding var isEditPagePresented: Bool
     @Binding var isScheduledTripsPresented: Bool
@@ -43,22 +45,43 @@ struct AircraftDetailScreen: View {
                 if aircraft.trips.isEmpty {
                     detailView
                 } else {
-                    switch selectedTab {
-                    case .detail:
-                        detailView
-                    case .tripHistory:
-                        tripHistoryContent
+                    ZStack {
+                        Group {
+                            switch selectedTab {
+                            case .detail:
+                                detailView
+                            case .tripHistory:
+                                tripHistoryContent
+                            }
+                        }
+                        .id(selectedTab)
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(
+                                    edge: slideFromRight ? .trailing : .leading
+                                ),
+                                removal: .move(
+                                    edge: slideFromRight ? .leading : .trailing
+                                )
+                            )
+                        )
                     }
                 }
             }
             .navigationTitle(aircraft.registrationNumber)
             .navigationBarTitleDisplayMode(.inline)
+            .animation(.snappy(duration: 0.35), value: selectedTab)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     if !aircraft.trips.isEmpty {
                         detailScreenPicker(selectedTab: $selectedTab)
+                            .onChange(of: selectedTab) { oldValue, newValue in
+                                slideFromRight =
+                                    newValue.rawValue < oldValue.rawValue
+                                previousTab = oldValue
+                            }
                     } else {
-                        Button(""){}
+                        Button("") {}
                     }
                 }
             }
@@ -93,7 +116,6 @@ struct AircraftDetailScreen: View {
                 }
             }
         }
-        .animation(.linear(duration: 0.5), value: selectedTab)
         .onAppear {
             if scheduledTrips.isEmpty {
                 scheduledTrips = aircraft.scheduledTrips
