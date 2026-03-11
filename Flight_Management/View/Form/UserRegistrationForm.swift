@@ -66,6 +66,9 @@ struct UserRegistrationForm: View {
                             }
 
                         }
+                        .onAppear {
+                            focusState = .name
+                        }
                         .navigationTitle(
                             viewModel.isEditMode ? "Update Profile" : "Add User"
                         )
@@ -114,9 +117,6 @@ struct UserRegistrationForm: View {
                     .toolbar {
                         toolbarContent
                     }
-                }
-                .onAppear {
-                    focusState = .name
                 }
             }
         }

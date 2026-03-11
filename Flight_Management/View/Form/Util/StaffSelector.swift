@@ -75,7 +75,7 @@ struct StaffSelectorView: View {
 
 // MARK: - UI
 extension StaffSelectorView {
-    
+
     var closeButton: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button(role: .close) {
@@ -89,7 +89,7 @@ extension StaffSelectorView {
             }
         }
     }
-    
+
     var saveButton: some ToolbarContent {
         ToolbarItem(placement: .confirmationAction) {
             Button(role: .confirm) {
@@ -114,18 +114,26 @@ extension StaffSelectorView {
         case .cabinCrew: return "Crew (\(current)/\(requiredCount))"
         }
     }
-    
-    var fallbackBackground: some View {
+
+    var noAvailableBackground: some View {
         ContentUnavailableView {
-            Label("", systemImage: "person.2")
+            Label("No Staff Available", systemImage: "person.2")
         } description: {
             Text("There is no available \(role.rawValue.lowercased()).")
         }
     }
 
+    var noSearchResultsBackground: some View {
+        ContentUnavailableView {
+            Label("No Results", systemImage: "magnifyingglass")
+        } description: {
+            Text("No \(role.rawValue.lowercased()) matched \"\(searchText)\".")
+        }
+    }
+
     private var staffList: some View {
         List {
-            if !localSelection.isEmpty {
+            if !localSelection.isEmpty && searchText.isEmpty {
                 Section("Selected") {
                     ForEach(localSelection) { staff in
                         staffRow(staff: staff)
@@ -133,13 +141,14 @@ extension StaffSelectorView {
                 }
             }
 
-            Section("Available") {
+            // Available section — filtered by search, excludes already-selected.
+            Section(searchText.isEmpty ? "Available" : "Results") {
                 ForEach(unselectedItems, id: \.id) { staff in
                     staffRow(staff: staff)
                 }
-
+                
                 if unselectedItems.isEmpty {
-                    fallbackBackground
+                    noSearchResultsBackground
                 }
             }
         }
@@ -176,15 +185,10 @@ extension StaffSelectorView {
 
     private var availableItems: [Staff] {
         allStaff.filter {
-            var result = true
-            if !searchText.isEmpty {
-                result =
-                    result
-                    && $0.nameSearchKey.contains(
-                        Staff.normalisedSearchKey(from: searchText)
-                    )
-            }
-            return result
+            guard !searchText.isEmpty else { return true }
+            return $0.nameSearchKey.contains(
+                Staff.normalisedSearchKey(from: searchText)
+            )
         }
     }
 

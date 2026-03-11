@@ -40,6 +40,11 @@ struct StaffRegistrationContent: View {
                     disclaimerText
                 }
             }
+            .onAppear {
+                if !viewModel.isEditMode {
+                    focusedField = .name
+                }
+            }
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
@@ -245,7 +250,9 @@ extension StaffRegistrationContent {
     private func isUniqueEmail() -> Bool {
         if viewModel.email.isEmpty { return true }
 
-        let email = viewModel.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = viewModel.email.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
         let userId = viewModel.staffToEdit?.id
         let descriptor = FetchDescriptor<Staff>(
             predicate: #Predicate<Staff> {

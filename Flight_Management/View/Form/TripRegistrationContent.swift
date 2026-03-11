@@ -393,9 +393,9 @@ extension TripRegistrationContent {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
+                .fill(Color.fieldFill)
                 .strokeBorder(
-                    hasError ? Color(.systemRed) : Color(.systemGray2),
+                    hasError ? Color(.systemRed) : Color.fieldBorder,
                     lineWidth: 1
                 )
         )

@@ -39,7 +39,7 @@ struct AircraftSelectorView: View {
                     }
 
                     if unselectedItems.isEmpty {
-                        fallbackBackground
+                        noSearchResultsBackground
                     }
                 }
             }
@@ -133,11 +133,11 @@ extension AircraftSelectorView {
         }
     }
 
-    var fallbackBackground: some View {
+    var noSearchResultsBackground: some View {
         ContentUnavailableView {
-            Label("", systemImage: "airplane")
+            Label("No Results", systemImage: "magnifyingglass")
         } description: {
-            Text("There is no available aircraft.")
+            Text("No aircraft matched \"\(searchText)\".")
         }
     }
 }
@@ -151,13 +151,11 @@ extension AircraftSelectorView {
 
     private var filteredAircraft: [Aircraft] {
         if searchText.isEmpty { return allAircraft }
-        let filtered = allAircraft.filter {
-            $0.registrationNumber
-                .localizedCaseInsensitiveContains(searchText)
-                || ($0.type.localizedCaseInsensitiveContains(searchText))
+        return allAircraft.filter {
+            $0.registrationNumber.localizedCaseInsensitiveContains(searchText)
+                || $0.type.localizedCaseInsensitiveContains(searchText)
         }
-
-        return filtered.sorted {
+        .sorted {
             $0.trips.count <= $1.trips.count
                 || $0.seatingCapacity < $1.seatingCapacity
         }

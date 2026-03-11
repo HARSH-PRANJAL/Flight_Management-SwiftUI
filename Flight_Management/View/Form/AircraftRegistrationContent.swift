@@ -90,7 +90,7 @@ struct AircraftRegistrationContent: View {
                     guard let focus = newFocus,
                         let targetID = focusScrollMap[focus]
                     else { return }
-                    withAnimation(.easeInOut(duration: 0.6)) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo(targetID, anchor: .bottom)
                     }
                 }
@@ -281,12 +281,12 @@ extension AircraftRegistrationContent {
                     .frame(width: 80)
                     .background {
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray6))
+                            .fill(Color.fieldFill)
                             .stroke(
                                 viewModel.fieldErrors[
                                     FieldError.getFieldTypeFor(staffRole: role)
                                 ] != nil
-                                    ? Color(.systemRed) : Color(.systemGray3),
+                                ? Color(.systemRed) : Color.fieldBorder,
                                 lineWidth: 1
                             )
                     }

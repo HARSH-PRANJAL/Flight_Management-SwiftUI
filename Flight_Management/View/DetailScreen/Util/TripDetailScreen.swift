@@ -124,7 +124,7 @@ extension TripDetailScreen {
                                 iconColor: Color(.systemIndigo)
                             )
                             .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.6)) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
                                     proxy.scrollTo("staffSection", anchor: .top)
                                 }
                             }

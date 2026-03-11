@@ -189,7 +189,7 @@ extension RouteRegistrationContent {
                                 // Journey Time Input
                                 if node.id != viewModel.selectedNodes.first?.id
                                 {
-                                    VStack(alignment: .trailing, spacing: 4) {
+                                    VStack(alignment: .center, spacing: 4) {
                                         Text("Trip")
                                             .font(
                                                 .system(
@@ -205,21 +205,19 @@ extension RouteRegistrationContent {
                                                 text: textBinding(for: node)
                                             )
                                             .keyboardType(.numberPad)
-                                            .multilineTextAlignment(.trailing)
+                                            .multilineTextAlignment(.leading)
                                             .padding(.vertical, 8)
                                             .padding(.horizontal, 8)
-                                            .frame(minWidth: 50)
+                                            .frame(width: 80)
                                             .background(
                                                 RoundedRectangle(
                                                     cornerRadius: 12
                                                 )
                                                 .fill(
-                                                    Color(
-                                                        .secondarySystemBackground
-                                                    )
+                                                    Color.fieldFill
                                                 )
                                                 .strokeBorder(
-                                                    Color(.systemGray2),
+                                                    Color.fieldBorder,
                                                     lineWidth: 1
                                                 )
                                             )
@@ -247,7 +245,7 @@ extension RouteRegistrationContent {
                                 }
                             }
                             .padding(12)
-                            .background(Color(.systemGray6))
+                            .background(Color(.systemIndigo).opacity(0.05))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
 
                             if node.id != viewModel.selectedNodes.last?.id {
