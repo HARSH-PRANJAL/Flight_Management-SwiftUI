@@ -2,8 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct TripManagerDashboardView: View {
-    @Environment(SessionManager.self) var session
-    @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.modelContext) var context
 
     @Query private var todayTrips: [Trip]
     @Query private var upcomingTrips: [Trip]
@@ -78,6 +77,9 @@ struct TripManagerDashboardView: View {
                     Spacer(minLength: 24)
                 }
                 .padding(.horizontal, 16)
+            }
+            .refreshable {
+                await DemoDataAPI.resolveExpiredTrips(in: context)
             }
             .scrollIndicators(.hidden)
             .sheet(item: $activeSheet) { sheet in
