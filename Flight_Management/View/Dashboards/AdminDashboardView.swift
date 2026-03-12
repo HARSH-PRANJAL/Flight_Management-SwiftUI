@@ -3,6 +3,8 @@ import SwiftData
 import SwiftUI
 
 struct AdminDashboardView: View {
+    @Environment(\.modelContext) var context
+    
     @Query private var todayTrips: [Trip]
     @Query private var upcomingTrips: [Trip]
     @Query private var availableStaff: [Staff]
@@ -104,6 +106,9 @@ struct AdminDashboardView: View {
                     Spacer(minLength: 24)
                 }
                 .padding(.horizontal, 16)
+            }
+            .refreshable {
+                await DemoDataAPI.resolveExpiredTrips(in: context)
             }
             .navigationTitle("Admin")
             .scrollIndicators(.hidden)
@@ -243,7 +248,7 @@ extension AdminDashboardView {
         let delayed = completedTrips.filter {
             $0.totalDelayedMinutes > 0
         }.count
-        let cancelled = completedTrips.filter { $0.isCancelled }.count
+        let cancelled = todayTrips.filter { $0.isCancelled }.count
 
         return [
             ("On-Time", onTime, Color.tripStatusColor(for: .onTime)),
