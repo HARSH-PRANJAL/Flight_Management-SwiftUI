@@ -10,8 +10,6 @@ struct TripDetailView: View {
     var trip: Trip
 
     @State private var showCancellationAlert = false
-    @State private var showSuccessMessage = false
-    @State private var successMessage = ""
 
     var isTripManager: Bool {
         sessionManager.user?.role == UserRole.tripManager.rawValue
@@ -63,8 +61,5 @@ struct TripDetailView: View {
         } catch {
             print("Error in cancelling trip: \(error)")
         }
-        successMessage =
-            "Trip \(trip.tripNumber) has been cancelled successfully."
-        showSuccessMessage = true
     }
 }

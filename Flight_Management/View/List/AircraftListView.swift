@@ -12,7 +12,6 @@ struct AircraftListView: View {
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
     @State private var showAircraftRegistration: Bool = false
-    @State private var selectedAircraft: Aircraft?
 
     var body: some View {
         Group {
@@ -44,15 +43,13 @@ struct AircraftListView: View {
                 .scrollDismissesKeyboard(.immediately)
                 .listStyle(.insetGrouped)
                 .refreshable {
-                    Task {
-                        await viewModel.loadInitial(
-                            context: context,
-                            statusFilter: selectedStatus,
-                            searchText: "",
-                            sort: selectedSort,
-                            sortOrder: selectedSortOrder
-                        )
-                    }
+                    await viewModel.loadInitial(
+                        context: context,
+                        statusFilter: selectedStatus,
+                        searchText: "",
+                        sort: selectedSort,
+                        sortOrder: selectedSortOrder
+                    )
                 }
             }
         }
