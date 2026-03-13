@@ -22,8 +22,8 @@ enum AdminTab: String, CaseIterable, Hashable {
         self == .staff || self == .route
     }
 
-    var profileImage: some View {
-        return ToolbarLabel()
+    var isBottomItem: Bool {
+        self == .profile
     }
 }
 
@@ -127,25 +127,21 @@ private struct AdminSidebarHost: View {
 
     private var sidebar: some View {
         List(selection: $sidebarSelection) {
-            ForEach(AdminTab.allCases, id: \.self) { tab in
-                if tab != .profile {
+            Section {
+                ForEach(
+                    AdminTab.allCases.filter { !$0.isBottomItem },
+                    id: \.self
+                ) { tab in
                     Label(tab.rawValue, systemImage: tab.icon)
                         .tag(tab)
-                } else {
-                    HStack {
-                        ToolbarLabel()
-                            .frame(width: 32, height: 32)
-                            .clipShape(Circle())
-
-                        Text("Profile")
-                    }
-                    .tag(tab)
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            logoutSection
+            sideBarBottomSection
         }
+        .listStyle(.sidebar)
+
         .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
         .onChange(of: sidebarSelection) { _, newValue in
             if let newValue {
@@ -163,11 +159,45 @@ private struct AdminSidebarHost: View {
         }
     }
 
-    private var logoutSection: some View {
-        VStack {
-            Divider()
+    var sideBarBottomSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+
+            Divider().opacity(0.75).padding(.bottom, 16)
 
             Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    sidebarSelection = .profile
+                    selectedTab = .profile
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    ToolbarLabel()
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
+                    Text("Profile")
+                        .foregroundStyle(
+                            sidebarSelection == .profile
+                                ? Color(.systemBlue)
+                                : Color(.label)
+                        )
+
+                }
+            }
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 16)
+            .background(
+                Capsule()
+                    .fill(
+                        sidebarSelection == .profile
+                            ? Color(.systemGray5)
+                            : Color.clear
+                    )
+            )
+            .padding(.horizontal, 16)
+
+            // Logout row
+            Button(role: .destructive) {
                 session.logout()
                 notification.showSuccess("Logged out successfully.")
             } label: {
@@ -175,11 +205,12 @@ private struct AdminSidebarHost: View {
                     "Logout",
                     systemImage: "rectangle.portrait.and.arrow.right"
                 )
+                .foregroundStyle(Color(.systemRed))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 32)
+                .padding(.vertical, 16)
             }
-            .tint(.red)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.vertical, 12)
+            .buttonStyle(.plain)
         }
         .background(.bar)
     }
