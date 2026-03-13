@@ -10,18 +10,13 @@ struct DonutChartView: View {
 
     var body: some View {
         if total == 0 {
-            VStack(spacing: 12) {
-                Image(systemName: "chart.pie")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
-                    .foregroundStyle(.gray.opacity(0.3))
 
-                Text("No data available")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: 280)
+            ContentUnavailableView(
+                "No data available",
+                systemImage: "chart.pie"
+            )
+            .frame(minWidth: 250, maxWidth: 500, minHeight: 250, maxHeight: 500)
+
         } else {
             VStack(spacing: 20) {
                 chartView
