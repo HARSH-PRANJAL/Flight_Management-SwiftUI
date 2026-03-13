@@ -4,6 +4,7 @@ import SwiftUI
 struct StaffListView: View {
 
     @Environment(\.modelContext) private var context
+    @Environment(SessionManager.self) private var session
 
     @State private var viewModel = StaffListViewModel()
 
@@ -11,6 +12,7 @@ struct StaffListView: View {
     @State private var selectedSort: StaffSort = .name
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
+    @State private var isAddStaffPresented: Bool = false
 
     var externalStaffs: [Staff] = []
     var navigationTitle: String = "Staff List"
@@ -40,13 +42,22 @@ struct StaffListView: View {
                             list
                         }
                     }
-                    .scrollDismissesKeyboard(.immediately)
-                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle(navigationTitle)
             .toolbar {
                 toolbarFilterSortItem
+                if let user = session.user,
+                    user.role == UserRole.admin.rawValue
+                {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            isAddStaffPresented.toggle()
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
             }
             .searchable(
                 text: $searchText,
@@ -117,6 +128,13 @@ struct StaffListView: View {
                 }
             }
         }
+        .sheet(isPresented: $isAddStaffPresented) {
+            NavigationStack {
+                StaffRegistrationForm()
+                    .navigationTitle("Add Staff")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+        }
     }
 }
 
@@ -144,8 +162,23 @@ extension StaffListView {
                         }
                     }
                 }
+
+                if viewModel.isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                }
             }
         }
+        .scrollDismissesKeyboard(.immediately)
+        .listStyle(.insetGrouped)
+        .tint(
+            UIDevice.current.userInterfaceIdiom == .pad
+                ? Color(.systemBlue).opacity(0.15) : Color.clear
+        )
     }
 }
 

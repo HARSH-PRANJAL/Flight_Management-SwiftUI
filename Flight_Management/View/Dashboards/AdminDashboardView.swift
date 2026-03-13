@@ -4,7 +4,9 @@ import SwiftUI
 
 struct AdminDashboardView: View {
     @Environment(\.modelContext) var context
-    
+    @Environment(SessionManager.self) var session
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @Query private var todayTrips: [Trip]
     @Query private var upcomingTrips: [Trip]
     @Query private var availableStaff: [Staff]
@@ -31,87 +33,15 @@ struct AdminDashboardView: View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
 
-            ScrollView {
-                VStack(spacing: 20) {
-                    tripDetailCards
-
-                    VStack(spacing: 12) {
-                        VStack(alignment: .leading) {
-                            Text("Daily Trip Status")
-                                .font(.headline)
-                            Text("Overview of operated trips today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        DonutChartView(
-                            data: tripPerformanceSummary,
-                            defaultTitle: "Total trips \noperated"
-                        )
-                        .frame(maxHeight: 500)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            cardTheme()
-                        )
-                    }
-
-                    VStack(spacing: 12) {
-                        VStack(alignment: .leading) {
-                            Text("Crew Status")
-                                .font(.headline)
-                            Text("Overall crew availability")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        DonutChartView(
-                            data: crewStatusCounts,
-                            defaultTitle: "Total crew"
-                        )
-                        .frame(maxHeight: 500)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            cardTheme()
-                        )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Upcoming Trips")
-                                    .font(.headline)
-                                Text("Next 6 hours")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            if filteredUpcomingTrip.count > 3 {
-                                Spacer()
-                                Button("View more") {
-                                    activeSheet = .upcomingTrips
-                                }
-                                .font(.subheadline)
-                                .tint(Color(.systemBlue))
-                            }
-                        }
-
-                        UpcomingTripsScrollView(trips: filteredUpcomingTrip)
-                            .padding(.horizontal, -16)
-                    }
-
-                    Spacer(minLength: 24)
+            Group {
+                if horizontalSizeClass == .regular {
+                    iPadLayout
+                } else {
+                    iOSLayout
                 }
-                .padding(.horizontal, 16)
             }
-            .refreshable {
-                await DemoDataAPI.resolveExpiredTrips(in: context)
-            }
-            .navigationTitle("Admin")
-            .scrollIndicators(.hidden)
+
+            .navigationTitle("\(session.user?.name ?? "Admin")")
         }
         .sheet(item: $activeSheet) { sheet in
             NavigationStack {
@@ -123,6 +53,196 @@ struct AdminDashboardView: View {
                 }
             }
         }
+    }
+
+    // MARK: - iPad Layout
+    var iPadLayout: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+
+                // Row 1 — Stat cards (2 columns)
+                HStack(spacing: 16) {
+                    CardView(
+                        title: "Scheduled Trips",
+                        value: "\(scheduledTripsCount)",
+                        subtitle: "Today",
+                        icon: "clock.fill",
+                        iconColor: Color.tripStatusColor(for: .scheduled)
+                    )
+                    .onTapGesture {
+                        if scheduledTripsCount != 0 {
+                            activeSheet = .scheduledTrips
+                        }
+                    }
+
+                    CardView(
+                        title: "Completed Trips",
+                        value: "\(completedTripsCount)",
+                        subtitle: "Today",
+                        icon: "airplane.arrival",
+                        iconColor: Color.tripStatusColor(for: .completed)
+                    )
+                    .onTapGesture {
+                        if completedTripsCount != 0 {
+                            activeSheet = .completedTrips
+                        }
+                    }
+                }
+
+                // Row 2 — Charts (2 columns, equal width)
+                HStack(alignment: .top, spacing: 16) {
+                    // Daily Trip Status
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Daily Trip Status")
+                                .font(.headline)
+                            Text("Overview of operated trips today")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        DonutChartView(
+                            data: tripPerformanceSummary,
+                            defaultTitle: "Total trips \noperated"
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    }
+                    .padding(16)
+                    .background(cardTheme())
+                    .frame(maxWidth: .infinity)
+
+                    // Crew Status
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Crew Status")
+                                .font(.headline)
+                            Text("Overall crew availability")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        DonutChartView(
+                            data: crewStatusCounts,
+                            defaultTitle: "Total crew"
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    }
+                    .padding(16)
+                    .background(cardTheme())
+                    .frame(maxWidth: .infinity)
+                }
+
+                // Upcoming Trips
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Upcoming Trips")
+                                .font(.headline)
+                            Text("Next 6 hours")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        if filteredUpcomingTrip.count > 3 {
+                            Button("View more") { activeSheet = .upcomingTrips }
+                                .font(.subheadline)
+                                .tint(Color(.systemBlue))
+                        }
+                    }
+                    UpcomingTripsScrollView(trips: filteredUpcomingTrip)
+                        .padding(.horizontal, -32)
+                }
+
+                Spacer(minLength: 24)
+            }
+            .padding(.horizontal, 32)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    var iOSLayout: some View {
+
+        ScrollView {
+            VStack(spacing: 20) {
+                tripDetailCards
+
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading) {
+                        Text("Daily Trip Status")
+                            .font(.headline)
+                        Text("Overview of operated trips today")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    DonutChartView(
+                        data: tripPerformanceSummary,
+                        defaultTitle: "Total trips \noperated"
+                    )
+                    .frame(maxHeight: 500)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        cardTheme()
+                    )
+                }
+
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading) {
+                        Text("Crew Status")
+                            .font(.headline)
+                        Text("Overall crew availability")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    DonutChartView(
+                        data: crewStatusCounts,
+                        defaultTitle: "Total crew"
+                    )
+                    .frame(maxHeight: 500)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        cardTheme()
+                    )
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Upcoming Trips")
+                                .font(.headline)
+                            Text("Next 6 hours")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        if filteredUpcomingTrip.count > 3 {
+                            Spacer()
+                            Button("View more") {
+                                activeSheet = .upcomingTrips
+                            }
+                            .font(.subheadline)
+                            .tint(Color(.systemBlue))
+                        }
+                    }
+
+                    UpcomingTripsScrollView(trips: filteredUpcomingTrip)
+                        .padding(.horizontal, -16)
+                }
+
+                Spacer(minLength: 24)
+            }
+            .padding(.horizontal, 16)
+        }
+        .refreshable {
+            await DemoDataAPI.resolveExpiredTrips(in: context)
+        }
+        .scrollIndicators(.hidden)
+
     }
 }
 

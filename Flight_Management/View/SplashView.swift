@@ -4,6 +4,7 @@ import SwiftUI
 struct SplashView: View {
     @Environment(\.modelContext) private var context
     @Environment(SessionManager.self) var session
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State private var showContent = false
 
     var body: some View {
@@ -12,16 +13,31 @@ struct SplashView: View {
                 ContentView()
                     .environment(session)
             } else {
-                ZStack {
-                    Color(.systemBackground)
-                        .ignoresSafeArea()
+                GeometryReader { geo in
 
-                    VStack(spacing: 16){
-                        LottieView(filename: "Airplane")
-                            .frame(width: 300, height: 300)
-                        Text("Trip Manager")
-                            .font(.system(size: 34, weight: .bold))
-                            .foregroundColor(.primary)
+                    ZStack {
+                        Color(.systemBackground)
+                            .ignoresSafeArea()
+
+                        VStack(spacing: geo.size.height * 0.03) {
+
+                            LottieView(filename: "Airplane")
+                                .frame(
+                                    width: min(geo.size.width * 0.35, 360),
+                                    height: min(geo.size.width * 0.35, 360)
+                                )
+
+                            Text("Trip Manager")
+                                .font(
+                                    .system(
+                                        size: horizontalSizeClass == .regular
+                                            ? 48 : 34,
+                                        weight: .bold
+                                    )
+                                )
+                                .foregroundStyle(.primary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
                 .task {

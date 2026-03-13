@@ -2,16 +2,19 @@ import SwiftData
 import SwiftUI
 
 struct RouteListView: View {
-    
+
     var requiredFilters: [RouteStatus] = RouteStatus.allCases
-    
+
     @Environment(\.modelContext) private var context
+    @Environment(SessionManager.self) private var session
+
     @State private var viewModel = RouteListViewModel()
 
     @State private var selectedSort: RouteSort = .name
     @State private var selectedSortOrder: SortOrder = .ascending
     @State var selectedFilter: RouteStatus? = nil
     @State private var searchText: String = ""
+    @State private var isAddRoutePresented: Bool = false
 
     var body: some View {
         VStack {
@@ -19,42 +22,32 @@ struct RouteListView: View {
                 if displayedRoutes.isEmpty {
                     fallbackBackground
                 } else {
-                    List {
-                        ForEach(displayedRoutes, id: \.id) { route in
-                            NavigationLink(
-                                destination: RouteDetailView(route: route)
-                            ) {
-                                ListRow(route: route)
-                            }
-                            .onAppear {
-                                if route.id == displayedRoutes.last?.id {
-                                    Task {
-                                        await viewModel.loadMore(
-                                            context: context,
-                                            filter: selectedFilter,
-                                            searchText: searchText
-                                        )
-                                    }
-                                }
+                    list
+                        .refreshable {
+                            Task {
+                                await viewModel.loadInitial(
+                                    context: context,
+                                    filter: selectedFilter,
+                                    searchText: ""
+                                )
                             }
                         }
-                    }
-                    .scrollDismissesKeyboard(.immediately)
-                    .listStyle(.insetGrouped)
-                    .refreshable {
-                        Task {
-                            await viewModel.loadInitial(
-                                context: context,
-                                filter: selectedFilter,
-                                searchText: ""
-                            )
-                        }
-                    }
                 }
             }
             .navigationTitle("Route List")
             .toolbar {
                 toolbarFilterSortItem
+                if let user = session.user,
+                    user.role == UserRole.admin.rawValue
+                {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            isAddRoutePresented = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
             }
             .searchable(
                 text: $searchText,
@@ -87,6 +80,53 @@ struct RouteListView: View {
                 }
             }
         }
+        .sheet(isPresented: $isAddRoutePresented) {
+            NavigationStack {
+                RouteRegistrationForm()
+            }
+        }
+    }
+}
+
+// MARK: List
+extension RouteListView {
+
+    var list: some View {
+        List {
+            ForEach(displayedRoutes, id: \.id) { route in
+                NavigationLink(
+                    destination: RouteDetailView(route: route)
+                ) {
+                    ListRow(route: route)
+                }
+                .onAppear {
+                    if route.id == displayedRoutes.last?.id {
+                        Task {
+                            await viewModel.loadMore(
+                                context: context,
+                                filter: selectedFilter,
+                                searchText: searchText
+                            )
+                        }
+                    }
+                }
+
+                if viewModel.isLoading {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                }
+            }
+        }
+        .scrollDismissesKeyboard(.immediately)
+        .listStyle(.insetGrouped)
+        .tint(
+            UIDevice.current.userInterfaceIdiom == .pad
+                ? Color(.systemBlue).opacity(0.15) : Color.clear
+        )
     }
 }
 
