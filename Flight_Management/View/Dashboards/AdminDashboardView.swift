@@ -14,6 +14,7 @@ struct AdminDashboardView: View {
     @Query private var unavailableStaff: [Staff]
 
     @State private var activeSheet: ActiveSheet? = nil
+    @State private var selectedTrip: Trip? = nil
 
     init() {
         _todayTrips = Query(
@@ -32,7 +33,6 @@ struct AdminDashboardView: View {
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
-
             Group {
                 if horizontalSizeClass == .regular {
                     iPadLayout
@@ -40,7 +40,6 @@ struct AdminDashboardView: View {
                     iOSLayout
                 }
             }
-
             .navigationTitle("\(session.user?.name ?? "Admin")")
         }
         .sheet(item: $activeSheet) { sheet in
@@ -50,6 +49,10 @@ struct AdminDashboardView: View {
                     upcomingTripList
                 case .scheduledTrips, .completedTrips:
                     liveTripList(for: sheet)
+                case .selectedTripDetail:
+                    if let trip = selectedTrip {
+                        TripDetailView(trip: trip)
+                    }
                 }
             }
         }
@@ -252,8 +255,9 @@ extension AdminDashboardView {
         TripList(
             externalTrips: filteredUpcomingTrip,
             navigationTitle:
-                "Trips in next 6 hours (\(filteredUpcomingTrip.count))",
-            requiredFilters: [.scheduled, .cancelled]
+                "Trips in next 6 hours",
+            requiredFilters: [.scheduled, .cancelled],
+            statusBadgeRequired: true
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -272,7 +276,7 @@ extension AdminDashboardView {
         TripList(
             externalTrips: tripsToDisplay(for: sheet),
             navigationTitle:
-                "",
+                sheet == .completedTrips ? "Completed Trips" : "Scheduled Trips",
             requiredFilters: []
         )
         .navigationBarTitleDisplayMode(.inline)
@@ -325,6 +329,7 @@ extension AdminDashboardView {
         case upcomingTrips
         case scheduledTrips
         case completedTrips
+        case selectedTripDetail
 
         var id: Int { hashValue }
     }
