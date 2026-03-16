@@ -6,12 +6,20 @@ struct TripList: View {
     var externalTrips: [Trip] = []
     var navigationTitle: String = "Trip List"
     var requiredFilters: [TripStatus] = TripStatus.allCases
-    var isCountRequired: Bool = false
+    var statusBadgeRequired: Bool = false
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
     @State private var selectedSortOrder: SortOrder = .ascending
     @State private var searchText: String = ""
+    
+    var navigationTitleString: String {
+        if let filter = selectedFilter {
+            return navigationTitle + " (\(filter.rawValue))"
+        } else {
+            return navigationTitle
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,7 +32,7 @@ struct TripList: View {
                         .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle(navigationTitle)
+            .navigationTitle(navigationTitleString)
             .toolbar {
                 toolbarFilterSortItem
             }
@@ -45,22 +53,8 @@ extension TripList {
                 NavigationLink(
                     destination: TripDetailView(trip: trip)
                 ) {
-                    ListRow(trip: trip)
+                    ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
                 }
-            }
-
-            if displayedTrips.count > 5 && isCountRequired {
-                Text("\(displayedTrips.count) trips")
-                    .font(.caption)
-                    .foregroundStyle(.primary)
-                    .scaledToFit()
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: 50,
-                        alignment: .center
-                    )
-                    .padding(.vertical, 8)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }

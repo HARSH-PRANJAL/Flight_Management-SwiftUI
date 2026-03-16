@@ -118,10 +118,7 @@ struct StaffListView: View {
             }
         }
     }
-}
-
-// MARK: List
-extension StaffListView {
+    
     var list: some View {
         List {
             ForEach(displayedStaffs, id: \.id) { staff in

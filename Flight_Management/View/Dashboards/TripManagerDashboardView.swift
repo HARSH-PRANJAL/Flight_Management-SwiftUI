@@ -103,8 +103,9 @@ extension TripManagerDashboardView {
         TripList(
             externalTrips: filteredUpcomingTrips,
             navigationTitle:
-                "Trips in next 24 hr (\(filteredUpcomingTrips.count))",
-            requiredFilters: [.scheduled, .cancelled]
+                "Trips in next 24 hr",
+            requiredFilters: [.scheduled, .cancelled],
+            statusBadgeRequired: true
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -123,7 +124,8 @@ extension TripManagerDashboardView {
         TripList(
             externalTrips: tripsToDisplay(for: sheet),
             navigationTitle:
-                "",
+                sheet == .completedTrips
+            ? "Completed Trips" : sheet == .onTimeTrips ? "On-time Trips" : sheet == .delayedTrips ? "Delayed Trips" : "Scheduled Trips",
             requiredFilters: []
         )
         .navigationBarTitleDisplayMode(.inline)
@@ -138,7 +140,7 @@ extension TripManagerDashboardView {
             }
         }
     }
-    
+
     var tripDetailCards: some View {
         VStack(spacing: 16) {
             HStack(spacing: 16) {

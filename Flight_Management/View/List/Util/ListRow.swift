@@ -180,7 +180,7 @@ extension ListRow {
         )
     }
 
-    init(trip: Trip) {
+    init(trip: Trip, statusIndicatorRequired: Bool = true) {
         let origin =
             trip.route.nodes.first(where: { $0.sequence == 1 })?.airport.code
             ?? "_"
@@ -198,7 +198,7 @@ extension ListRow {
                 format: "dd MMM, HH:mm"
             ),
             metadata: meta,
-            status: .from(tripStatus: trip.currentStatus),
+            status: statusIndicatorRequired ? .from(tripStatus: trip.currentStatus) : nil,
             associatedTrip: trip
         )
     }

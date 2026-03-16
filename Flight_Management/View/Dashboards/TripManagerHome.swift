@@ -30,7 +30,7 @@ struct TripManagerHome: View {
                 }
             }
 
-            Tab("Trips", systemImage: "pin") {
+            Tab("Trips", systemImage: "airplane.departure") {
                 NavigationStack {
                     TripListView()
                         .toolbar {
