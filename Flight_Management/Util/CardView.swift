@@ -10,18 +10,18 @@ struct CardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(title)
                         .font(.headline)
                         .minimumScaleFactor(0.7)
+                        .padding(.bottom, 4)
                     Text(value)
                         .font(.title3)
-                        .fontWeight(.semibold)
                         .minimumScaleFactor(0.7)
                 }
                 Spacer()
                 Image(systemName: icon)
-                    .font(.system(size: 24))
+                    .font(.title)
                     .foregroundColor(iconColor)
                     .minimumScaleFactor(0.7)
             }

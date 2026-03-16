@@ -175,7 +175,7 @@ extension AircraftDetailScreen {
             externalTrips: aircraft.trips,
             navigationTitle: "\(aircraft.registrationNumber) trips",
             requiredFilters: [.scheduled, .cancelled, .completed],
-            isCountRequired: true
+            statusBadgeRequired: true
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
