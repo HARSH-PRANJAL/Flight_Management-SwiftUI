@@ -103,6 +103,14 @@ final class StaffListViewModel {
                 .replacingOccurrences(of: "-", with: "")
                 == normalisedSearch
         }
+        
+        if !normalisedSearch.isEmpty {
+            return #Predicate<Staff> {
+                ($0.nameSearchKey.contains(normalisedSearch)
+                    || (designationSearch != nil
+                        && $0.designation == designationSearch!))
+            }
+        }
 
         if let filter {
             switch filter {

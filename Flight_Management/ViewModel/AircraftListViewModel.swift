@@ -96,6 +96,15 @@ final class AircraftListViewModel {
             }
         }
 
+        if !normalisedSearch.isEmpty {
+            return #Predicate<Aircraft> { aircraft in
+                !aircraft.isDecommissioned
+                    && aircraft.registrationNumberSearchKey.contains(
+                        normalisedSearch
+                    )
+            }
+        }
+
         if let statusFilter {
             switch statusFilter {
             case .available:

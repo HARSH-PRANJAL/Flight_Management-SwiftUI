@@ -91,6 +91,17 @@ final class TripListViewModel {
             return nil
         }
 
+        if !normalisedSearch.isEmpty {
+            return #Predicate<Trip> { trip in
+                (trip.tripNumberSearchKey.contains(
+                    normalisedSearch
+                )
+                    || trip.route.nameSearchKey.contains(
+                        normalisedRouteSearch
+                    ))
+            }
+        }
+
         if let filter {
             switch filter {
             case .cancelled:

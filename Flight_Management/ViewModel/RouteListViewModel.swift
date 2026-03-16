@@ -77,12 +77,19 @@ final class RouteListViewModel {
             return nil
         }
 
+        if !normalisedSearch.isEmpty {
+            return #Predicate<Route> {
+                $0.nameSearchKey.contains(normalisedSearch)
+            }
+        }
+
         if let filter {
             switch filter {
             case .inactive:
                 if !normalisedSearch.isEmpty {
                     return #Predicate<Route> {
-                        $0.nameSearchKey.contains(normalisedSearch) && !$0.isActive
+                        $0.nameSearchKey.contains(normalisedSearch)
+                            && !$0.isActive
                     }
                 } else {
                     return #Predicate<Route> {
@@ -92,7 +99,8 @@ final class RouteListViewModel {
             case .active:
                 if !normalisedSearch.isEmpty {
                     return #Predicate<Route> {
-                        $0.nameSearchKey.contains(normalisedSearch) && $0.isActive
+                        $0.nameSearchKey.contains(normalisedSearch)
+                            && $0.isActive
                     }
                 } else {
                     return #Predicate<Route> {
