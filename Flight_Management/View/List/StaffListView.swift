@@ -18,6 +18,9 @@ struct StaffListView: View {
     var navigationTitle: String = "Staff List"
     var requiredFilters: [StaffAvailabilityStatus] = StaffAvailabilityStatus
         .allCases
+    /// Optional selection binding for split-view layouts.
+    /// When provided, rows update the selection instead of pushing a detail view.
+    var selection: Binding<Staff?>? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -143,10 +146,26 @@ extension StaffListView {
     var list: some View {
         List {
             ForEach(displayedStaffs, id: \.id) { staff in
-                NavigationLink(
-                    destination: StaffDetailView(staff: staff)
-                ) {
-                    ListRow(staff: staff)
+                Group {
+                    if let selection {
+                        Button {
+                            selection.wrappedValue = staff
+                        } label: {
+                            ListRow(staff: staff)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(
+                            selection.wrappedValue?.id == staff.id
+                                ? Color(.systemBlue).opacity(0.15)
+                            : Color(.systemBackground)
+                        )
+                    } else {
+                        NavigationLink(
+                            destination: StaffDetailView(staff: staff)
+                        ) {
+                            ListRow(staff: staff)
+                        }
+                    }
                 }
                 .onAppear {
                     guard externalStaffs.isEmpty else { return }
@@ -175,10 +194,6 @@ extension StaffListView {
         }
         .scrollDismissesKeyboard(.immediately)
         .listStyle(.insetGrouped)
-        .tint(
-            UIDevice.current.userInterfaceIdiom == .pad
-                ? Color(.systemBlue).opacity(0.15) : Color.clear
-        )
     }
 }
 

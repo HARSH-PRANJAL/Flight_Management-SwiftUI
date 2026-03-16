@@ -13,44 +13,27 @@ struct AircraftListView: View {
     @State private var searchText: String = ""
     @State private var showAircraftRegistration: Bool = false
 
+    /// Optional selection binding for use in split-view layouts.
+    /// When provided, the list behaves as a selection list instead of pushing detail.
+    var selection: Binding<Aircraft?>? = nil
+
     var body: some View {
         Group {
             if viewModel.items.isEmpty {
                 fallbackBackground
             } else {
-                List {
-                    ForEach(viewModel.items, id: \.id) { aircraft in
-                        NavigationLink(
-                            destination: AircraftDetailView(aircraft: aircraft)
-                        ) {
-                            ListRow(aircraft: aircraft)
-                        }
-                        .onAppear {
-                            if aircraft.id == viewModel.items.last?.id {
-                                Task {
-                                    await viewModel.loadMore(
-                                        context: context,
-                                        statusFilter: selectedStatus,
-                                        searchText: searchText,
-                                        sort: selectedSort,
-                                        sortOrder: selectedSortOrder
-                                    )
-                                }
-                            }
-                        }
+                list
+                    .scrollDismissesKeyboard(.immediately)
+                    .listStyle(.insetGrouped)
+                    .refreshable {
+                        await viewModel.loadInitial(
+                            context: context,
+                            statusFilter: selectedStatus,
+                            searchText: "",
+                            sort: selectedSort,
+                            sortOrder: selectedSortOrder
+                        )
                     }
-                }
-                .scrollDismissesKeyboard(.immediately)
-                .listStyle(.insetGrouped)
-                .refreshable {
-                    await viewModel.loadInitial(
-                        context: context,
-                        statusFilter: selectedStatus,
-                        searchText: "",
-                        sort: selectedSort,
-                        sortOrder: selectedSortOrder
-                    )
-                }
             }
         }
         .navigationTitle("Aircraft List")
@@ -123,6 +106,49 @@ struct AircraftListView: View {
 
 // MARK: Toolbar Item
 extension AircraftListView {
+
+    var list: some View {
+        List {
+            ForEach(viewModel.items, id: \.id) { aircraft in
+                Group {
+                    if let selection {
+                        Button {
+                            selection.wrappedValue = aircraft
+                        } label: {
+                            ListRow(aircraft: aircraft)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(
+                            selection.wrappedValue?.id == aircraft.id
+                                ? Color(.systemBlue).opacity(0.15)
+                            : Color(.systemBackground)
+                        )
+                    } else {
+                        NavigationLink(
+                            destination: AircraftDetailView(
+                                aircraft: aircraft
+                            )
+                        ) {
+                            ListRow(aircraft: aircraft)
+                        }
+                    }
+                }
+                .onAppear {
+                    if aircraft.id == viewModel.items.last?.id {
+                        Task {
+                            await viewModel.loadMore(
+                                context: context,
+                                statusFilter: selectedStatus,
+                                searchText: searchText,
+                                sort: selectedSort,
+                                sortOrder: selectedSortOrder
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     var toolbarFilterSortItem: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {

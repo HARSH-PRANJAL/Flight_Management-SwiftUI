@@ -6,6 +6,9 @@ struct TripListView: View {
     var externalTrips: [Trip]? = nil
     var navigationTitle: String = "Trip List"
     var requiredFilters: [TripStatus] = TripStatus.allCases
+    /// Optional selection binding for split-view layouts.
+    /// When provided, rows update the selection instead of pushing a detail view.
+    var selection: Binding<Trip?>? = nil
 
     @Environment(\.modelContext) private var context
 
@@ -119,10 +122,26 @@ extension TripListView {
     var list: some View {
         List {
             ForEach(displayedTrips, id: \.id) { trip in
-                NavigationLink(
-                    destination: TripDetailView(trip: trip)
-                ) {
-                    ListRow(trip: trip)
+                Group {
+                    if let selection {
+                        Button {
+                            selection.wrappedValue = trip
+                        } label: {
+                            ListRow(trip: trip)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(
+                            selection.wrappedValue?.id == trip.id
+                            ? Color(.systemBlue).opacity(0.15)
+                                : Color(.systemBackground)
+                        )
+                    } else {
+                        NavigationLink(
+                            destination: TripDetailView(trip: trip)
+                        ) {
+                            ListRow(trip: trip)
+                        }
+                    }
                 }
                 .onAppear {
                     if externalTrips != nil { return }
@@ -253,7 +272,7 @@ extension TripListView {
             case .onTime:
                 return viewModel.items.filter { $0.currentStatus == .onTime }
             case .delayed:
-                return viewModel.items.filter { $0.totalDelayedMinutes > 0}
+                return viewModel.items.filter { $0.totalDelayedMinutes > 0 }
             default:
                 return viewModel.items
             }

@@ -4,6 +4,9 @@ import SwiftUI
 struct RouteListView: View {
 
     var requiredFilters: [RouteStatus] = RouteStatus.allCases
+    /// Optional selection binding for split-view layouts.
+    /// When provided, rows update the selection instead of pushing a detail view.
+    var selection: Binding<Route?>? = nil
 
     @Environment(\.modelContext) private var context
     @Environment(SessionManager.self) private var session
@@ -94,10 +97,26 @@ extension RouteListView {
     var list: some View {
         List {
             ForEach(displayedRoutes, id: \.id) { route in
-                NavigationLink(
-                    destination: RouteDetailView(route: route)
-                ) {
-                    ListRow(route: route)
+                Group {
+                    if let selection {
+                        Button {
+                            selection.wrappedValue = route
+                        } label: {
+                            ListRow(route: route)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(
+                            selection.wrappedValue?.id == route.id
+                                ? Color(.systemBlue).opacity(0.15)
+                            : Color(.systemBackground)
+                        )
+                    } else {
+                        NavigationLink(
+                            destination: RouteDetailView(route: route)
+                        ) {
+                            ListRow(route: route)
+                        }
+                    }
                 }
                 .onAppear {
                     if route.id == displayedRoutes.last?.id {
