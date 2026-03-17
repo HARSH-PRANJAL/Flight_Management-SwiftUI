@@ -91,7 +91,9 @@ private struct AdminSidebarHost: View {
                     ContentUnavailableView(
                         "No Staff Selected",
                         systemImage: "person.2.fill",
-                        description: Text("Select a staff member from the list.")
+                        description: Text(
+                            "Select a staff member from the list."
+                        )
                     )
                 }
             case .route:
@@ -166,56 +168,31 @@ private struct AdminSidebarHost: View {
 
     var sideBarBottomSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-
             Divider().opacity(0.75).padding(.bottom, 16)
 
-            Button {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    sidebarSelection = .profile
-                    selectedTab = .profile
+            Menu {
+                Section {
+                    Button("Profile") {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            sidebarSelection = .profile
+                            selectedTab = .profile
+                        }
+                    }
+                    .buttonSizing(.flexible)
+                    .buttonStyle(.plain)
+                    Button("Logout", role: .destructive) {
+                        session.logout()
+                    }
+                    .buttonSizing(.flexible)
+                    .buttonStyle(.plain)
                 }
             } label: {
-                HStack(spacing: 10) {
-                    ToolbarLabel()
-                        .frame(width: 32, height: 32)
-                        .clipShape(Circle())
-                    Text("Profile")
-                        .foregroundStyle(
-                            sidebarSelection == .profile
-                                ? Color(.systemBlue)
-                                : Color(.label)
-                        )
-
-                }
+                ToolbarLabel()
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
             }
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 16)
-            .background(
-                Capsule()
-                    .fill(
-                        sidebarSelection == .profile
-                            ? Color(.systemGray5)
-                            : Color.clear
-                    )
-            )
-            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, alignment: .center)
 
-            // Logout row
-            Button(role: .destructive) {
-                session.logout()
-                notification.showSuccess("Logged out successfully.")
-            } label: {
-                Label(
-                    "Logout",
-                    systemImage: "rectangle.portrait.and.arrow.right"
-                )
-                .foregroundStyle(Color(.systemRed))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 32)
-                .padding(.vertical, 16)
-            }
-            .buttonStyle(.plain)
         }
         .background(.bar)
     }

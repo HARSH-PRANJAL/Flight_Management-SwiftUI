@@ -3,7 +3,6 @@ import SwiftUI
 
 struct TripManagerDashboardView: View {
     @Environment(\.modelContext) var context
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @Query private var todayTrips: [Trip]
     @Query private var upcomingTrips: [Trip]
@@ -23,22 +22,34 @@ struct TripManagerDashboardView: View {
             filter: DashboardDB.upcomingTripsPredicate(withinHours: 24),
             sort: \Trip.scheduledDepartureTime
         )
+
+        _allAircraft = Query(
+            filter: #Predicate<Aircraft> { !$0.isDecommissioned }
+        )
     }
 
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
-            Group {
-                if horizontalSizeClass == .regular {
-                    iPadLayout
-                } else {
-                    iOSLayout
+            GeometryReader { geo in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        cardsGrid(width: geo.size.width)
+                        chartsGrid(width: geo.size.width)
+                        routeAlertsSection(width: geo.size.width)
+                        upcomingTripsSection(width: geo.size.width)
+                        Spacer(minLength: 24)
+                    }
+                    .padding(
+                        .horizontal,
+                        horizontalPadding(for: geo.size.width)
+                    )
                 }
+                .refreshable {
+                    await DemoDataAPI.resolveExpiredTrips(in: context)
+                }
+                .scrollIndicators(.hidden)
             }
-            .refreshable {
-                await DemoDataAPI.resolveExpiredTrips(in: context)
-            }
-            .scrollIndicators(.hidden)
             .sheet(item: $activeSheet) { sheet in
                 NavigationStack {
                     Group {
@@ -71,170 +82,177 @@ struct TripManagerDashboardView: View {
 
 // MARK: - UI
 extension TripManagerDashboardView {
-    var iPadLayout: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                tripDetailCards
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width >= 700 ? 32 : 16
+    }
 
-                HStack(alignment: .top, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Daily Trip Status")
-                                .font(.headline)
-                            Text("Overview of operated trips today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+    private func cardColumnCount(for width: CGFloat) -> Int {
+        width >= 740 ? 4 : 2
+    }
 
-                        DonutChartView(
-                            data: tripPerformanceSummary,
-                            defaultTitle: "Total trips \noperated"
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                    }
-                    .padding(16)
-                    .background(cardTheme())
-                    .frame(maxWidth: .infinity)
+    private func cardColumns(for width: CGFloat) -> [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
+            count: cardColumnCount(for: width)
+        )
+    }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Aircraft Utilization")
-                                .font(.headline)
-                            Text("Today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+    private func chartColumns(for width: CGFloat) -> [GridItem] {
+        let count = width >= 740 ? 2 : 1
+        return Array(
+            repeating: GridItem(.flexible(minimum: 320), spacing: 16),
+            count: count
+        )
+    }
 
-                        DonutChartView(
-                            data: aircraftUtilisationCounts,
-                            defaultTitle: "Total aircraft"
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                    }
-                    .padding(16)
-                    .background(cardTheme())
-                    .frame(maxWidth: .infinity)
+    @ViewBuilder
+    func cardsGrid(width: CGFloat) -> some View {
+        LazyVGrid(
+            columns: cardColumns(for: width),
+            alignment: .leading,
+            spacing: 12
+        ) {
+            CardView(
+                title: "Scheduled Trips",
+                value: "\(scheduledTripsCount)",
+                subtitle: "Today",
+                icon: "clock.fill",
+                iconColor: Color.tripStatusColor(for: .scheduled)
+            )
+            .onTapGesture {
+                if scheduledTripsCount != 0 {
+                    activeSheet = .scheduledTrips
                 }
-
-                routeAlertsSection
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 24 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        if filteredUpcomingTrips.count > 3 {
-                            Button("View more") { activeSheet = .upcomingTrips }
-                                .font(.subheadline)
-                                .tint(Color(.systemBlue))
-                        }
-                    }
-
-                    UpcomingTripsScrollView(
-                        trips: filteredUpcomingTrips,
-                        noDataMessage: "No upcoming trips in next 24 hours",
-                        selectedTrip: $selectedTrip,
-                        presentedSheet: $activeSheet,
-                        onSelect: { item in
-                            return .selectedTripDetail(trip: item)
-                        }
-                    )
-                    .padding(.horizontal, -32)
-                }
-
-                Spacer(minLength: 24)
             }
-            .padding(.horizontal, 32)
+
+            CardView(
+                title: "Completed Trips",
+                value: "\(completedTripsCount)",
+                subtitle: "Today",
+                icon: "airplane.arrival",
+                iconColor: Color.tripStatusColor(for: .completed)
+            )
+            .onTapGesture {
+                if completedTripsCount != 0 {
+                    activeSheet = .completedTrips
+                }
+            }
+
+            CardView(
+                title: "On time Trips",
+                value: "\(liveOnTimeTripsCount)",
+                subtitle: "Operating now",
+                icon: "clock.badge.airplane.fill",
+                iconColor: Color.tripStatusColor(for: .onTime)
+            )
+            .onTapGesture {
+                if liveOnTimeTripsCount != 0 {
+                    activeSheet = .onTimeTrips
+                }
+            }
+
+            CardView(
+                title: "Delayed Trips",
+                value: "\(liveDelayedTripsCount)",
+                subtitle: "Operating now",
+                icon: "clock.badge.airplane.fill",
+                iconColor: Color.tripStatusColor(for: .delayed)
+            )
+            .onTapGesture {
+                if liveDelayedTripsCount != 0 {
+                    activeSheet = .delayedTrips
+                }
+            }
         }
     }
 
-    var iOSLayout: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                tripDetailCards
-
-                VStack(alignment: .leading) {
+    @ViewBuilder
+    func chartsGrid(width: CGFloat) -> some View {
+        LazyVGrid(
+            columns: chartColumns(for: width),
+            alignment: .leading,
+            spacing: 16
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Daily Trip Status")
                         .font(.headline)
                     Text("Overview of operated trips today")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
 
                 DonutChartView(
                     data: tripPerformanceSummary,
                     defaultTitle: "Total trips \noperated"
                 )
-                .frame(maxHeight: 500)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(cardTheme())
-
-                VStack(spacing: 12) {
-                    VStack(alignment: .leading) {
-                        Text("Aircraft Utilisation")
-                            .font(.headline)
-                        Text("Today")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    DonutChartView(
-                        data: aircraftUtilisationCounts,
-                        defaultTitle: "Total aircraft"
-                    )
-                    .frame(maxHeight: 500)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(cardTheme())
-                }
-
-                routeAlertsSection
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 24 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        if filteredUpcomingTrips.count > 3 {
-                            Spacer()
-                            Button("View more") {
-                                activeSheet = .upcomingTrips
-                            }
-                            .font(.subheadline)
-                            .tint(Color(.systemBlue))
-                        }
-                    }
-
-                    UpcomingTripsScrollView(
-                        trips: filteredUpcomingTrips,
-                        noDataMessage: "No upcoming trips in next 24 hours",
-                        selectedTrip: $selectedTrip,
-                        presentedSheet: $activeSheet,
-                        onSelect: { item in
-                            return .selectedTripDetail(trip: item)
-                        }
-                    )
-                    .padding(.horizontal, -16)
-                }
-
-                Spacer(minLength: 24)
             }
-            .padding(.horizontal, 16)
+            .padding(16)
+            .background(cardTheme())
+
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Aircraft Utilization")
+                        .font(.headline)
+                    Text("Today")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                DonutChartView(
+                    data: aircraftUtilisationCounts,
+                    defaultTitle: "Total aircraft"
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+            }
+            .padding(16)
+            .background(cardTheme())
+        }
+    }
+
+    @ViewBuilder
+    func routeAlertsSection(width: CGFloat) -> some View {
+        if width >= 760 {
+            routeAlertsSectionIpad
+        } else {
+            routeAlertsSectionIos
+        }
+    }
+
+    @ViewBuilder
+    func upcomingTripsSection(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Upcoming Trips")
+                        .font(.headline)
+                    Text("Next 24 hours")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if filteredUpcomingTrips.count > 3 {
+                    Button("View more") {
+                        activeSheet = .upcomingTrips
+                    }
+                    .font(.subheadline)
+                    .tint(Color(.systemBlue))
+                }
+            }
+
+            UpcomingTripsScrollView(
+                trips: filteredUpcomingTrips,
+                noDataMessage: "No upcoming trips in next 24 hours",
+                selectedTrip: $selectedTrip,
+                presentedSheet: $activeSheet,
+                onSelect: { item in
+                    return .selectedTripDetail(trip: item)
+                }
+            )
+            .padding(.horizontal, -horizontalPadding(for: width))
         }
     }
 
@@ -266,66 +284,7 @@ extension TripManagerDashboardView {
         .padding(.top, -20)
     }
 
-    var tripDetailCards: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 16) {
-                CardView(
-                    title: "Scheduled Trips",
-                    value: "\(scheduledTripsCount)",
-                    subtitle: "Today",
-                    icon: "clock.fill",
-                    iconColor: Color.tripStatusColor(for: .scheduled)
-                )
-                .onTapGesture {
-                    if scheduledTripsCount != 0 {
-                        activeSheet = .scheduledTrips
-                    }
-                }
-
-                CardView(
-                    title: "Completed Trips",
-                    value: "\(completedTripsCount)",
-                    subtitle: "Today",
-                    icon: "airplane.arrival",
-                    iconColor: Color.tripStatusColor(for: .completed)
-                )
-                .onTapGesture {
-                    if completedTripsCount != 0 {
-                        activeSheet = .completedTrips
-                    }
-                }
-            }
-            HStack(spacing: 16) {
-                CardView(
-                    title: "On time Trips",
-                    value: "\(liveOnTimeTripsCount)",
-                    subtitle: "Operating now",
-                    icon: "clock.badge.airplane",
-                    iconColor: Color.tripStatusColor(for: .onTime)
-                )
-                .onTapGesture {
-                    if liveOnTimeTripsCount != 0 {
-                        activeSheet = .onTimeTrips
-                    }
-                }
-
-                CardView(
-                    title: "Delayed Trips",
-                    value: "\(liveDelayedTripsCount)",
-                    subtitle: "Operating now",
-                    icon: "clock.badge.airplane",
-                    iconColor: Color.tripStatusColor(for: .delayed)
-                )
-                .onTapGesture {
-                    if liveDelayedTripsCount != 0 {
-                        activeSheet = .delayedTrips
-                    }
-                }
-            }
-        }
-    }
-
-    var routeAlertsSection: some View {
+    var routeAlertsSectionIpad: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Route Alerts")
@@ -339,6 +298,49 @@ extension TripManagerDashboardView {
                 CardView(
                     title: "Most Delayed Route",
                     value: mostDelayedRouteName,
+                    subtitle: mostDelayedRouteSubtitle,
+                    icon: "clock.arrow.circlepath.fill",
+                    iconColor: Color.tripStatusColor(for: .delayed)
+                )
+                .onTapGesture {
+                    if let route = mostDelayedRoute {
+                        selectedRoute = route
+                        activeSheet = .selectedRouteDetail(route: route)
+                    }
+                }
+
+                CardView(
+                    title: "Most Cancelled Route",
+                    value: mostCancelledRouteName,
+                    subtitle: mostCancelledRouteSubtitle,
+                    icon: "xmark.octagon.fill",
+                    iconColor: Color.tripStatusColor(for: .cancelled)
+                )
+                .onTapGesture {
+                    if let route = mostCancelledRoute {
+                        selectedRoute = route
+                        activeSheet = .selectedRouteDetail(route: route)
+                    }
+                }
+            }
+        }
+    }
+
+    var routeAlertsSectionIos: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Route Alerts")
+                    .font(.headline)
+
+                Text("Overall trip operated in routes")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(spacing: 12) {
+                CardView(
+                    title: "Most Delayed Route",
+                    value: mostCancelledRouteName,
                     subtitle: mostDelayedRouteSubtitle,
                     icon: "clock.arrow.circlepath",
                     iconColor: Color.tripStatusColor(for: .delayed)

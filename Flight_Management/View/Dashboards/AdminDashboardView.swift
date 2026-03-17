@@ -5,7 +5,6 @@ import SwiftUI
 struct AdminDashboardView: View {
     @Environment(\.modelContext) var context
     @Environment(SessionManager.self) var session
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @Query private var todayTrips: [Trip]
     @Query private var upcomingTrips: [Trip]
@@ -34,12 +33,21 @@ struct AdminDashboardView: View {
     var body: some View {
         ZStack {
             Color(.systemGroupedBackground).ignoresSafeArea(.all)
-            Group {
-                if horizontalSizeClass == .regular {
-                    iPadLayout
-                } else {
-                    iOSLayout
+            GeometryReader { geo in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        cardsGrid(width: geo.size.width)
+                        chartsGrid(width: geo.size.width)
+                        staffPerformanceSection(width: geo.size.width)
+                        upcomingTripsSection(width: geo.size.width)
+                        Spacer(minLength: 24)
+                    }
+                    .padding(.horizontal, horizontalPadding(for: geo.size.width))
                 }
+                .refreshable {
+                    await DemoDataAPI.resolveExpiredTrips(in: context)
+                }
+                .scrollIndicators(.hidden)
             }
             .navigationTitle("\(session.user?.name ?? "Admin")")
         }
@@ -75,193 +83,171 @@ struct AdminDashboardView: View {
             }
         }
     }
-
-    // MARK: - iPad
-    var iPadLayout: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-
-                // Row 1 — Stat cards (2 columns)
-                tripDetailCards
-
-                // Row 2 — Charts (2 columns, equal width)
-                HStack(alignment: .top, spacing: 16) {
-                    // Daily Trip Status
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Daily Trip Status")
-                                .font(.headline)
-                            Text("Overview of operated trips today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        DonutChartView(
-                            data: tripPerformanceSummary,
-                            defaultTitle: "Total trips \noperated"
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                    }
-                    .padding(16)
-                    .background(cardTheme())
-                    .frame(maxWidth: .infinity)
-
-                    // Crew Status
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Crew Status")
-                                .font(.headline)
-                            Text("Availability of crew today")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        DonutChartView(
-                            data: crewStatusCounts,
-                            defaultTitle: "Total staff"
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                    }
-                    .padding(16)
-                    .background(cardTheme())
-                    .frame(maxWidth: .infinity)
-                }
-
-                staffPerformanceSectionIpad
-
-                // Upcoming Trips
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 6 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        if filteredUpcomingTrip.count > 3 {
-                            Button("View more") { activeSheet = .upcomingTrips }
-                                .font(.subheadline)
-                                .tint(Color(.systemBlue))
-                        }
-                    }
-                    UpcomingTripsScrollView(
-                        trips: filteredUpcomingTrip,
-                        selectedTrip: $selectedTrip,
-                        presentedSheet: $activeSheet,
-                        onSelect: { item in
-                            return .selectedTripDetail(trip: item)
-                        }
-                    )
-                    .padding(.horizontal, -32)
-                }
-
-                Spacer(minLength: 24)
-            }
-            .padding(.horizontal, 32)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    // MARK: iOS
-    var iOSLayout: some View {
-
-        ScrollView {
-            VStack(spacing: 20) {
-                tripDetailCards
-
-                VStack(spacing: 12) {
-                    VStack(alignment: .leading) {
-                        Text("Daily Trip Status")
-                            .font(.headline)
-                        Text("Overview of operated trips today")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    DonutChartView(
-                        data: tripPerformanceSummary,
-                        defaultTitle: "Total trips \noperated"
-                    )
-                    .frame(maxHeight: 500)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        cardTheme()
-                    )
-                }
-
-                VStack(spacing: 12) {
-                    VStack(alignment: .leading) {
-                        Text("Crew Status")
-                            .font(.headline)
-                        Text("Availability of crew today")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    DonutChartView(
-                        data: crewStatusCounts,
-                        defaultTitle: "Total crew"
-                    )
-                    .frame(maxHeight: 500)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        cardTheme()
-                    )
-                }
-
-                staffPerformanceSectionIos
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Upcoming Trips")
-                                .font(.headline)
-                            Text("Next 6 hours")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        if filteredUpcomingTrip.count > 3 {
-                            Spacer()
-                            Button("View more") {
-                                activeSheet = .upcomingTrips
-                            }
-                            .font(.subheadline)
-                            .tint(Color(.systemBlue))
-                        }
-                    }
-
-                    UpcomingTripsScrollView(
-                        trips: filteredUpcomingTrip,
-                        selectedTrip: $selectedTrip,
-                        presentedSheet: $activeSheet,
-                        onSelect: { item in
-                            return .selectedTripDetail(trip: item)
-                        }
-                    )
-                    .padding(.horizontal, -16)
-                }
-
-                Spacer(minLength: 24)
-            }
-            .padding(.horizontal, 16)
-        }
-        .refreshable {
-            await DemoDataAPI.resolveExpiredTrips(in: context)
-        }
-        .scrollIndicators(.hidden)
-
-    }
 }
 
 // MARK: Ui
 extension AdminDashboardView {
+    // MARK: Responsive layout helpers (Grid-based)
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width >= 700 ? 32 : 16
+    }
+
+    private func cardColumnCount(for width: CGFloat) -> Int {
+        // Target layout:
+        // - iPad (wider): 4 cards per row
+        // - iPhone / narrow: 2 cards per row
+        width >= 740 ? 4 : 2
+    }
+
+    private func cardColumns(for width: CGFloat) -> [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
+            count: cardColumnCount(for: width)
+        )
+    }
+
+    private func chartColumns(for width: CGFloat) -> [GridItem] {
+        let count = width >= 740 ? 2 : 1
+        return Array(repeating: GridItem(.flexible(minimum: 320), spacing: 16), count: count)
+    }
+
+    @ViewBuilder
+    func cardsGrid(width: CGFloat) -> some View {
+        LazyVGrid(columns: cardColumns(for: width), alignment: .leading, spacing: 12) {
+            CardView(
+                title: "Scheduled Trips",
+                value: "\(scheduledTripsCount)",
+                subtitle: "Today",
+                icon: "clock.fill",
+                iconColor: Color.tripStatusColor(for: .scheduled)
+            )
+            .onTapGesture {
+                if scheduledTripsCount != 0 {
+                    activeSheet = .scheduledTrips
+                }
+            }
+
+            CardView(
+                title: "Completed Trips",
+                value: "\(completedTripsCount)",
+                subtitle: "Today",
+                icon: "airplane.arrival",
+                iconColor: Color.tripStatusColor(for: .completed)
+            )
+            .onTapGesture {
+                if completedTripsCount != 0 {
+                    activeSheet = .completedTrips
+                }
+            }
+
+            CardView(
+                title: "Active Routes",
+                value: "\(activeRoutesNowCount)",
+                subtitle: "Today",
+                icon: "point.topleft.down.curvedto.point.bottomright.up",
+                iconColor: Color(.systemTeal)
+            )
+            .onTapGesture {
+                if activeRoutesNowCount != 0 {
+                    activeSheet = .activeRoutes
+                }
+            }
+
+            CardView(
+                title: "Route Utilisation",
+                value: routeUtilisationPercentLabel,
+                subtitle: "Today",
+                icon: "chart.pie.fill",
+                iconColor: Color(.systemIndigo),
+                clickable: false
+            )
+        }
+    }
+
+    @ViewBuilder
+    func chartsGrid(width: CGFloat) -> some View {
+        LazyVGrid(columns: chartColumns(for: width), alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Daily Trip Status")
+                        .font(.headline)
+                    Text("Overview of operated trips today")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                DonutChartView(
+                    data: tripPerformanceSummary,
+                    defaultTitle: "Total trips \noperated"
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+            }
+            .padding(16)
+            .background(cardTheme())
+
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Crew Status")
+                        .font(.headline)
+                    Text("Availability of crew today")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                DonutChartView(
+                    data: crewStatusCounts,
+                    defaultTitle: "Total staff"
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+            }
+            .padding(16)
+            .background(cardTheme())
+        }
+    }
+
+    @ViewBuilder
+    func staffPerformanceSection(width: CGFloat) -> some View {
+        // Wider layouts get the 3-column role layout, otherwise stacked.
+        if cardColumnCount(for: width) == 4 {
+            staffPerformanceSectionIpad
+        } else {
+            staffPerformanceSectionIos
+        }
+    }
+
+    @ViewBuilder
+    func upcomingTripsSection(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Upcoming Trips")
+                        .font(.headline)
+                    Text("Next 6 hours")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if filteredUpcomingTrip.count > 3 {
+                    Button("View more") { activeSheet = .upcomingTrips }
+                        .font(.subheadline)
+                        .tint(Color(.systemBlue))
+                }
+            }
+
+            UpcomingTripsScrollView(
+                trips: filteredUpcomingTrip,
+                selectedTrip: $selectedTrip,
+                presentedSheet: $activeSheet,
+                onSelect: { item in
+                    return .selectedTripDetail(trip: item)
+                }
+            )
+            .padding(.horizontal, -horizontalPadding(for: width))
+        }
+    }
+
     var upcomingTripList: some View {
         TripList(
             externalTrips: filteredUpcomingTrip,
@@ -366,11 +352,23 @@ extension AdminDashboardView {
 // MARK: Staff Performance
 extension AdminDashboardView {
     private func topPerformers(for role: StaffRole) -> [Staff] {
-        allStaff
+        let top3 = allStaff
             .filter { $0.designation == role }
-            .sorted { $0.totalTripHours > $1.totalTripHours }
+            .sorted {
+                if $0.totalTripHours != $1.totalTripHours {
+                    return $0.totalTripHours > $1.totalTripHours
+                }
+                return $0.trips.count > $1.trips.count
+            }
             .prefix(3)
             .map { $0 }
+
+        // If the best 3 performers have 0 hours, treat as no data.
+        if !top3.isEmpty && top3.allSatisfy({ $0.totalTripHours == 0 }) {
+            return []
+        }
+
+        return top3
     }
 
     var staffPerformanceSectionIpad: some View {
@@ -385,6 +383,7 @@ extension AdminDashboardView {
 
             HStack(alignment: .top, spacing: 16) {
                 ForEach(StaffRole.allCases, id: \.self) { role in
+                    let performers = topPerformers(for: role)
                     VStack(alignment: .leading, spacing: 8) {
                         Text(role.rawValue)
                             .font(.subheadline)
@@ -392,31 +391,37 @@ extension AdminDashboardView {
                             .foregroundStyle(Color(.label))
 
                         VStack(spacing: 8) {
-                            ForEach(topPerformers(for: role), id: \.id) {
-                                staff in
-                                HStack {
-                                    VStack {
-                                        Button {
-                                            selectedStaff = staff
-                                            activeSheet = .selectedStaffDetail(
-                                                staff: staff
-                                            )
-                                        } label: {
-                                            ListRow(performanceStaff: staff)
-                                        }
-                                        .buttonStyle(.plain)
+                            if performers.isEmpty {
+                                ContentUnavailableView(
+                                    "No performance data",
+                                    systemImage: "chart.bar"
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                            } else {
+                                ForEach(performers, id: \.id) { staff in
+                                    HStack {
+                                        VStack {
+                                            Button {
+                                                selectedStaff = staff
+                                                activeSheet = .selectedStaffDetail(
+                                                    staff: staff
+                                                )
+                                            } label: {
+                                                ListRow(performanceStaff: staff)
+                                            }
+                                            .buttonStyle(.plain)
 
-                                        if staff.id
-                                            != topPerformers(for: role).last?.id
-                                        {
-                                            Divider()
+                                            if staff.id != performers.last?.id {
+                                                Divider()
+                                            }
                                         }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.subheadline.smallCaps())
+                                            .foregroundStyle(Color(.tertiaryLabel))
+                                            .padding(.trailing, 12)
                                     }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.subheadline.smallCaps())
-                                        .foregroundStyle(Color(.tertiaryLabel))
-                                        .padding(.trailing, 12)
                                 }
                             }
 
@@ -442,37 +447,44 @@ extension AdminDashboardView {
 
             VStack(spacing: 12) {
                 ForEach(StaffRole.allCases, id: \.self) { role in
+                    let performers = topPerformers(for: role)
                     VStack(alignment: .leading, spacing: 8) {
                         Text(role.rawValue)
                             .font(.subheadline.bold())
                             .foregroundStyle(Color(.label))
 
                         VStack(spacing: 8) {
-                            ForEach(topPerformers(for: role), id: \.id) {
-                                staff in
-                                HStack {
-                                    VStack {
-                                        Button {
-                                            selectedStaff = staff
-                                            activeSheet = .selectedStaffDetail(
-                                                staff: staff
-                                            )
-                                        } label: {
-                                            ListRow(performanceStaff: staff)
-                                        }
-                                        .buttonStyle(.plain)
+                            if performers.isEmpty {
+                                ContentUnavailableView(
+                                    "No performance data",
+                                    systemImage: "chart.bar"
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                            } else {
+                                ForEach(performers, id: \.id) { staff in
+                                    HStack {
+                                        VStack {
+                                            Button {
+                                                selectedStaff = staff
+                                                activeSheet = .selectedStaffDetail(
+                                                    staff: staff
+                                                )
+                                            } label: {
+                                                ListRow(performanceStaff: staff)
+                                            }
+                                            .buttonStyle(.plain)
 
-                                        if staff.id
-                                            != topPerformers(for: role).last?.id
-                                        {
-                                            Divider()
+                                            if staff.id != performers.last?.id {
+                                                Divider()
+                                            }
                                         }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.subheadline.smallCaps())
+                                            .foregroundStyle(Color(.tertiaryLabel))
+                                            .padding(.trailing, 12)
                                     }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.subheadline.smallCaps())
-                                        .foregroundStyle(Color(.tertiaryLabel))
-                                        .padding(.trailing, 12)
                                 }
                             }
                         }
