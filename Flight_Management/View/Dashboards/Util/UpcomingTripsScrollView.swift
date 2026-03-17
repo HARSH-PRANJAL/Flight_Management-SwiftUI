@@ -21,7 +21,8 @@ struct UpcomingTripsScrollView<T>: View {
                         subtitle:
                             "Planned arrival: \(formatDate(trip.estimatedArrivalTime, format: "dd MMM, HH:mm"))",
                         icon: "airplane",
-                        iconColor: Color(.systemBlue)
+                        iconColor: Color(.systemBlue),
+                        clickable: false
                     )
                     .padding(.leading, 16)
                     .padding(.bottom, 8)
