@@ -26,15 +26,9 @@ struct ImagePreviewer: View {
                             if circular {
                                 image
                                     .resizable()
-                                    .scaledToFill()
+                                    .scaledToFit()
                                     .frame(width: 320, height: 320)
-                                    .clipShape(Circle())
-                                    .overlay(
-                                        Circle().stroke(
-                                            Color.gray.opacity(0.25),
-                                            lineWidth: 2
-                                        )
-                                    )
+                                    .padding(16)
                             } else {
                                 image
                                     .resizable()

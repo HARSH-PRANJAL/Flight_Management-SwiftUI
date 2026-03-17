@@ -74,7 +74,17 @@ struct StaffDetailScreen: View {
             }
             .animation(.snappy(duration: 0.35), value: selectedTab)
         }
-        .fullScreenCover(isPresented: $showImagePreview) {
+        .fullScreenCover(
+            isPresented: Binding(
+                get: {
+                    showImagePreview
+                        && UIDevice.current.userInterfaceIdiom != .pad
+                },
+                set: { newValue in
+                    if !newValue { showImagePreview = false }
+                }
+            )
+        ) {
             if let image = staff.avatarImage {
                 NavigationStack {
                     ImagePreviewer(
@@ -221,6 +231,29 @@ extension StaffDetailScreen {
         VStack(spacing: 0) {
             displayImage
                 .padding(.bottom, 20)
+                .popover(
+                    isPresented: Binding(
+                        get: { showImagePreview && UIDevice.current.userInterfaceIdiom == .pad },
+                        set: { newValue in
+                            if !newValue { showImagePreview = false }
+                        }
+                    ),
+                    attachmentAnchor: .rect(.bounds),
+                    arrowEdge: .top
+                ) {
+                    if let image = staff.avatarImage {
+                        NavigationStack {
+                            ImagePreviewer(
+                                image: image,
+                                title: "Profile Photo",
+                                circular: true,
+                                profileBgColor: staff.profileBgColor
+                            )
+                        }
+                    } else {
+                        EmptyView()
+                    }
+                }
             Text(staff.name)
                 .font(.title)
                 .fontWeight(.semibold)
