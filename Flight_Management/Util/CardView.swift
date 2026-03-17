@@ -6,6 +6,7 @@ struct CardView: View {
     var subtitle: String? = nil
     let icon: String
     let iconColor: Color
+    var clickable: Bool = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -15,21 +16,34 @@ struct CardView: View {
                         .font(.headline)
                         .minimumScaleFactor(0.7)
                         .padding(.bottom, 4)
+
                     Text(value)
                         .font(.title3)
                         .minimumScaleFactor(0.7)
                 }
+
                 Spacer()
+
                 Image(systemName: icon)
                     .font(.title)
                     .foregroundColor(iconColor)
                     .minimumScaleFactor(0.7)
             }
 
-            if let subtitle = self.subtitle {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .minimumScaleFactor(0.7)
+            HStack(alignment: .bottom) {
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .minimumScaleFactor(0.7)
+                }
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if clickable {
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.smallCaps())
+                    .foregroundStyle(Color(.tertiaryLabel))
+                    .padding(.trailing, 12)
             }
         }
         .padding()

@@ -151,7 +151,8 @@ extension AircraftDetailScreen {
                             title: "Flying Hours",
                             value: "\(tripHours) hr",
                             icon: "clock",
-                            iconColor: Color(.systemBrown)
+                            iconColor: Color(.systemBrown),
+                            clickable: false
                         )
                     }
                 }

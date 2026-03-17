@@ -111,23 +111,25 @@ extension TripDetailScreen {
                     Section {
                         HStack(spacing: 12) {
                             CardView(
-                                title: "Duration",
-                                value:
-                                    "\(trip.route.totalPlannedDurationMinutes) m",
-                                icon: "clock",
-                                iconColor: Color(.systemBrown)
-                            )
-                            CardView(
                                 title: "Crew",
                                 value: "\(trip.staffs.count)",
                                 icon: "person.2",
-                                iconColor: Color(.systemIndigo)
+                                iconColor: Color(.systemIndigo),
+                                clickable: false
                             )
                             .onTapGesture {
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     proxy.scrollTo("staffSection", anchor: .top)
                                 }
                             }
+                            CardView(
+                                title: "Duration",
+                                value:
+                                    "\(trip.route.totalPlannedDurationMinutes) m",
+                                icon: "clock",
+                                iconColor: Color(.systemBrown),
+                                clickable: false
+                            )
                         }
                     }
                     .padding(.bottom, 8)

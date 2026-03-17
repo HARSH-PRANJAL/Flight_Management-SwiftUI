@@ -132,7 +132,7 @@ struct StaffDetailScreen: View {
                         CardView(
                             title: "Scheduled",
                             value: "\(staff.scheduledTrips.count)",
-                            icon: "airplane.up.right",
+                            icon: "clock.badge.airplane",
                             iconColor: Color(.systemBlue)
                         )
                         .onTapGesture {
@@ -145,7 +145,8 @@ struct StaffDetailScreen: View {
                             value:
                                 "\(tripHours) hr",
                             icon: "clock",
-                            iconColor: Color(.systemPurple)
+                            iconColor: Color(.systemPurple),
+                            clickable: false
                         )
                     }
                     .padding(.bottom, 8)
