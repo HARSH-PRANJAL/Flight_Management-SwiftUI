@@ -27,6 +27,7 @@ struct StaffRegistrationForm: View {
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
         }
+        .padding(.bottom, 24)
     }
 }
 

@@ -118,6 +118,7 @@ struct UserRegistrationForm: View {
                         toolbarContent
                     }
                 }
+                .padding(.bottom, 24)
             }
         }
         .alert("Discard Changes?", isPresented: $showConfirmCloseAlert) {

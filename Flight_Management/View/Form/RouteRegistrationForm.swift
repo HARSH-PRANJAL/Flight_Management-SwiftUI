@@ -18,6 +18,7 @@ struct RouteRegistrationForm: View {
                 .onAppear {
                     viewModel.originalSnapshot = viewModel.currentSnapshot()
                 }
+                .padding(.bottom, 24)
         }
     }
 }

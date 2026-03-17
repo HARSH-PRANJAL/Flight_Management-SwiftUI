@@ -102,6 +102,7 @@ struct UserLoginForm: View {
                 .padding()
                 Spacer()
             }
+            .frame(maxWidth: 500, maxHeight: 700, alignment: .center)
             .overlay {
                 if errorMessage != nil {
                     ErrorOverlay(message: errorMessage!)
@@ -113,6 +114,7 @@ struct UserLoginForm: View {
                     }
                 }
             }
+            .padding(.bottom, 24)
         }
     }
 

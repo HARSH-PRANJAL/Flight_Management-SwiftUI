@@ -24,6 +24,7 @@ struct TripRegistrationForm: View {
             TripRegistrationContent(viewModel: viewModel, isPresented: isPresented)
                 .navigationTitle(viewModel.isEditMode ? "Edit Trip" : "Schedule Trip")
                 .navigationBarTitleDisplayMode(.inline)
+                .padding(.bottom, 24)
         }
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
