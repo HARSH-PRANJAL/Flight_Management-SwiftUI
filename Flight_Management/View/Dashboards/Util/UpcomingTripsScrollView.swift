@@ -1,11 +1,12 @@
 import SwiftUI
 
-struct UpcomingTripsScrollView: View {
+struct UpcomingTripsScrollView<T>: View {
     let trips: [Trip]
     var noDataMessage: String = "No upcoming trips in next 6 hours"
-    
-    @State private var selectedTrip: Trip? = nil
-    @State private var isTripDetailPresented: Bool = false
+
+    @Binding var selectedTrip: Trip?
+    @Binding var presentedSheet: T?
+    var onSelect: (Trip) -> T
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -26,7 +27,7 @@ struct UpcomingTripsScrollView: View {
                     .padding(.bottom, 8)
                     .onTapGesture {
                         selectedTrip = trip
-                        isTripDetailPresented = true
+                        presentedSheet = onSelect(trip)
                     }
                 }
                 if trips.isEmpty {
@@ -36,25 +37,6 @@ struct UpcomingTripsScrollView: View {
                 }
             }
         }
-        .sheet(isPresented: $isTripDetailPresented) {
-            NavigationStack {
-                if let trip = selectedTrip {
-                    TripDetailView(trip: trip)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button {
-                                    isTripDetailPresented = false
-                                } label: {
-                                    Image(systemName: "xmark")
-                                }
-                            }
-                        }
-                }
-            }
-        }
     }
 }
 
-#Preview {
-    UpcomingTripsScrollView(trips: [])
-}

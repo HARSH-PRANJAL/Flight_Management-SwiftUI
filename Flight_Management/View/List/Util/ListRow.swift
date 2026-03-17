@@ -133,6 +133,22 @@ extension ListRow {
         )
     }
 
+    init(performanceStaff staff: Staff) {
+        let meta = String(
+            format: "%.0f hr • %d trips",
+            staff.totalTripHours,
+            staff.completedTrips.count
+        )
+        self.init(
+            profileImage: staff.avatarImage,
+            title: staff.name,
+            subtitle: nil,
+            metadata: meta,
+            status: nil,
+            showFallbackImage: true
+        )
+    }
+
     init(aircraft: Aircraft) {
         let meta =
             "\(aircraft.seatingCapacity) seats • \(aircraft.totalTripsOperated) trips"
