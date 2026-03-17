@@ -19,7 +19,7 @@ enum TripManagerTab: String, CaseIterable, Hashable {
     }
 
     var usesThreeColumns: Bool {
-        self == .aircrafts || self == .trips
+        self == .aircrafts || self == .trips || self == .routes
     }
 }
 
@@ -55,6 +55,7 @@ private struct TripManagerSidebarHost: View {
     @State private var isTripRegistrationPresented: Bool = false
     @State private var selectedAircraft: Aircraft?
     @State private var selectedTrip: Trip?
+    @State private var selectedRoute: Route?
 
     var body: some View {
         Group {
@@ -94,33 +95,48 @@ private struct TripManagerSidebarHost: View {
                             }
                         }
                 }
+            case .routes:
+                NavigationStack {
+                    RouteListView(selection: $selectedRoute)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    isTripRegistrationPresented.toggle()
+                                } label: {
+                                    Image(systemName: "plus")
+                                }
+                            }
+                        }
+                }
             default:
                 EmptyView()
             }
         } detail: {
-            switch selectedTab {
-            case .aircrafts:
-                if let aircraft = selectedAircraft {
-                    AircraftDetailView(aircraft: aircraft)
-                } else {
-                    ContentUnavailableView(
-                        "No Aircraft Selected",
-                        systemImage: "airplane",
-                        description: Text("Select an aircraft from the list.")
-                    )
+            NavigationStack {
+                switch selectedTab {
+                case .aircrafts:
+                    if let aircraft = selectedAircraft {
+                        AircraftDetailView(aircraft: aircraft)
+                    } else {
+                        ContentUnavailableView(
+                            "No Aircraft Selected",
+                            systemImage: "airplane",
+                            description: Text("Select an aircraft from the list.")
+                        )
+                    }
+                case .trips:
+                    if let trip = selectedTrip {
+                        TripDetailView(trip: trip)
+                    } else {
+                        ContentUnavailableView(
+                            "No Trip Selected",
+                            systemImage: "airplane.departure",
+                            description: Text("Select a trip from the list.")
+                        )
+                    }
+                default:
+                    EmptyView()
                 }
-            case .trips:
-                if let trip = selectedTrip {
-                    TripDetailView(trip: trip)
-                } else {
-                    ContentUnavailableView(
-                        "No Trip Selected",
-                        systemImage: "airplane.departure",
-                        description: Text("Select a trip from the list.")
-                    )
-                }
-            default:
-                EmptyView()
             }
         }
         .navigationSplitViewStyle(.balanced)
@@ -141,10 +157,6 @@ private struct TripManagerSidebarHost: View {
                                 modelContext: modelContext
                             )
                         }
-                }
-            case .routes:
-                NavigationStack {
-                    RouteListView(requiredFilters: [], selectedFilter: .active)
                 }
             case .profile:
                 NavigationStack {

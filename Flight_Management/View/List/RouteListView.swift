@@ -4,8 +4,6 @@ import SwiftUI
 struct RouteListView: View {
 
     var requiredFilters: [RouteStatus] = RouteStatus.allCases
-    /// Optional selection binding for split-view layouts.
-    /// When provided, rows update the selection instead of pushing a detail view.
     var selection: Binding<Route?>? = nil
 
     @Environment(\.modelContext) private var context
