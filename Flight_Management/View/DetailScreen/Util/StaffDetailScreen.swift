@@ -238,7 +238,6 @@ extension StaffDetailScreen {
                             if !newValue { showImagePreview = false }
                         }
                     ),
-                    attachmentAnchor: .rect(.bounds),
                     arrowEdge: .top
                 ) {
                     if let image = staff.avatarImage {

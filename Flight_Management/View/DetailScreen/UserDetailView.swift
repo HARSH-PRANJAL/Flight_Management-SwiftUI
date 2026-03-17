@@ -4,6 +4,8 @@ import SwiftUI
 struct UserDetailView: View {
     @Environment(SessionManager.self) var session
     @Environment(\.modelContext) var context
+    @Environment(NotificationManager.self) var notification
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     @State var isEditPageShowing: Bool = false
     @State var user: User? = nil

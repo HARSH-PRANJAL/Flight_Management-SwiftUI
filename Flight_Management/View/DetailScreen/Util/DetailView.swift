@@ -26,7 +26,17 @@ struct DetailView: View {
                 detailView
             }
         }
-        .fullScreenCover(isPresented: $showImagePreview) {
+        .fullScreenCover(
+            isPresented: Binding(
+                get: {
+                    showImagePreview
+                        && UIDevice.current.userInterfaceIdiom != .pad
+                },
+                set: { newValue in
+                    if !newValue { showImagePreview = false }
+                }
+            )
+        ) {
             NavigationStack {
                 ImagePreviewer(
                     image: profileImage,
@@ -69,6 +79,27 @@ struct DetailView: View {
         VStack(spacing: 0) {
             displayImage
                 .padding(.bottom, 20)
+                .popover(
+                    isPresented: Binding(
+                        get: {
+                            showImagePreview
+                                && UIDevice.current.userInterfaceIdiom == .pad
+                        },
+                        set: { newValue in
+                            if !newValue { showImagePreview = false }
+                        }
+                    ),
+                    arrowEdge: .top
+                ) {
+                    NavigationStack {
+                        ImagePreviewer(
+                            image: profileImage,
+                            title: titleText,
+                            profileBgColor: profileBgColor
+                        )
+                    }
+                    .frame(width: 520, height: 520)
+                }
             Text(titleText)
                 .font(.title)
                 .fontWeight(.semibold)
