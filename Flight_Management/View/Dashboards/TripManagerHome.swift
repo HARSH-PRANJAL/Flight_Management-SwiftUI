@@ -143,7 +143,6 @@ private struct TripManagerSidebarHost: View {
             case .home:
                 NavigationStack {
                     TripManagerDashboardView()
-                        .navigationTitle("Manager")
                 }
             case .profile:
                 NavigationStack {
@@ -203,12 +202,17 @@ private struct TripManagerSidebarHost: View {
                     .buttonStyle(.plain)
                 }
             } label: {
-                ToolbarLabel()
-                    .frame(width: 32, height: 32)
-                    .clipShape(Circle())
+                HStack {
+                    ToolbarLabel()
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
+                        .padding(.trailing, 4)
+                    Text("\(session.user?.name ?? "Manager")")
+                        .foregroundStyle(Color.primary)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
-
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 32)
         }
         .background(.bar)
     }
@@ -232,7 +236,6 @@ private struct TripManagerTabLayout: View {
             ) {
                 NavigationStack {
                     TripManagerDashboardView()
-                        .navigationTitle("Manager")
                         .toolbar {
                             profileHandlerToolbarItem(
                                 session: session,

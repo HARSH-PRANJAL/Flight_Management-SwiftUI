@@ -40,11 +40,12 @@ struct TripManagerDashboardView: View {
                         upcomingTripsSection(width: geo.size.width)
                         Spacer(minLength: 24)
                     }
-                    .padding(
-                        .horizontal,
-                        horizontalPadding(for: geo.size.width)
-                    )
+                    .navigationTitle("Manager")
                 }
+                .padding(
+                    .horizontal,
+                    horizontalPadding(for: geo.size.width)
+                )
                 .refreshable {
                     await DemoDataAPI.resolveExpiredTrips(in: context)
                 }

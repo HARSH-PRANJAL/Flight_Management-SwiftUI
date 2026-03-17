@@ -42,14 +42,14 @@ struct AdminDashboardView: View {
                         upcomingTripsSection(width: geo.size.width)
                         Spacer(minLength: 24)
                     }
-                    .padding(.horizontal, horizontalPadding(for: geo.size.width))
+                    .navigationTitle("Admin")
                 }
+                .padding(.horizontal, horizontalPadding(for: geo.size.width))
                 .refreshable {
                     await DemoDataAPI.resolveExpiredTrips(in: context)
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle("\(session.user?.name ?? "Admin")")
         }
         .sheet(item: $activeSheet) { sheet in
             NavigationStack {

@@ -187,11 +187,17 @@ private struct AdminSidebarHost: View {
                     .buttonStyle(.plain)
                 }
             } label: {
-                ToolbarLabel()
-                    .frame(width: 32, height: 32)
-                    .clipShape(Circle())
+                HStack {
+                    ToolbarLabel()
+                        .frame(width: 32, height: 32)
+                        .clipShape(Circle())
+                        .padding(.trailing, 4)
+                    Text("\(session.user?.name ?? "Admin")")
+                        .foregroundStyle(Color.primary)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 32)
 
         }
         .background(.bar)
