@@ -355,8 +355,6 @@ extension StaffRegistrationContent {
             }
             staff.currentTrip?.cancel()
 
-            staff.markUnavailable()
-
             do {
                 try context.save()
                 return true

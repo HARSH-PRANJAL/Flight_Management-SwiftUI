@@ -332,6 +332,7 @@ extension AdminDashboardView {
             UIDevice.current.userInterfaceIdiom == .pad
                 ? Color(.systemBlue).opacity(0.15) : Color.clear
         )
+        .padding(.top, -20)
     }
     private func topPerformers(for role: StaffRole) -> [Staff] {
         let top3 =
