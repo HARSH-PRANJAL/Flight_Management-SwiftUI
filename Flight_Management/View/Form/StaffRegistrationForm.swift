@@ -22,12 +22,12 @@ struct StaffRegistrationForm: View {
             StaffRegistrationContent(viewModel: viewModel, isPresented: isPresented)
                 .navigationTitle(viewModel.isEditMode ? "Updated Staff" : "Add Staff")
                 .navigationBarTitleDisplayMode(.inline)
+                .padding(.bottom, 24)
         }
         .scrollDismissesKeyboard(.interactively)
         .onAppear {
             viewModel.originalSnapshot = viewModel.currentSnapshot()
         }
-        .padding(.bottom, 24)
     }
 }
 
