@@ -8,6 +8,8 @@ struct RouteDetailView: View {
     @Environment(NotificationManager.self) var notificationManager
     @Environment(\.modelContext) var context
 
+    @State private var showDeleteAlert = false
+
     var isAdmin: Bool {
         session.user?.role == UserRole.admin.rawValue
     }
@@ -20,9 +22,6 @@ struct RouteDetailView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     primaryCard
-                    if isAdmin {
-                        actionButton
-                    }
                     airportNodesCard
 
                     if !currentTrip.isEmpty {
@@ -36,34 +35,48 @@ struct RouteDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Button(""){}
+                    Button("") {}
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        if isAdmin {
+                            if route.isActive {
+                                Button(role: .destructive) {
+                                    showDeleteAlert = true
+                                } label: {
+                                    Label("Delete Route", systemImage: "trash")
+                                }
+                            } else {
+                                Button {
+                                    onTapAction()
+                                } label: {
+                                    Label("Restore Route", systemImage: "mappin.and.ellipse")
+                                }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
                 }
             }
         }
         .toolbar(.hidden, for: .tabBar)
+        .alert("", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                showDeleteAlert = false
+            }
+            Button("Delete", role: .destructive) {
+                onTapAction()
+                showDeleteAlert = false
+            }
+        } message: {
+            Text("Route will not be available for trip scheduling but you can restore it later.")
+        }
     }
 }
 
 // MARK: UI
 extension RouteDetailView {
-    var actionButton: some View {
-        Button {
-            onTapAction()
-        } label: {
-            HStack(spacing: 8) {
-                Image(
-                    systemName: !route.isActive ? "mappin.and.ellipse" : "trash"
-                )
-                Text(!route.isActive ? "Restore route" : "Delete route")
-            }
-            .font(.body.weight(.semibold))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-        }
-        .buttonStyle(.bordered)
-        .tint(!route.isActive ? Color(.systemGreen) : Color(.systemRed))
-        .padding(.bottom, 8)
-    }
 
     var primaryCard: some View {
         VStack(spacing: 0) {

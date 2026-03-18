@@ -89,25 +89,6 @@ extension TripDetailScreen {
                         primaryCard
                     }
 
-                    if canCancelTrip {
-                        Section {
-                            Button {
-                                onCancelTapped?()
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "xmark.circle")
-                                        .font(.body.weight(.semibold))
-                                    Text("Cancel Trip")
-                                        .font(.body.weight(.semibold))
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(Color(.systemRed))
-                        }
-                    }
-
                     Section {
                         HStack(spacing: 12) {
                             CardView(
@@ -147,12 +128,25 @@ extension TripDetailScreen {
             .scrollIndicators(.hidden)
             .padding(.horizontal, 16)
             .toolbar {
-                if canEditTrip {
+                if canEditTrip || canCancelTrip {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            isEditPresented = true
+                        Menu {
+                            if canEditTrip {
+                                Button {
+                                    isEditPresented = true
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                            }
+                            if canCancelTrip {
+                                Button(role: .destructive) {
+                                    onCancelTapped?()
+                                } label: {
+                                    Label("Cancel Trip", systemImage: "xmark.circle.fill")
+                                }
+                            }
                         } label: {
-                            Image(systemName: "pencil")
+                            Image(systemName: "ellipsis")
                         }
                     }
                 }

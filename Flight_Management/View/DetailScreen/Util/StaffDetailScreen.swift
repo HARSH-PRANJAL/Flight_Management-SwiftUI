@@ -107,36 +107,6 @@ struct StaffDetailScreen: View {
                     primaryCard
                 }
 
-                if onActionButtonTapped != nil {
-                    Section {
-                        Button {
-                            onActionButtonTapped!()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(
-                                    systemName: staff.isMarkedUnavailable
-                                        ? "person.badge.plus" : "person.slash"
-                                )
-                                .font(.body.weight(.semibold))
-                                Text(
-                                    staff.isMarkedUnavailable
-                                        ? "Mark Available" : "Mark Unavailable"
-                                )
-                                .font(.body.weight(.semibold))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(
-                            staff.isMarkedUnavailable
-                                ? Color(.systemGreen)
-                                : Color(.systemRed)
-                        )
-                        .padding(.bottom, 8)
-                    }
-                }
-
                 Section {
                     HStack(spacing: 12) {
                         CardView(
@@ -169,11 +139,30 @@ struct StaffDetailScreen: View {
         .padding(.horizontal, 16)
         .scrollIndicators(.hidden)
         .toolbar {
-            if isAdmin {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { isEditPageShowing = true }) {
-                        Image(systemName: "pencil")
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    if isAdmin {
+                        Button(action: { isEditPageShowing = true }) {
+                            Label("Edit", systemImage: "pencil")
+                        }
                     }
+                    if let onAction = onActionButtonTapped {
+                        Button(
+                            role: staff.isMarkedUnavailable ? nil : .destructive
+                        ) {
+                            onAction()
+                        } label: {
+                            Label(
+                                staff.isMarkedUnavailable
+                                    ? "Mark Available" : "Mark Unavailable",
+                                systemImage: staff.isMarkedUnavailable
+                                    ? "person.badge.plus"
+                                    : "person.slash"
+                            )
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
                 }
             }
         }
@@ -233,7 +222,10 @@ extension StaffDetailScreen {
                 .padding(.bottom, 20)
                 .popover(
                     isPresented: Binding(
-                        get: { showImagePreview && UIDevice.current.userInterfaceIdiom == .pad },
+                        get: {
+                            showImagePreview
+                                && UIDevice.current.userInterfaceIdiom == .pad
+                        },
                         set: { newValue in
                             if !newValue { showImagePreview = false }
                         }
