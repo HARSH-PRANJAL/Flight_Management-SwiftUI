@@ -195,21 +195,10 @@ private struct TripManagerSidebarHost: View {
         VStack(alignment: .leading, spacing: 0) {
             Divider().opacity(0.75).padding(.bottom, 16)
 
-            Menu {
-                Section {
-                    Button("Profile") {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            sidebarSelection = .profile
-                            selectedTab = .profile
-                        }
-                    }
-                    .buttonSizing(.flexible)
-                    .buttonStyle(.plain)
-                    Button("Logout", role: .destructive) {
-                        session.logout()
-                    }
-                    .buttonSizing(.flexible)
-                    .buttonStyle(.plain)
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    sidebarSelection = .profile
+                    selectedTab = .profile
                 }
             } label: {
                 HStack {

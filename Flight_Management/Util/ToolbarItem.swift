@@ -6,21 +6,7 @@ func profileHandlerToolbarItem(
     modelContext: ModelContext
 ) -> some ToolbarContent {
     return ToolbarItem(placement: .topBarTrailing) {
-        Menu {
-            NavigationLink(
-                "Profile",
-                destination: {
-                    UserDetailView()
-                }
-            )
-            Section {
-                Button("Logout", role: .destructive) {
-                    session.logout()
-                }
-                .buttonSizing(.flexible)
-                .buttonStyle(.plain)
-            }
-        } label: {
+        NavigationLink(destination: UserDetailView()) {
             ToolbarLabel()
                 .frame(width: 32, height: 32)
                 .clipShape(Circle())
