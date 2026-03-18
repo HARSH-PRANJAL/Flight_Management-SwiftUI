@@ -295,7 +295,7 @@ extension TripDetailScreen {
                         .padding(16)
                     }
                     .buttonStyle(PressableRowStyle())
-                    if staff.id != trip.staffs.last?.id {
+                    if staff.id != crew.last?.id {
                         Divider()
                             .padding(.leading, 16)
                     }
