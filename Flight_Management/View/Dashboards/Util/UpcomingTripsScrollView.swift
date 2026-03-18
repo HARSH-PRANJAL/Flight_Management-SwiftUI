@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct UpcomingTripsScrollView<T>: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     let trips: [Trip]
     var noDataMessage: String = "No upcoming trips in next 6 hours"
 
@@ -24,7 +25,7 @@ struct UpcomingTripsScrollView<T>: View {
                         iconColor: Color(.systemBlue),
                         clickable: false
                     )
-                    .padding(.leading, 16)
+                    .padding(.leading, horizontalSizeClass == .regular ? 32 : 16)
                     .padding(.bottom, 8)
                     .onTapGesture {
                         selectedTrip = trip

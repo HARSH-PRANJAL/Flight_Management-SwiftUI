@@ -34,18 +34,20 @@ struct TripManagerDashboardView: View {
             GeometryReader { geo in
                 ScrollView {
                     VStack(spacing: 24) {
-                        cardsGrid(width: geo.size.width)
-                        chartsGrid(width: geo.size.width)
-                        routeAlertsSection(width: geo.size.width)
+                        VStack(spacing: 24) {
+                            cardsGrid(width: geo.size.width)
+                            chartsGrid(width: geo.size.width)
+                            routeAlertsSection(width: geo.size.width)
+                        }
+                        .padding(
+                            .horizontal,
+                            horizontalPadding(for: geo.size.width)
+                        )
                         upcomingTripsSection(width: geo.size.width)
                         Spacer(minLength: 24)
                     }
                     .navigationTitle("Manager")
                 }
-                .padding(
-                    .horizontal,
-                    horizontalPadding(for: geo.size.width)
-                )
                 .refreshable {
                     await DemoDataAPI.resolveExpiredTrips(in: context)
                 }
@@ -83,29 +85,6 @@ struct TripManagerDashboardView: View {
 
 // MARK: - UI
 extension TripManagerDashboardView {
-    private func horizontalPadding(for width: CGFloat) -> CGFloat {
-        width >= 700 ? 32 : 16
-    }
-
-    private func cardColumnCount(for width: CGFloat) -> Int {
-        width >= 740 ? 4 : 2
-    }
-
-    private func cardColumns(for width: CGFloat) -> [GridItem] {
-        Array(
-            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
-            count: cardColumnCount(for: width)
-        )
-    }
-
-    private func chartColumns(for width: CGFloat) -> [GridItem] {
-        let count = width >= 740 ? 2 : 1
-        return Array(
-            repeating: GridItem(.flexible(minimum: 320), spacing: 16),
-            count: count
-        )
-    }
-
     @ViewBuilder
     func cardsGrid(width: CGFloat) -> some View {
         LazyVGrid(
@@ -243,6 +222,7 @@ extension TripManagerDashboardView {
                     .tint(Color(.systemBlue))
                 }
             }
+            .padding(.horizontal, horizontalPadding(for: width))
 
             UpcomingTripsScrollView(
                 trips: filteredUpcomingTrips,
@@ -253,7 +233,6 @@ extension TripManagerDashboardView {
                     return .selectedTripDetail(trip: item)
                 }
             )
-            .padding(.horizontal, -horizontalPadding(for: width))
         }
     }
 
@@ -373,6 +352,29 @@ extension TripManagerDashboardView {
 
 // MARK: Util
 extension TripManagerDashboardView {
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width >= 700 ? 32 : 16
+    }
+
+    private func cardColumnCount(for width: CGFloat) -> Int {
+        width >= 740 ? 4 : 2
+    }
+
+    private func cardColumns(for width: CGFloat) -> [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
+            count: cardColumnCount(for: width)
+        )
+    }
+
+    private func chartColumns(for width: CGFloat) -> [GridItem] {
+        let count = width >= 740 ? 2 : 1
+        return Array(
+            repeating: GridItem(.flexible(minimum: 320), spacing: 16),
+            count: count
+        )
+    }
+    
     private enum ActiveSheet: Identifiable, Equatable {
         case upcomingTrips
         case onTimeTrips

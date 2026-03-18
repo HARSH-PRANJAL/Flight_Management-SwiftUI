@@ -36,15 +36,20 @@ struct AdminDashboardView: View {
             GeometryReader { geo in
                 ScrollView {
                     VStack(spacing: 24) {
-                        cardsGrid(width: geo.size.width)
-                        chartsGrid(width: geo.size.width)
-                        staffPerformanceSection(width: geo.size.width)
+                        VStack(spacing: 24) {
+                            cardsGrid(width: geo.size.width)
+                            chartsGrid(width: geo.size.width)
+                            staffPerformanceSection(width: geo.size.width)
+                        }
+                        .padding(
+                            .horizontal,
+                            horizontalPadding(for: geo.size.width)
+                        )
                         upcomingTripsSection(width: geo.size.width)
                         Spacer(minLength: 24)
                     }
                     .navigationTitle("Admin")
                 }
-                .padding(.horizontal, horizontalPadding(for: geo.size.width))
                 .refreshable {
                     await DemoDataAPI.resolveExpiredTrips(in: context)
                 }
@@ -87,33 +92,13 @@ struct AdminDashboardView: View {
 
 // MARK: Ui
 extension AdminDashboardView {
-    // MARK: Responsive layout helpers (Grid-based)
-    private func horizontalPadding(for width: CGFloat) -> CGFloat {
-        width >= 700 ? 32 : 16
-    }
-
-    private func cardColumnCount(for width: CGFloat) -> Int {
-        // Target layout:
-        // - iPad (wider): 4 cards per row
-        // - iPhone / narrow: 2 cards per row
-        width >= 740 ? 4 : 2
-    }
-
-    private func cardColumns(for width: CGFloat) -> [GridItem] {
-        Array(
-            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
-            count: cardColumnCount(for: width)
-        )
-    }
-
-    private func chartColumns(for width: CGFloat) -> [GridItem] {
-        let count = width >= 740 ? 2 : 1
-        return Array(repeating: GridItem(.flexible(minimum: 320), spacing: 16), count: count)
-    }
-
     @ViewBuilder
     func cardsGrid(width: CGFloat) -> some View {
-        LazyVGrid(columns: cardColumns(for: width), alignment: .leading, spacing: 12) {
+        LazyVGrid(
+            columns: cardColumns(for: width),
+            alignment: .leading,
+            spacing: 12
+        ) {
             CardView(
                 title: "Scheduled Trips",
                 value: "\(scheduledTripsCount)",
@@ -166,7 +151,11 @@ extension AdminDashboardView {
 
     @ViewBuilder
     func chartsGrid(width: CGFloat) -> some View {
-        LazyVGrid(columns: chartColumns(for: width), alignment: .leading, spacing: 16) {
+        LazyVGrid(
+            columns: chartColumns(for: width),
+            alignment: .leading,
+            spacing: 16
+        ) {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Daily Trip Status")
@@ -235,6 +224,7 @@ extension AdminDashboardView {
                         .tint(Color(.systemBlue))
                 }
             }
+            .padding(.horizontal, horizontalPadding(for: width))
 
             UpcomingTripsScrollView(
                 trips: filteredUpcomingTrip,
@@ -244,7 +234,6 @@ extension AdminDashboardView {
                     return .selectedTripDetail(trip: item)
                 }
             )
-            .padding(.horizontal, -horizontalPadding(for: width))
         }
     }
 
@@ -326,10 +315,7 @@ extension AdminDashboardView {
             }
         }
     }
-}
 
-// MARK: Active Routes
-extension AdminDashboardView {
     var activeRoutesList: some View {
         List {
             ForEach(activeRoutesToday, id: \.id) { route in
@@ -347,12 +333,9 @@ extension AdminDashboardView {
                 ? Color(.systemBlue).opacity(0.15) : Color.clear
         )
     }
-}
-
-// MARK: Staff Performance
-extension AdminDashboardView {
     private func topPerformers(for role: StaffRole) -> [Staff] {
-        let top3 = allStaff
+        let top3 =
+            allStaff
             .filter { $0.designation == role }
             .sorted {
                 if $0.totalTripHours != $1.totalTripHours {
@@ -363,7 +346,6 @@ extension AdminDashboardView {
             .prefix(3)
             .map { $0 }
 
-        // If the best 3 performers have 0 hours, treat as no data.
         if !top3.isEmpty && top3.allSatisfy({ $0.totalTripHours == 0 }) {
             return []
         }
@@ -404,9 +386,10 @@ extension AdminDashboardView {
                                         VStack {
                                             Button {
                                                 selectedStaff = staff
-                                                activeSheet = .selectedStaffDetail(
-                                                    staff: staff
-                                                )
+                                                activeSheet =
+                                                    .selectedStaffDetail(
+                                                        staff: staff
+                                                    )
                                             } label: {
                                                 ListRow(performanceStaff: staff)
                                             }
@@ -419,7 +402,9 @@ extension AdminDashboardView {
                                         Spacer()
                                         Image(systemName: "chevron.right")
                                             .font(.subheadline.smallCaps())
-                                            .foregroundStyle(Color(.tertiaryLabel))
+                                            .foregroundStyle(
+                                                Color(.tertiaryLabel)
+                                            )
                                             .padding(.trailing, 12)
                                     }
                                 }
@@ -467,9 +452,10 @@ extension AdminDashboardView {
                                         VStack {
                                             Button {
                                                 selectedStaff = staff
-                                                activeSheet = .selectedStaffDetail(
-                                                    staff: staff
-                                                )
+                                                activeSheet =
+                                                    .selectedStaffDetail(
+                                                        staff: staff
+                                                    )
                                             } label: {
                                                 ListRow(performanceStaff: staff)
                                             }
@@ -482,7 +468,9 @@ extension AdminDashboardView {
                                         Spacer()
                                         Image(systemName: "chevron.right")
                                             .font(.subheadline.smallCaps())
-                                            .foregroundStyle(Color(.tertiaryLabel))
+                                            .foregroundStyle(
+                                                Color(.tertiaryLabel)
+                                            )
                                             .padding(.trailing, 12)
                                     }
                                 }
@@ -499,6 +487,29 @@ extension AdminDashboardView {
 
 // MARK: Util
 extension AdminDashboardView {
+    private func horizontalPadding(for width: CGFloat) -> CGFloat {
+        width >= 700 ? 32 : 16
+    }
+
+    private func cardColumnCount(for width: CGFloat) -> Int {
+        width >= 740 ? 4 : 2
+    }
+
+    private func cardColumns(for width: CGFloat) -> [GridItem] {
+        Array(
+            repeating: GridItem(.flexible(minimum: 160), spacing: 12),
+            count: cardColumnCount(for: width)
+        )
+    }
+
+    private func chartColumns(for width: CGFloat) -> [GridItem] {
+        let count = width >= 740 ? 2 : 1
+        return Array(
+            repeating: GridItem(.flexible(minimum: 320), spacing: 16),
+            count: count
+        )
+    }
+
     private enum ActiveSheet: Identifiable, Equatable {
         case upcomingTrips
         case scheduledTrips

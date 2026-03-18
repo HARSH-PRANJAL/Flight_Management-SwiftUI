@@ -83,31 +83,33 @@ private struct AdminSidebarHost: View {
                 EmptyView()
             }
         } detail: {
-            switch selectedTab {
-            case .staff:
-                if let staff = selectedStaff {
-                    StaffDetailView(staff: staff)
-                } else {
-                    ContentUnavailableView(
-                        "No Staff Selected",
-                        systemImage: "person.2.fill",
-                        description: Text(
-                            "Select a staff member from the list."
+            NavigationStack {
+                switch selectedTab {
+                case .staff:
+                    if let staff = selectedStaff {
+                        StaffDetailView(staff: staff)
+                    } else {
+                        ContentUnavailableView(
+                            "No Staff Selected",
+                            systemImage: "person.2.fill",
+                            description: Text(
+                                "Select a staff member from the list."
+                            )
                         )
-                    )
+                    }
+                case .route:
+                    if let route = selectedRoute {
+                        RouteDetailView(route: route)
+                    } else {
+                        ContentUnavailableView(
+                            "No Route Selected",
+                            systemImage: "map.fill",
+                            description: Text("Select a route from the list.")
+                        )
+                    }
+                default:
+                    EmptyView()
                 }
-            case .route:
-                if let route = selectedRoute {
-                    RouteDetailView(route: route)
-                } else {
-                    ContentUnavailableView(
-                        "No Route Selected",
-                        systemImage: "map.fill",
-                        description: Text("Select a route from the list.")
-                    )
-                }
-            default:
-                EmptyView()
             }
         }
         .navigationSplitViewStyle(.balanced)

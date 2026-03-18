@@ -127,6 +127,16 @@ private struct TripManagerSidebarHost: View {
                             description: Text("Select a trip from the list.")
                         )
                     }
+                case .routes:
+                    if let route = selectedRoute {
+                        RouteDetailView(route: route)
+                    } else {
+                        ContentUnavailableView(
+                            "No Route Selected",
+                            systemImage: "map.fill",
+                            description: Text("Select a route from the list.")
+                        )
+                    }
                 default:
                     EmptyView()
                 }
