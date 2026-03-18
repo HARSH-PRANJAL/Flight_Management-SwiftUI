@@ -241,8 +241,8 @@ extension TripManagerDashboardView {
             externalTrips: filteredUpcomingTrips,
             navigationTitle:
                 "Trips in next 24 hr",
-            requiredFilters: [.scheduled, .cancelled],
-            statusBadgeRequired: true
+            requiredFilters: [],
+            statusBadgeRequired: false
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -422,7 +422,7 @@ extension TripManagerDashboardView {
 
     private var filteredUpcomingTrips: [Trip] {
         return upcomingTrips.filter {
-            $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
+            $0.currentStatus == .scheduled
         }
     }
 

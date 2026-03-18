@@ -242,8 +242,8 @@ extension AdminDashboardView {
             externalTrips: filteredUpcomingTrip,
             navigationTitle:
                 "Trips in next 6 hours",
-            requiredFilters: [.scheduled, .cancelled],
-            statusBadgeRequired: true
+            requiredFilters: [],
+            statusBadgeRequired: false
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -559,7 +559,7 @@ extension AdminDashboardView {
 
     private var filteredUpcomingTrip: [Trip] {
         return upcomingTrips.filter {
-            $0.currentStatus == .scheduled || $0.currentStatus == .cancelled
+            $0.currentStatus == .scheduled
         }
     }
 
