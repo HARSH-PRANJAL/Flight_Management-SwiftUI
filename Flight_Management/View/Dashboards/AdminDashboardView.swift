@@ -317,22 +317,12 @@ extension AdminDashboardView {
     }
 
     var activeRoutesList: some View {
-        List {
-            ForEach(activeRoutesToday, id: \.id) { route in
-                NavigationLink(destination: RouteDetailView(route: route)) {
-                    ListRow(route: route)
-                }
-            }
-        }
-        .navigationTitle("Active Routes (\(activeRoutesNowCount))")
-        .navigationBarTitleDisplayMode(.inline)
-        .scrollDismissesKeyboard(.immediately)
-        .listStyle(.insetGrouped)
-        .tint(
-            UIDevice.current.userInterfaceIdiom == .pad
-                ? Color(.systemBlue).opacity(0.15) : Color.clear
-        )
-        .padding(.top, -20)
+        RouteList(externalRoutes: activeRoutesToday)
+            .navigationTitle("Active Routes")
+            .navigationBarTitleDisplayMode(.inline)
+            .scrollDismissesKeyboard(.immediately)
+            .listStyle(.insetGrouped)
+            .padding(.top, -20)
     }
     private func topPerformers(for role: StaffRole) -> [Staff] {
         let top3 =
