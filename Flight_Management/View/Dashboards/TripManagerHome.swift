@@ -67,11 +67,6 @@ private struct TripManagerSidebarHost: View {
     @State private var tripDetailPath: [TripManagerDetailRoute] = []
     @State private var routeDetailPath: [TripManagerDetailRoute] = []
 
-    @Query private var staffs: [Staff]
-    @Query private var trips: [Trip]
-    @Query private var aircrafts: [Aircraft]
-    @Query private var routes: [Route]
-
     var body: some View {
         Group {
             if selectedTab.usesThreeColumns {
@@ -303,19 +298,35 @@ private struct TripManagerSidebarHost: View {
     }
 
     private func trip(for id: UUID) -> Trip? {
-        trips.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Trip>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func staff(for id: UUID) -> Staff? {
-        staffs.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Staff>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func aircraft(for id: UUID) -> Aircraft? {
-        aircrafts.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Aircraft>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func route(for id: UUID) -> Route? {
-        routes.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Route>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private var currentDetailPathBinding: Binding<[TripManagerDetailRoute]> {

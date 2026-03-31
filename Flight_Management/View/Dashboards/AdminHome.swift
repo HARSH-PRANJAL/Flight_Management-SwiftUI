@@ -68,9 +68,6 @@ private struct AdminSidebarHost: View {
     @State private var staffDetailPath: [AdminDetailRoute] = []
     @State private var routeDetailPath: [AdminDetailRoute] = []
 
-    @Query private var staffs: [Staff]
-    @Query private var trips: [Trip]
-    @Query private var aircrafts: [Aircraft]
 
     var body: some View {
         if selectedTab.usesThreeColumns {
@@ -264,15 +261,27 @@ private struct AdminSidebarHost: View {
     }
 
     private func trip(for id: UUID) -> Trip? {
-        trips.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Trip>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func staff(for id: UUID) -> Staff? {
-        staffs.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Staff>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func aircraft(for id: UUID) -> Aircraft? {
-        aircrafts.first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Aircraft>(
+            predicate: #Predicate { $0.id == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private var currentDetailPathBinding: Binding<[AdminDetailRoute]> {
