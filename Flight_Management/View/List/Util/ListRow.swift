@@ -91,8 +91,10 @@ extension ListRow {
             meta =
                 "Next: \(next.tripNumber) • \(formatDate(next.scheduledDepartureTime, format: "dd MMM"))"
         } else {
+            let tripCount = staff.completedTrips.count
+            let tripString = tripCount == 1 ? "trip" : "trips"
             meta = String(
-                format: "%.0f hr logged in \(staff.completedTrips.count) trips",
+                format: "%.0f hr logged in \(tripCount) \(tripString)",
                 staff.totalTripHours
             )
         }
