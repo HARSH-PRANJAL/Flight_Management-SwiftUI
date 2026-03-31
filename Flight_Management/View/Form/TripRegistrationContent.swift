@@ -282,7 +282,7 @@ extension TripRegistrationContent {
                 selectedDate: $viewModel.scheduledDeparture,
                 title: "Departure",
                 title2: "Departure date & time",
-                format: "dd/MM/yyyy h:mm",
+                format: "dd/MM/yyyy HH:mm",
                 hasError: viewModel.fieldErrors[.date] != nil,
                 minDate: minDepartureDate,
                 maxDate: maxDepartureDate,

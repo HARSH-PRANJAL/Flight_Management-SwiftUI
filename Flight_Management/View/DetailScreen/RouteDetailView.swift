@@ -169,6 +169,7 @@ extension RouteDetailView {
                     }
                 }
             }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .background(
                 Color(.tertiarySystemBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 12))

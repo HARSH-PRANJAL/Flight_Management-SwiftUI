@@ -140,30 +140,32 @@ struct StaffDetailScreen: View {
         .padding(.horizontal, 16)
         .scrollIndicators(.hidden)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    if isAdmin {
+            if isAdmin {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+
                         Button(action: { isEditPageShowing = true }) {
                             Label("Edit", systemImage: "pencil")
                         }
-                    }
-                    if let onAction = onActionButtonTapped {
-                        Button(
-                            role: staff.isMarkedUnavailable ? nil : .destructive
-                        ) {
-                            onAction()
-                        } label: {
-                            Label(
-                                staff.isMarkedUnavailable
-                                    ? "Mark Available" : "Mark Unavailable",
-                                systemImage: staff.isMarkedUnavailable
-                                    ? "person.badge.plus"
-                                    : "person.slash"
-                            )
+                        if let onAction = onActionButtonTapped {
+                            Button(
+                                role: staff.isMarkedUnavailable
+                                    ? nil : .destructive
+                            ) {
+                                onAction()
+                            } label: {
+                                Label(
+                                    staff.isMarkedUnavailable
+                                        ? "Mark Available" : "Mark Unavailable",
+                                    systemImage: staff.isMarkedUnavailable
+                                        ? "person.badge.plus"
+                                        : "person.slash"
+                                )
+                            }
                         }
+                    } label: {
+                        Image(systemName: "ellipsis")
                     }
-                } label: {
-                    Image(systemName: "ellipsis")
                 }
             }
         }

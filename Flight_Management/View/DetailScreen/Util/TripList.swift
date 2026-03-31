@@ -52,12 +52,17 @@ extension TripList {
         List {
             ForEach(displayedTrips, id: \.id) { trip in
                 if let onSelectTrip {
-                    Button {
-                        onSelectTrip(trip)
-                    } label: {
-                        ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
+                    HStack {
+                        Button {
+                            onSelectTrip(trip)
+                        } label: {
+                            ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.smallCaps())
+                            .foregroundStyle(Color(.tertiaryLabel))
+                            .padding(.trailing, 12)
                     }
-                    .buttonStyle(.plain)
                 } else {
                     NavigationLink(
                         destination: TripDetailView(trip: trip)

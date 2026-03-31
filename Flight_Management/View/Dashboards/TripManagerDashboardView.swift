@@ -279,7 +279,7 @@ extension TripManagerDashboardView {
                     title: "Most Delayed Route",
                     value: mostDelayedRouteName,
                     subtitle: mostDelayedRouteSubtitle,
-                    icon: "clock.arrow.circlepath.fill",
+                    icon: "clock.badge.airplane.fill",
                     iconColor: Color.tripStatusColor(for: .delayed)
                 )
                 .onTapGesture {
