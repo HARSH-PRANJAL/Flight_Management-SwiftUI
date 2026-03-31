@@ -33,9 +33,12 @@ struct UpcomingTripsScrollView<T>: View {
                     }
                 }
                 if trips.isEmpty {
-                    Text(noDataMessage)
-                        .foregroundColor(.secondary)
-                        .padding()
+                    ContentUnavailableView(
+                        noDataMessage,
+                        systemImage: "airplane"
+                    )
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(maxHeight: 200)
                 }
             }
         }
