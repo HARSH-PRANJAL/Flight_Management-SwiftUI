@@ -4,6 +4,7 @@ import SwiftUI
 struct StaffDetailScreen: View {
     let staff: Staff
     var isAdmin: Bool = false
+    var onShowTrip: ((Trip) -> Void)? = nil
 
     var onActionButtonTapped: (() -> Void)? = nil
     @State private var showImagePreview = false
@@ -173,7 +174,8 @@ struct StaffDetailScreen: View {
             externalTrips: staff.trips,
             navigationTitle: "\(staff.name) trips",
             requiredFilters: [.completed, .cancelled, .scheduled],
-            statusBadgeRequired: true
+            statusBadgeRequired: true,
+            onSelectTrip: onShowTrip
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -186,34 +188,57 @@ extension StaffDetailScreen {
     var flightSectionsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let trip = staff.currentTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Current Trip",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
             if let trip = staff.nextScheduledTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Next Trip",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
             if let trip = staff.lastCompletedTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Last Trip",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
         }
         .padding(.bottom, 16)
+    }
+
+    @ViewBuilder
+    private func sectionForTrip(
+        title: String,
+        icon: String,
+        iconColor: Color,
+        trip: Trip
+    ) -> some View {
+        if let onShowTrip {
+            ClickableSection(
+                title: title,
+                icon: icon,
+                iconColor: iconColor,
+                row: { ListRow(trip: trip) },
+                onTap: { onShowTrip(trip) }
+            )
+        } else {
+            ClickableSection(
+                title: title,
+                icon: icon,
+                iconColor: iconColor,
+                row: { ListRow(trip: trip) },
+                destination: { TripDetailView(trip: trip) }
+            )
+        }
     }
 
     var primaryCard: some View {

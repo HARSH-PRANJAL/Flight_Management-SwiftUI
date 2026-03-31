@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 // MARK: Tab
@@ -25,6 +26,12 @@ enum AdminTab: String, CaseIterable, Hashable {
     var isBottomItem: Bool {
         self == .profile
     }
+}
+
+private enum AdminDetailRoute: Hashable {
+    case trip(UUID)
+    case staff(UUID)
+    case aircraft(UUID)
 }
 
 struct AdminHome: View {
@@ -58,6 +65,12 @@ private struct AdminSidebarHost: View {
     @State private var sidebarSelection: AdminTab? = .home
     @State private var selectedStaff: Staff?
     @State private var selectedRoute: Route?
+    @State private var staffDetailPath: [AdminDetailRoute] = []
+    @State private var routeDetailPath: [AdminDetailRoute] = []
+
+    @Query private var staffs: [Staff]
+    @Query private var trips: [Trip]
+    @Query private var aircrafts: [Aircraft]
 
     var body: some View {
         if selectedTab.usesThreeColumns {
@@ -83,11 +96,15 @@ private struct AdminSidebarHost: View {
                 EmptyView()
             }
         } detail: {
-            NavigationStack {
+            NavigationStack(path: currentDetailPathBinding) {
                 switch selectedTab {
                 case .staff:
                     if let staff = selectedStaff {
-                        StaffDetailView(staff: staff)
+                        StaffDetailView(
+                            staff: staff,
+                            onShowTrip: showTrip
+                        )
+                            .id(staff.id)
                     } else {
                         ContentUnavailableView(
                             "No Staff Selected",
@@ -99,7 +116,11 @@ private struct AdminSidebarHost: View {
                     }
                 case .route:
                     if let route = selectedRoute {
-                        RouteDetailView(route: route)
+                        RouteDetailView(
+                            route: route,
+                            onShowTrip: showTrip
+                        )
+                            .id(route.id)
                     } else {
                         ContentUnavailableView(
                             "No Route Selected",
@@ -109,6 +130,37 @@ private struct AdminSidebarHost: View {
                     }
                 default:
                     EmptyView()
+                }
+            }
+            .navigationDestination(for: AdminDetailRoute.self) { destination in
+                switch destination {
+                case .trip(let id):
+                    if let trip = trip(for: id) {
+                        TripDetailView(
+                            trip: trip,
+                            onShowAircraft: showAircraft,
+                            onShowStaff: showStaff
+                        )
+                    } else {
+                        ContentUnavailableView("Trip Not Found", systemImage: "airplane.departure")
+                    }
+                case .staff(let id):
+                    if let staff = staff(for: id) {
+                        StaffDetailView(
+                            staff: staff,
+                            onShowTrip: showTrip
+                        )
+                    } else {
+                        ContentUnavailableView("Staff Not Found", systemImage: "person.2.fill")
+                    }
+                case .aircraft(let id):
+                    if let aircraft = aircraft(for: id) {
+                        AircraftDetailView(
+                            aircraft: aircraft
+                        )
+                    } else {
+                        ContentUnavailableView("Aircraft Not Found", systemImage: "airplane")
+                    }
                 }
             }
         }
@@ -165,6 +217,72 @@ private struct AdminSidebarHost: View {
         }
         .onChange(of: selectedTab) { _, newValue in
             sidebarSelection = newValue
+        }
+        .onChange(of: selectedStaff?.id) { _, newValue in
+            if newValue != nil {
+                staffDetailPath = []
+            }
+        }
+        .onChange(of: selectedRoute?.id) { _, newValue in
+            if newValue != nil {
+                routeDetailPath = []
+            }
+        }
+    }
+
+    private func showTrip(_ trip: Trip) {
+        switch selectedTab {
+        case .staff:
+            staffDetailPath.append(.trip(trip.id))
+        case .route:
+            routeDetailPath.append(.trip(trip.id))
+        default:
+            break
+        }
+    }
+
+    private func showAircraft(_ aircraft: Aircraft) {
+        switch selectedTab {
+        case .staff:
+            staffDetailPath.append(.aircraft(aircraft.id))
+        case .route:
+            routeDetailPath.append(.aircraft(aircraft.id))
+        default:
+            break
+        }
+    }
+
+    private func showStaff(_ staff: Staff) {
+        switch selectedTab {
+        case .staff:
+            staffDetailPath.append(.staff(staff.id))
+        case .route:
+            routeDetailPath.append(.staff(staff.id))
+        default:
+            break
+        }
+    }
+
+    private func trip(for id: UUID) -> Trip? {
+        trips.first(where: { $0.id == id })
+    }
+
+    private func staff(for id: UUID) -> Staff? {
+        staffs.first(where: { $0.id == id })
+    }
+
+    private func aircraft(for id: UUID) -> Aircraft? {
+        aircrafts.first(where: { $0.id == id })
+    }
+
+    private var currentDetailPathBinding: Binding<[AdminDetailRoute]> {
+        switch selectedTab {
+        case .staff:
+            return $staffDetailPath
+        case .route:
+            return $routeDetailPath
+        default:
+            return $staffDetailPath
         }
     }
 

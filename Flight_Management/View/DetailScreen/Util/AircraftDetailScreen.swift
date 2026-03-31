@@ -9,6 +9,7 @@ struct AircraftDetailScreen: View {
 
     let aircraft: Aircraft
     var isManager: Bool = false
+    var onShowTrip: ((Trip) -> Void)? = nil
     var isAircraftAvailable: Bool { aircraft.currentStatus == .available }
 
     @State private var selectedTab: DetailTripTab = .detail
@@ -176,7 +177,8 @@ extension AircraftDetailScreen {
             externalTrips: aircraft.trips,
             navigationTitle: "\(aircraft.registrationNumber) trips",
             requiredFilters: [.scheduled, .cancelled, .completed],
-            statusBadgeRequired: true
+            statusBadgeRequired: true,
+            onSelectTrip: onShowTrip
         )
         .navigationBarTitleDisplayMode(.inline)
         .padding(.top, -20)
@@ -185,34 +187,57 @@ extension AircraftDetailScreen {
     var tripSectionCards: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let trip = aircraft.currentTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Current Trip",
                     icon: "clock.badge.airplane",
                     iconColor: Color(.systemCyan),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
             if let trip = aircraft.nextScheduledTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Next Trip",
                     icon: "calendar.badge.clock",
                     iconColor: Color(.systemIndigo),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
             if let trip = aircraft.lastCompletedTrip {
-                ClickableSection(
+                sectionForTrip(
                     title: "Last Trip",
                     icon: "checkmark.circle",
                     iconColor: Color(.systemGreen),
-                    row: { ListRow(trip: trip) },
-                    destination: { TripDetailView(trip: trip) }
+                    trip: trip
                 )
             }
         }
         .padding(.bottom, 16)
+    }
+
+    @ViewBuilder
+    private func sectionForTrip(
+        title: String,
+        icon: String,
+        iconColor: Color,
+        trip: Trip
+    ) -> some View {
+        if let onShowTrip {
+            ClickableSection(
+                title: title,
+                icon: icon,
+                iconColor: iconColor,
+                row: { ListRow(trip: trip) },
+                onTap: { onShowTrip(trip) }
+            )
+        } else {
+            ClickableSection(
+                title: title,
+                icon: icon,
+                iconColor: iconColor,
+                row: { ListRow(trip: trip) },
+                destination: { TripDetailView(trip: trip) }
+            )
+        }
     }
 
     var primaryCard: some View {

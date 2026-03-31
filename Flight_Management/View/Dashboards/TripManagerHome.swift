@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 // MARK: Tab
@@ -21,6 +22,12 @@ enum TripManagerTab: String, CaseIterable, Hashable {
     var usesThreeColumns: Bool {
         self == .aircrafts || self == .trips || self == .routes
     }
+}
+
+private enum TripManagerDetailRoute: Hashable {
+    case trip(UUID)
+    case staff(UUID)
+    case aircraft(UUID)
 }
 
 struct TripManagerHome: View {
@@ -56,6 +63,14 @@ private struct TripManagerSidebarHost: View {
     @State private var selectedAircraft: Aircraft?
     @State private var selectedTrip: Trip?
     @State private var selectedRoute: Route?
+    @State private var aircraftDetailPath: [TripManagerDetailRoute] = []
+    @State private var tripDetailPath: [TripManagerDetailRoute] = []
+    @State private var routeDetailPath: [TripManagerDetailRoute] = []
+
+    @Query private var staffs: [Staff]
+    @Query private var trips: [Trip]
+    @Query private var aircrafts: [Aircraft]
+    @Query private var routes: [Route]
 
     var body: some View {
         Group {
@@ -103,11 +118,14 @@ private struct TripManagerSidebarHost: View {
                 EmptyView()
             }
         } detail: {
-            NavigationStack {
+            NavigationStack(path: currentDetailPathBinding) {
                 switch selectedTab {
                 case .aircrafts:
                     if let aircraft = selectedAircraft {
-                        AircraftDetailView(aircraft: aircraft)
+                        AircraftDetailView(
+                            aircraft: aircraft,
+                            onShowTrip: showTrip
+                        )
                     } else {
                         ContentUnavailableView(
                             "No Aircraft Selected",
@@ -119,7 +137,11 @@ private struct TripManagerSidebarHost: View {
                     }
                 case .trips:
                     if let trip = selectedTrip {
-                        TripDetailView(trip: trip)
+                        TripDetailView(
+                            trip: trip,
+                            onShowAircraft: showAircraft,
+                            onShowStaff: showStaff
+                        )
                     } else {
                         ContentUnavailableView(
                             "No Trip Selected",
@@ -129,7 +151,10 @@ private struct TripManagerSidebarHost: View {
                     }
                 case .routes:
                     if let route = selectedRoute {
-                        RouteDetailView(route: route)
+                        RouteDetailView(
+                            route: route,
+                            onShowTrip: showTrip
+                        )
                     } else {
                         ContentUnavailableView(
                             "No Route Selected",
@@ -139,6 +164,38 @@ private struct TripManagerSidebarHost: View {
                     }
                 default:
                     EmptyView()
+                }
+            }
+            .navigationDestination(for: TripManagerDetailRoute.self) { destination in
+                switch destination {
+                case .trip(let id):
+                    if let trip = trip(for: id) {
+                        TripDetailView(
+                            trip: trip,
+                            onShowAircraft: showAircraft,
+                            onShowStaff: showStaff
+                        )
+                    } else {
+                        ContentUnavailableView("Trip Not Found", systemImage: "airplane.departure")
+                    }
+                case .staff(let id):
+                    if let staff = staff(for: id) {
+                        StaffDetailView(
+                            staff: staff,
+                            onShowTrip: showTrip
+                        )
+                    } else {
+                        ContentUnavailableView("Staff Not Found", systemImage: "person.2.fill")
+                    }
+                case .aircraft(let id):
+                    if let aircraft = aircraft(for: id) {
+                        AircraftDetailView(
+                            aircraft: aircraft,
+                            onShowTrip: showTrip
+                        )
+                    } else {
+                        ContentUnavailableView("Aircraft Not Found", systemImage: "airplane")
+                    }
                 }
             }
         }
@@ -188,6 +245,89 @@ private struct TripManagerSidebarHost: View {
         }
         .onChange(of: selectedTab) { _, newValue in
             sidebarSelection = newValue
+        }
+        .onChange(of: selectedAircraft?.id) { _, newValue in
+            if newValue != nil {
+                aircraftDetailPath = []
+            }
+        }
+        .onChange(of: selectedTrip?.id) { _, newValue in
+            if newValue != nil {
+                tripDetailPath = []
+            }
+        }
+        .onChange(of: selectedRoute?.id) { _, newValue in
+            if newValue != nil {
+                routeDetailPath = []
+            }
+        }
+    }
+
+    private func showTrip(_ trip: Trip) {
+        switch selectedTab {
+        case .aircrafts:
+            aircraftDetailPath.append(.trip(trip.id))
+        case .trips:
+            tripDetailPath.append(.trip(trip.id))
+        case .routes:
+            routeDetailPath.append(.trip(trip.id))
+        default:
+            break
+        }
+    }
+
+    private func showAircraft(_ aircraft: Aircraft) {
+        switch selectedTab {
+        case .aircrafts:
+            aircraftDetailPath.append(.aircraft(aircraft.id))
+        case .trips:
+            tripDetailPath.append(.aircraft(aircraft.id))
+        case .routes:
+            routeDetailPath.append(.aircraft(aircraft.id))
+        default:
+            break
+        }
+    }
+
+    private func showStaff(_ staff: Staff) {
+        switch selectedTab {
+        case .aircrafts:
+            aircraftDetailPath.append(.staff(staff.id))
+        case .trips:
+            tripDetailPath.append(.staff(staff.id))
+        case .routes:
+            routeDetailPath.append(.staff(staff.id))
+        default:
+            break
+        }
+    }
+
+    private func trip(for id: UUID) -> Trip? {
+        trips.first(where: { $0.id == id })
+    }
+
+    private func staff(for id: UUID) -> Staff? {
+        staffs.first(where: { $0.id == id })
+    }
+
+    private func aircraft(for id: UUID) -> Aircraft? {
+        aircrafts.first(where: { $0.id == id })
+    }
+
+    private func route(for id: UUID) -> Route? {
+        routes.first(where: { $0.id == id })
+    }
+
+    private var currentDetailPathBinding: Binding<[TripManagerDetailRoute]> {
+        switch selectedTab {
+        case .aircrafts:
+            return $aircraftDetailPath
+        case .trips:
+            return $tripDetailPath
+        case .routes:
+            return $routeDetailPath
+        default:
+            return $tripDetailPath
         }
     }
 

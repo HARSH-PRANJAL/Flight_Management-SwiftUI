@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RouteDetailView: View {
     var route: Route
+    var onShowTrip: ((Trip) -> Void)? = nil
 
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
@@ -146,18 +147,21 @@ extension RouteDetailView {
 
             VStack(spacing: 0) {
                 ForEach(currentTrip, id: \.id) { trip in
-                    NavigationLink(destination: TripDetailView(trip: trip)) {
-                        HStack {
-                            ListRow(trip: trip)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline.smallCaps())
-                                .foregroundStyle(Color(.tertiaryLabel))
-                                .padding(.trailing, 12)
+                    Group {
+                        if let onShowTrip {
+                            Button {
+                                onShowTrip(trip)
+                            } label: {
+                                tripRow(trip: trip)
+                            }
+                            .buttonStyle(PressableRowStyle())
+                        } else {
+                            NavigationLink(destination: TripDetailView(trip: trip)) {
+                                tripRow(trip: trip)
+                            }
+                            .buttonStyle(PressableRowStyle())
                         }
-                        .padding(12)
                     }
-                    .buttonStyle(PressableRowStyle())
 
                     if trip.id != currentTrip.last?.id {
                         Divider()
@@ -171,6 +175,18 @@ extension RouteDetailView {
             )
         }
         .padding(.bottom, 16)
+    }
+
+    private func tripRow(trip: Trip) -> some View {
+        HStack {
+            ListRow(trip: trip)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.subheadline.smallCaps())
+                .foregroundStyle(Color(.tertiaryLabel))
+                .padding(.trailing, 12)
+        }
+        .padding(12)
     }
 
     var airportNodesCard: some View {

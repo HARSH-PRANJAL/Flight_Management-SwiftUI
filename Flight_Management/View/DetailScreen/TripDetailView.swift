@@ -8,6 +8,8 @@ struct TripDetailView: View {
     @Environment(\.dismiss) var dismiss
 
     var trip: Trip
+    var onShowAircraft: ((Aircraft) -> Void)? = nil
+    var onShowStaff: ((Staff) -> Void)? = nil
 
     @State private var showCancellationAlert = false
 
@@ -27,7 +29,9 @@ struct TripDetailView: View {
                 trip: trip,
                 onCancelTapped: isTripManager
                     ? { showCancellationAlert = true } : nil,
-                isTripManager: isTripManager
+                isTripManager: isTripManager,
+                onShowAircraft: onShowAircraft,
+                onShowStaff: onShowStaff
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar(.hidden, for: .tabBar)

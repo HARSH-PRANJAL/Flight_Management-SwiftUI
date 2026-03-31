@@ -3,6 +3,7 @@ import SwiftUI
 
 struct StaffDetailView: View {
     let staff: Staff
+    var onShowTrip: ((Trip) -> Void)? = nil
 
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
@@ -50,6 +51,7 @@ struct StaffDetailView: View {
             StaffDetailScreen(
                 staff: staff,
                 isAdmin: isAdmin,
+                onShowTrip: onShowTrip,
                 onActionButtonTapped: isAdmin ? { handleAdminAction() } : nil,
                 isScheduledTripsPresented: $isScheduledTripsPresented,
                 isEditPageShowing: $isEditPageShowing

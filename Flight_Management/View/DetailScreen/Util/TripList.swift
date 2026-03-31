@@ -7,6 +7,7 @@ struct TripList: View {
     var navigationTitle: String = "Trip List"
     var requiredFilters: [TripStatus] = TripStatus.allCases
     var statusBadgeRequired: Bool = false
+    var onSelectTrip: ((Trip) -> Void)? = nil
 
     @State private var selectedFilter: TripStatus? = nil
     @State private var selectedSort: TripSort = .departure
@@ -50,10 +51,19 @@ extension TripList {
     var list: some View {
         List {
             ForEach(displayedTrips, id: \.id) { trip in
-                NavigationLink(
-                    destination: TripDetailView(trip: trip)
-                ) {
-                    ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
+                if let onSelectTrip {
+                    Button {
+                        onSelectTrip(trip)
+                    } label: {
+                        ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    NavigationLink(
+                        destination: TripDetailView(trip: trip)
+                    ) {
+                        ListRow(trip: trip, statusIndicatorRequired: statusBadgeRequired)
+                    }
                 }
             }
         }

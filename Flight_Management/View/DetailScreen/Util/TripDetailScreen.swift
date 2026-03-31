@@ -14,6 +14,8 @@ struct TripDetailScreen: View {
     let trip: Trip
     var onCancelTapped: (() -> Void)? = nil
     var isTripManager: Bool = false
+    var onShowAircraft: ((Aircraft) -> Void)? = nil
+    var onShowStaff: ((Staff) -> Void)? = nil
 
     var canCancelTrip: Bool {
         !trip.isCancelled && !trip.isCompleted && onCancelTapped != nil
@@ -165,22 +167,25 @@ extension TripDetailScreen {
                     .symbolRenderingMode(.monochrome)
                     .foregroundStyle(Color(.systemBlue))
             }
-            NavigationLink(
-                destination: AircraftDetailView(
-                    aircraft: trip.aircraft
-                )
-            ) {
-                HStack {
-                    ListRow(tripAircraft: trip.aircraft)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.smallCaps())
-                        .foregroundStyle(Color(.tertiaryLabel))
-                        .padding(.trailing, 12)
+            Group {
+                if let onShowAircraft {
+                    Button {
+                        onShowAircraft(trip.aircraft)
+                    } label: {
+                        aircraftRow
+                    }
+                    .buttonStyle(PressableRowStyle())
+                } else {
+                    NavigationLink(
+                        destination: AircraftDetailView(
+                            aircraft: trip.aircraft
+                        )
+                    ) {
+                        aircraftRow
+                    }
+                    .buttonStyle(PressableRowStyle())
                 }
-                .padding(16)
             }
-            .buttonStyle(PressableRowStyle())
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
@@ -275,20 +280,23 @@ extension TripDetailScreen {
             VStack(spacing: 0) {
                 ForEach(crew, id: \.id) { staff in
 
-                    NavigationLink(
-                        destination: StaffDetailView(staff: staff)
-                    ) {
-                        HStack {
-                            ListRow(tripStaff: staff)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline.smallCaps())
-                                .foregroundStyle(Color(.tertiaryLabel))
-                                .padding(.trailing, 12)
+                    Group {
+                        if let onShowStaff {
+                            Button {
+                                onShowStaff(staff)
+                            } label: {
+                                crewRow(for: staff)
+                            }
+                            .buttonStyle(PressableRowStyle())
+                        } else {
+                            NavigationLink(
+                                destination: StaffDetailView(staff: staff)
+                            ) {
+                                crewRow(for: staff)
+                            }
+                            .buttonStyle(PressableRowStyle())
                         }
-                        .padding(16)
                     }
-                    .buttonStyle(PressableRowStyle())
                     if staff.id != crew.last?.id {
                         Divider()
                             .padding(.leading, 16)
@@ -298,6 +306,30 @@ extension TripDetailScreen {
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .padding(.bottom, 16)
+    }
+
+    private var aircraftRow: some View {
+        HStack {
+            ListRow(tripAircraft: trip.aircraft)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.subheadline.smallCaps())
+                .foregroundStyle(Color(.tertiaryLabel))
+                .padding(.trailing, 12)
+        }
+        .padding(16)
+    }
+
+    private func crewRow(for staff: Staff) -> some View {
+        HStack {
+            ListRow(tripStaff: staff)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.subheadline.smallCaps())
+                .foregroundStyle(Color(.tertiaryLabel))
+                .padding(.trailing, 12)
+        }
+        .padding(16)
     }
 }
 

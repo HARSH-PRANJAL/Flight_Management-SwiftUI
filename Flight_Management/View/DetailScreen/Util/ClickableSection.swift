@@ -1,24 +1,41 @@
 import SwiftUI
 
-struct ClickableSection<Row: View, Destination: View>: View {
+struct ClickableSection<Row: View>: View {
     let title: String
     let icon: String
     let iconColor: Color
     let row: Row
-    let destination: Destination
+    let destination: AnyView?
+    let onTap: (() -> Void)?
 
     init(
         title: String,
         icon: String,
         iconColor: Color,
         @ViewBuilder row: () -> Row,
-        @ViewBuilder destination: () -> Destination
+        @ViewBuilder destination: () -> some View
     ) {
         self.title = title
         self.icon = icon
         self.iconColor = iconColor
         self.row = row()
-        self.destination = destination()
+        self.destination = AnyView(destination())
+        self.onTap = nil
+    }
+
+    init(
+        title: String,
+        icon: String,
+        iconColor: Color,
+        @ViewBuilder row: () -> Row,
+        onTap: @escaping () -> Void
+    ) {
+        self.title = title
+        self.icon = icon
+        self.iconColor = iconColor
+        self.row = row()
+        self.destination = nil
+        self.onTap = onTap
     }
 
     var body: some View {
@@ -32,21 +49,33 @@ struct ClickableSection<Row: View, Destination: View>: View {
                     .foregroundStyle(iconColor)
             }
 
-            NavigationLink(destination: destination) {
-                HStack {
-                    row
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline)
-                        .foregroundStyle(.tertiary)
+            if let onTap {
+                Button(action: onTap) {
+                    rowContainer
                 }
-                .padding(12)
+                .buttonStyle(PressableRowStyle())
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else if let destination {
+                NavigationLink(destination: destination) {
+                    rowContainer
+                }
+                .buttonStyle(PressableRowStyle())
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .buttonStyle(PressableRowStyle())
-            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
+    }
+
+    private var rowContainer: some View {
+        HStack {
+            row
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(12)
     }
 }
 

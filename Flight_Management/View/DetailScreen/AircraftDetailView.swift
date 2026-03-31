@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AircraftDetailView: View {
     let aircraft: Aircraft
+    var onShowTrip: ((Trip) -> Void)? = nil
 
     @Environment(SessionManager.self) var session
     @Environment(NotificationManager.self) var notificationManager
@@ -22,6 +23,7 @@ struct AircraftDetailView: View {
             AircraftDetailScreen(
                 aircraft: aircraft,
                 isManager: isTripManager,
+                onShowTrip: onShowTrip,
                 isEditPagePresented: $isEditPageShowing,
                 isScheduledTripsPresented: $isScheduledTripsPresented
             )
