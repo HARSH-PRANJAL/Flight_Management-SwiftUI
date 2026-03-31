@@ -26,6 +26,10 @@ struct TripManagerDashboardView: View {
         _allAircraft = Query(
             filter: #Predicate<Aircraft> { !$0.isDecommissioned }
         )
+
+        _allTrips = Query(
+            filter: #Predicate<Trip> { $0.isCompleted || $0.isCancelled }
+        )
     }
 
     var body: some View {
@@ -322,7 +326,7 @@ extension TripManagerDashboardView {
                     title: "Most Delayed Route",
                     value: mostCancelledRouteName,
                     subtitle: mostDelayedRouteSubtitle,
-                    icon: "clock.arrow.circlepath",
+                    icon: "clock.badge.airplane.fill",
                     iconColor: Color.tripStatusColor(for: .delayed)
                 )
                 .onTapGesture {
@@ -374,7 +378,7 @@ extension TripManagerDashboardView {
             count: count
         )
     }
-    
+
     private enum ActiveSheet: Identifiable, Equatable {
         case upcomingTrips
         case onTimeTrips
@@ -486,12 +490,12 @@ extension TripManagerDashboardView {
     }
 
     private var delayedTripCountsByRoute: [(route: Route, delayedCount: Int)] {
-        let now = Date()
-        let tripsSoFar = allTrips.filter { $0.scheduledDepartureTime <= now }
-        let grouped = Dictionary(grouping: tripsSoFar) { $0.route.id }
+        let grouped = Dictionary(grouping: allTrips) { $0.route.id }
         let byRoute: [(Route, Int)] = grouped.compactMap { _, trips in
             guard let route = trips.first?.route else { return nil }
-            let delayedCount = trips.filter { $0.totalDelayedMinutes > 0 }.count
+            let delayedCount = trips.filter {
+                $0.totalDelayedMinutes > 0
+            }.count
             return (route, delayedCount)
         }
         return byRoute.sorted { $0.1 > $1.1 }
@@ -500,9 +504,7 @@ extension TripManagerDashboardView {
     private var cancelledTripCountsByRoute:
         [(route: Route, cancelledCount: Int)]
     {
-        let now = Date()
-        let tripsSoFar = allTrips.filter { $0.scheduledDepartureTime <= now }
-        let grouped = Dictionary(grouping: tripsSoFar) { $0.route.id }
+        let grouped = Dictionary(grouping: allTrips) { $0.route.id }
         let byRoute: [(Route, Int)] = grouped.compactMap { _, trips in
             guard let route = trips.first?.route else { return nil }
             let cancelledCount = trips.filter(\.isCancelled).count
