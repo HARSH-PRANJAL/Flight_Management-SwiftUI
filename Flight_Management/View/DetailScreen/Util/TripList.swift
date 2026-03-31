@@ -171,7 +171,7 @@ extension TripList {
 
         if !searchText.isEmpty {
             filtered = filtered.filter { trip in
-                let flightMatch = trip.tripNumber
+                let flightMatch = trip.tripNumberSearchKey
                     .localizedCaseInsensitiveContains(searchText)
                 let routeMatch = trip.route.name
                     .localizedCaseInsensitiveContains(searchText)
