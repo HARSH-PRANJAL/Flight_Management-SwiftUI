@@ -161,7 +161,8 @@ private struct TripManagerSidebarHost: View {
                     EmptyView()
                 }
             }
-            .navigationDestination(for: TripManagerDetailRoute.self) { destination in
+            .navigationDestination(for: TripManagerDetailRoute.self) {
+                destination in
                 switch destination {
                 case .trip(let id):
                     if let trip = trip(for: id) {
@@ -171,7 +172,10 @@ private struct TripManagerSidebarHost: View {
                             onShowStaff: showStaff
                         )
                     } else {
-                        ContentUnavailableView("Trip Not Found", systemImage: "airplane.departure")
+                        ContentUnavailableView(
+                            "Trip Not Found",
+                            systemImage: "airplane.departure"
+                        )
                     }
                 case .staff(let id):
                     if let staff = staff(for: id) {
@@ -180,7 +184,10 @@ private struct TripManagerSidebarHost: View {
                             onShowTrip: showTrip
                         )
                     } else {
-                        ContentUnavailableView("Staff Not Found", systemImage: "person.2.fill")
+                        ContentUnavailableView(
+                            "Staff Not Found",
+                            systemImage: "person.2.fill"
+                        )
                     }
                 case .aircraft(let id):
                     if let aircraft = aircraft(for: id) {
@@ -189,7 +196,10 @@ private struct TripManagerSidebarHost: View {
                             onShowTrip: showTrip
                         )
                     } else {
-                        ContentUnavailableView("Aircraft Not Found", systemImage: "airplane")
+                        ContentUnavailableView(
+                            "Aircraft Not Found",
+                            systemImage: "airplane"
+                        )
                     }
                 }
             }
@@ -406,16 +416,6 @@ private struct TripManagerTabLayout: View {
             }
 
             Tab(
-                TripManagerTab.routes.rawValue,
-                systemImage: TripManagerTab.routes.icon,
-                value: TripManagerTab.routes
-            ) {
-                NavigationStack {
-                    RouteListView(requiredFilters: [], selectedFilter: .active)
-                }
-            }
-
-            Tab(
                 TripManagerTab.trips.rawValue,
                 systemImage: TripManagerTab.trips.icon,
                 value: TripManagerTab.trips
@@ -431,6 +431,16 @@ private struct TripManagerTabLayout: View {
                                 }
                             }
                         }
+                }
+            }
+
+            Tab(
+                TripManagerTab.routes.rawValue,
+                systemImage: TripManagerTab.routes.icon,
+                value: TripManagerTab.routes
+            ) {
+                NavigationStack {
+                    RouteListView(requiredFilters: [], selectedFilter: .active)
                 }
             }
         }
