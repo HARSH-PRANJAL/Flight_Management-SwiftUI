@@ -94,7 +94,7 @@ extension ListRow {
             let tripCount = staff.completedTrips.count
             let tripString = tripCount == 1 ? "trip" : "trips"
             meta = String(
-                format: "%.0f hr logged in \(tripCount) \(tripString)",
+                format: "%.1f hr logged in \(tripCount) \(tripString)",
                 staff.totalTripHours
             )
         }

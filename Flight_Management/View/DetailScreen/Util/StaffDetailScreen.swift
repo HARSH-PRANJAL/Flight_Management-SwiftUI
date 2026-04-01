@@ -24,7 +24,7 @@ struct StaffDetailScreen: View {
             return String(format: "%.1f", hours)
         }
     }
-    
+
     var tripString: String {
         if staff.completedTrips.count == 1 {
             return "trip"
@@ -340,8 +340,10 @@ extension StaffDetailScreen {
                     }
                     .padding(.bottom, 5)
                     Label {
-                        Text("\(staff.completedTrips.count) \(tripString) operated")
-                            .font(.body)
+                        Text(
+                            "\(staff.completedTrips.count) \(tripString) operated"
+                        )
+                        .font(.body)
                     } icon: {
                         Image(systemName: "airplane.circle.fill")
                             .font(.title)
@@ -362,14 +364,6 @@ extension StaffDetailScreen {
                 }
                 Spacer()
             }
-            .padding(.bottom, 12)
-            Divider()
-                .padding(.bottom, 10)
-                .opacity(0.75)
-            DetailRowView(
-                label: "Total operated trips",
-                value: "\(staff.completedTrips.count)"
-            )
         }
         .padding(20)
         .frame(maxWidth: .infinity)
