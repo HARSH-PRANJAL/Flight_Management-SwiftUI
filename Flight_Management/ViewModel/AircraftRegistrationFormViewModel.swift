@@ -144,7 +144,7 @@ extension AircraftRegistrationFormViewModel {
                 "Maximum allowed number of copilots is \(allowedCopilots)."
             return false
         }
-        if crewCount > 12 {
+        if crewCount > 16 {
             fieldErrors[.crew] =
                 "Number of crew members cannot be more than 12."
             return false
