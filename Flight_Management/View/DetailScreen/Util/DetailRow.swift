@@ -7,7 +7,7 @@ struct DetailRowView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(label)
-                .fontWeight(.semibold)
+                .fontWeight(.medium)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .trailing)

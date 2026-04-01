@@ -166,7 +166,7 @@ extension StaffRegistrationContent {
                 placeholder: "example@example.com",
                 focus: .email,
                 hasError: viewModel.fieldErrors[.email] != nil,
-                maxLength: 255,
+                maxLength: 254,
                 allowedCharacter: {
                     $0.isASCII
                 },

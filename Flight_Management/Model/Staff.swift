@@ -27,7 +27,7 @@ class Staff {
 
     var completedTrips: [Trip] {
         return trips.filter({
-            $0.isCompleted == true || $0.isCancelled == true
+            $0.isCompleted == true
         })
     }
 

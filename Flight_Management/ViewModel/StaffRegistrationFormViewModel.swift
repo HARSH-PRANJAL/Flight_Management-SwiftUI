@@ -116,7 +116,7 @@ extension StaffRegistrationFormViewModel {
     }
 
     func validateEmail() -> Bool {
-        let pattern = /^[A-Z0-9a-z._%+-]{1,64}@[A-Za-z0-9.-]+\.[A-Za-z]{2,64}$/
+        let pattern = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmedEmail.isEmpty {
@@ -143,7 +143,7 @@ extension StaffRegistrationFormViewModel {
             fieldErrors[.date] = "Date of birth can not be empty."
             return false
         }
-        
+
         let calendar = Calendar.current
         let today = Date()
 
@@ -196,7 +196,11 @@ extension StaffRegistrationFormViewModel {
 
     var maxBirthDate: Date {
         if role == nil {
-            return Calendar.current.date(byAdding: .year, value: -70, to: Date())
+            return Calendar.current.date(
+                byAdding: .year,
+                value: -70,
+                to: Date()
+            )
                 ?? Date.distantPast
         }
         let maxAge = getMaxAgeForRole(role)

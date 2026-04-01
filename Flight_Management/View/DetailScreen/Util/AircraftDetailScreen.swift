@@ -270,8 +270,8 @@ extension AircraftDetailScreen {
 
             VStack(alignment: .leading, spacing: 10) {
                 DetailRowView(
-                    label: "Total trips",
-                    value: "\(aircraft.trips.count)"
+                    label: "Total operated trips",
+                    value: "\(aircraft.totalTripsOperated)"
                 )
                 DetailRowView(
                     label: "Seating capacity",
